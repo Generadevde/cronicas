@@ -35,6 +35,18 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 	while restante > 0:
 		var passo := mini(PASSO_DIAS, restante)
 		restante -= passo
+		# O tempo parou: o relógio não anda, só quem usou o poder (e quem ele tocou) age.
+		var pausa := Motor.pausa(u)
+		if not pausa.is_empty():
+			passo = mini(passo, int(pausa["restante"]))
+			Motor.gastar_pausa(u, passo)
+			var rng_p := RandomNumberGenerator.new()
+			rng_p.seed = hash(str(u.semente()) + ":pausa:" + str(DataMundo.ordem(u.relogio)) + ":" + str(int(pausa["restante"])))
+			var idx_p := _indice_de_lugares(u)
+			for eid in pausa["quem"]:
+				if u.entidades.has(eid) and Estado.tem_mente(u, eid) and Estado.vivo(u, eid):
+					novos.append_array(Decisao.decidir(u, eid, rng_p, idx_p))
+			continue
 		_andar_relogio(u, passo)
 		ctrl["passos"] = int(ctrl.get("passos", 0)) + 1
 		var rng := RandomNumberGenerator.new()
@@ -43,7 +55,7 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 		deste_passo.append_array(Informacao.espalhar(u, rng))
 		var indice := _indice_de_lugares(u)
 		for eid in _mentes(u):
-			if foco.has(u.estado(eid)["local"]) or Viagens.viajando(u, eid):
+			if foco.has(u.estado(eid)["local"]) or Viagens.viajando(u, eid) or Motor.dormindo(u, eid):
 				continue
 			if not _deve_pensar(u, eid, int(ctrl["passos"])):
 				continue
@@ -151,7 +163,7 @@ static func _favorito_envolvido(u: Universo, fid: String) -> bool:
 static func _mentes(u: Universo) -> Array:
 	var lista: Array = []
 	for e in u.entidades_ativas():
-		if Estado.tem_mente(u, e["id"]) and Estado.vivo(u, e["id"]):
+		if Estado.tem_mente(u, e["id"]) and Estado.vivo(u, e["id"]) and not Motor.dormindo(u, e["id"]):
 			lista.append(e["id"])
 	return lista
 

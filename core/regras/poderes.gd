@@ -59,6 +59,9 @@ static func narrativo(u: Universo, pid: String) -> bool:
 	return false
 
 
+const PECAS_DO_MOTOR := ["pausar", "adormecer", "despertar", "apagar", "prever", "galho"]
+
+
 ## Quanto o poder multiplica a força numa luta.
 static func bonus(u: Universo, pid: String) -> float:
 	var v := u.valor_campo(pid, "força")
@@ -130,8 +133,12 @@ static func consequencias_do_uso(u: Universo, fid: String) -> Dictionary:
 	var alvo := str(f["dados"].get("alvo", ""))
 	var pnome: String = u.entidade(pid)["nome"]
 	var ctx := {"sujeito": eid, "outro": alvo, "lugar": f["lugar"]}
-	for par in [["custo", "custo de "], ["efeitos permitidos", ""]]:
+	# Poderes que mudam o motor (parar o tempo, sono eterno, ver o futuro…) valem pelo "efeito".
+	var motor := u.valor_campo(pid, "efeitos permitidos") == "" and Pecas.ler(u, u.valor_campo(pid, "efeito")).any(func(e): return str(e.get("peca", "")) in PECAS_DO_MOTOR)
+	for par in [["custo", "custo de "], ["efeitos permitidos", ""], ["efeito", ""]]:
 		if par[0] == "efeitos permitidos" and narrativo(u, pid) and u.valor_campo(pid, "efeitos permitidos") == "":
+			continue
+		if par[0] == "efeito" and not motor:
 			continue
 		var txt := u.valor_campo(pid, par[0])
 		if txt == "":
@@ -151,7 +158,7 @@ static func consequencias_do_uso(u: Universo, fid: String) -> Dictionary:
 		})
 		if f2 != "":
 			r["fatos"].append(f2)
-	if narrativo(u, pid) and u.valor_campo(pid, "efeitos permitidos") == "":
+	if narrativo(u, pid) and u.valor_campo(pid, "efeitos permitidos") == "" and not motor:
 		r["pedido"] = criar_pedido(u, fid, eid, pid, alvo)
 	return r
 

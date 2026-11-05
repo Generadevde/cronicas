@@ -46,7 +46,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 	var em_guerra := Guerras.lugares_em_guerra(u)
 	for e in u.entidades_ativas():
 		var lugar: String = e["id"]
-		if Mapa.especie(u, lugar) != "povoado" or not Natureza.tem_natureza(u, lugar):
+		if Mapa.especie(u, lugar) != "povoado" or not Natureza.tem_natureza(u, lugar) or Motor.adormecido(u, lugar):
 			continue
 		var reg := Natureza.de(u, lugar)
 		if float(reg["pop"]) <= 0:

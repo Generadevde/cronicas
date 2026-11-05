@@ -82,7 +82,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 	var novos: Array = []
 	for e in u.entidades_ativas():
 		var eid: String = e["id"]
-		if not Estado.tem_mente(u, eid) or not Estado.vivo(u, eid):
+		if not Estado.tem_mente(u, eid) or not Estado.vivo(u, eid) or Motor.dormindo(u, eid):
 			continue
 		var idade_d := Estado.idade_em_dias(u, eid)
 		if idade_d < 0:

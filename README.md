@@ -127,6 +127,17 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - No mapa, guerras e cidades ocupadas aparecem marcadas com ⚔.
 - Teste do plano: Sokovia contra Bermudit com o exército de fantasmas.
 
+## Parte 8 — Pactos e forças cósmicas
+
+- **Pactos**: qualquer entidade com "o que oferece" e "o que cobra" na ficha (deus, demônio, ser antigo, o próprio Autor) procura quem tem um desejo forte e nenhuma saída — vingança contra alguém muito mais forte, doença, uma guerra perdida, um luto — e oferece um pacto. A mente da pessoa decide (desespero, ambição, prudência, e se o preço cai sobre a família).
+- **O desejo se cumpre de verdade** ("Kai morreu de repente, sem que ninguém soubesse explicar"). O **preço fica secreto**: só você vê, na aba **Cosmos** e na wiki, e os personagens não ficam sabendo pelas notícias.
+- **O preço chega depois**, no tempo escrito ("a alma do primeiro filho, em dez anos"; "vinte anos de vida"; "a cidade inteira dorme"). Paga a pessoa, o primeiro filho, a família ou a cidade. Só então o mundo descobre.
+- Entidades ganham **seguidores**, e as sociedades reagem: perseguem o culto (teocracias, quem despreza pactos) ou tentam usar a entidade.
+- **O Autor e o arauto**: você pode existir no mundo como força cósmica (com o nome que quiser), fora do mapa, sem envelhecer nem morrer. Quem "conhece o Autor" é seu arauto: você revela uma visão, uma ordem ou uma profecia, e ele reage com a própria mente — obedece, duvida, espalha ou esconde. O mundo fica sabendo pelas notícias, com atraso. Dá para fazer pactos com o Autor.
+- **Poderes que mudam o motor** (no "efeito" do poder, numa lei ou num preço): **parar o tempo** (o relógio do mundo para, menos para quem usou e quem ele tocou), **sono eterno** (um lugar sai da simulação até a maldição ser quebrada), **apagar da existência**, **ver o futuro** (a simulação roda numa cópia do mundo e a visão fica guardada no fato) e **voltar ao passado** (abre um galho da linha do tempo; em "Ainda sem efeito" você decide abrir, e o galho vira um universo à parte na estante).
+- No mapa: ◉ onde há pacto ainda não cobrado, ☾ onde há sono eterno.
+- Teste do plano: um pacto cujo preço chega anos depois.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.

@@ -166,6 +166,36 @@ static func ler_um(u: Universo, original: String) -> Dictionary:
 	if t.contains("ressuscit") or t.contains("volta a vida") or t.contains("volta dos mortos"):
 		e["peca"] = "reviver"
 		return e
+	# Poderes que mudam o motor: parar o tempo, sono eterno, apagar, ver o futuro, voltar no tempo.
+	if t.contains("para o tempo") or t.contains("parar o tempo") or t.contains("congela o tempo") or t.contains("pausa o tempo") or t.contains("o tempo para"):
+		e["peca"] = "pausar"
+		e["dias"] = _dias(t, 7)
+		return e
+	if t.contains("sono eterno") or t.contains("dorme para sempre") or t.contains("dormem para sempre") or t.contains("cai em sono") or t.contains("caem em sono") or t.contains("adormece"):
+		e["peca"] = "adormecer"
+		e["alvo"] = "lugar"
+		if lugar_citado != "":
+			e["lugar_alvo"] = lugar_citado
+		return e
+	if t.contains("quebra a maldicao") or t.contains("desperta do sono") or t.contains("despertam do sono") or t.contains("acorda do sono"):
+		e["peca"] = "despertar"
+		e["alvo"] = "lugar"
+		if lugar_citado != "":
+			e["lugar_alvo"] = lugar_citado
+		return e
+	if t.contains("apagad") and t.contains("existencia") or t.contains("deixa de existir") or t.contains("apaga da existencia") or t.contains("apaga o outro"):
+		e["peca"] = "apagar"
+		if not e.get("alvo_explicito", false) and pessoa_citada == "":
+			e["alvo"] = "outro"
+		return e
+	if t.contains("ve o futuro") or t.contains("ver o futuro") or t.contains("preve o futuro") or t.contains("enxerga o futuro") or t.contains("visao do futuro"):
+		e["peca"] = "prever"
+		e["dias"] = _dias(t, 360) if (t.contains(" ano") or t.contains(" mes") or t.contains(" dia")) else 360
+		return e
+	if t.contains("volta ao passado") or t.contains("voltar ao passado") or t.contains("viaja ao passado") or t.contains("volta no tempo") or t.contains("voltar no tempo"):
+		e["peca"] = "galho"
+		e["anos"] = int(_dias(t, 3600) / 360)
+		return e
 	# morte, doença, ferimento, cura
 	if rx.compile("\\bmorre(m)?\\b") == OK and rx.search(t) != null or t.contains(" cai morto ") or t.contains(" cai morta "):
 		e["peca"] = "morrer"
@@ -342,6 +372,18 @@ static func descrever(u: Universo, e: Dictionary) -> String:
 			o = "nada acontece"
 		"expectativa":
 			o = "vive cerca de %d anos" % int(e["anos"])
+		"pausar":
+			o = "o tempo para por %s (menos para quem usou e quem ele tocar)" % _tempo(int(e.get("dias", 7)))
+		"adormecer":
+			o = "cai em sono eterno (sai da simulação até a maldição ser quebrada)"
+		"despertar":
+			o = "desperta do sono eterno"
+		"apagar":
+			o = "é apagado da existência"
+		"prever":
+			o = "vê o futuro (a simulação de %s à frente)" % _tempo(int(e.get("dias", 360)))
+		"galho":
+			o = "volta ao passado (abre um galho da linha do tempo)"
 	return "%s → %s" % [quem, o]
 
 
@@ -433,6 +475,22 @@ static func operacoes(u: Universo, e: Dictionary, ctx: Dictionary) -> Array:
 				ops.append({"op": "traco", "quem": q, "traco": e["traco"], "delta": float(e.get("delta", 0.15))})
 			"marca":
 				ops.append({"op": "marca", "quem": q, "marca": e["marca"]})
+			"pausar":
+				var tocados: Array = [q]
+				if str(ctx.get("outro", "")) != "":
+					tocados.append(ctx["outro"])
+				ops.append({"op": "pausar", "quem": tocados, "dias": int(e.get("dias", 7))})
+			"adormecer":
+				ops.append({"op": "adormecer", "lugar": q})
+			"despertar":
+				ops.append({"op": "despertar", "lugar": q})
+			"apagar":
+				ops.append({"op": "apagar", "quem": q})
+			"prever":
+				ops.append({"op": "prever", "quem": q, "dias": int(e.get("dias", 360))})
+				ops.append({"op": "marca", "quem": q, "marca": "viu o futuro"})
+			"galho":
+				ops.append({"op": "galho", "quem": q, "anos": int(e.get("anos", 10))})
 	return ops
 
 

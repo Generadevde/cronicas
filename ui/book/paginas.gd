@@ -61,6 +61,11 @@ static func entidade(u: Universo, eid: String) -> String:
 		s += guerra(u, eid)
 	if Forcas.eh_forca(u, eid):
 		s += forca(u, eid)
+	s += pactos(u, eid)
+	if u.estado(eid).get("apagado", false):
+		s += "\n[color=#7A2418][b]Apagado da existência.[/b] Quase ninguém lembra que existiu.[/color]\n"
+	if u.estado(eid).has("adormecido"):
+		s += "\n[color=#233B66][b]Sob sono eterno.[/b] O lugar saiu da simulação até a maldição ser quebrada.[/color]\n"
 	var ls := Lendas.de(u, eid)
 	if not ls.is_empty():
 		var linhas_l: Array = []
@@ -375,6 +380,29 @@ static func guerra(u: Universo, g: String) -> String:
 	return secao("Guerra") + "\n".join(linhas) + "\n"
 
 
+## Pactos de uma entidade (o que ofereceu) ou de uma pessoa (o que pediu). Você vê
+## tudo, como deus — inclusive os pactos secretos e quando o preço vai chegar.
+static func pactos(u: Universo, eid: String) -> String:
+	var linhas: Array = []
+	for p in Pactos.todos(u):
+		if p["ser"] != eid and p["com"] != eid:
+			continue
+		var f := u.fatos.obter(p["fato"])
+		if f.is_empty() or not f["canon"]:
+			continue
+		var info: Dictionary = f["dados"].get("pacto", {})
+		var outro: String = p["com"] if p["ser"] == eid else p["ser"]
+		var estado := "[color=#7A2418]preço pago[/color]" if p["cobrado"] else ("preço chega em %s" % DataMundo.texto(_data_de_ordem(int(p["quando"]))))
+		linhas.append("• %s %s — desejo: %s · preço: %s · %s%s" % ["com" if p["ser"] == eid else "com", link("ent:" + outro, u.entidade(outro).get("nome", "?")),
+			_e(str(info.get("desejo", {}).get("texto", "?"))), _e(str(info.get("preco", {}).get("resumo", "?"))), estado,
+			" [color=#5A3A1A](secreto: só você sabe)[/color]" if p["secreto"] and not p["cobrado"] else ""])
+	if linhas.is_empty():
+		if Pactos.ofertantes(u).has(eid):
+			return secao("Pactos") + "[i]Oferece: %s · cobra: %s. Ainda não fez nenhum pacto.[/i]\n" % [_e(Pactos.oferta(u, eid)), _e(Pactos.preco_escrito(u, eid) if Pactos.preco_escrito(u, eid) != "" else "não disse")]
+		return ""
+	return secao("Pactos") + "\n".join(linhas) + "\n"
+
+
 static func _palavra_moral(m: float) -> String:
 	if m >= 0.85:
 		return "inabalável"
@@ -482,6 +510,15 @@ static func fato(u: Universo, fid: String) -> String:
 		s += "[b]Envolve:[/b] %s\n" % ", ".join(nomes)
 	if f["lugar"] != "":
 		s += "[b]Onde:[/b] %s\n" % link("ent:" + f["lugar"], u.entidade(f["lugar"]).get("nome", f["lugar"]))
+	if f["dados"].get("secreto", false):
+		s += "[b]Secreto:[/b] só quem estava lá sabe (e você)\n"
+	if f["dados"].get("previsao", null) is Array:
+		s += secao("O que a visão mostrou")
+		var prev: Array = f["dados"]["previsao"]
+		if prev.is_empty():
+			s += "[i]Nada de grande: um tempo calmo.[/i]\n"
+		for p in prev:
+			s += "• [color=#5A3A1A]%s[/color] — %s\n" % [DataMundo.texto(p["data"]), _e(p["descricao"])]
 	if not f["dados"].is_empty():
 		s += "[b]Dados:[/b] [color=#5A3A1A]%s[/color]\n" % _e(JSON.stringify(f["dados"]))
 

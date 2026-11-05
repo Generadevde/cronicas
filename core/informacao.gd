@@ -44,7 +44,7 @@ static func espalhar(u: Universo, rng: RandomNumberGenerator) -> Array:
 	ctrl["ate_seq"] = todos_f.back()["seq"] if not todos_f.is_empty() else 0
 	var pendentes: Array = []
 	for f in candidatos:
-		if not f["canon"] or f["tipo"] in ["notícia", "rumor"]:
+		if not f["canon"] or f["tipo"] in ["notícia", "rumor"] or f["dados"].get("secreto", false):
 			continue
 		var imp: float = float(f["dados"].get("importancia", Simulador.IMPORTANCIA.get(f["dados"].get("acao", ""), 0.0)))
 		if imp < IMPORTANCIA_MINIMA:

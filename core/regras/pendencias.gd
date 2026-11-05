@@ -22,13 +22,15 @@ const CAMPOS_LIDOS := ["personalid", "jeito", "gost", "valor", "hobby", "paix", 
 	"cargo", "honram", "odeiam", "condenam",
 	"tipo de forc", "moral", "animo", "comandante", "general", "capitao", "almirante", "pertence", "lado", "pontos fortes", "pontos fracos",
 	"fraquez", "fraco", "vantage", "desvantage", "suprimento", "soldados", "efetivo", "aliad", "inimig", "rival", "exercito", "tropas",
-	"lados", "motivo", "titulo", "ferida", "ponto fraco"]
+	"lados", "motivo", "titulo", "ferida", "ponto fraco",
+	"o que oferece", "oferece", "concede", "promete", "o que cobra", "cobra", "preco", "seguidores", "vontade", "como age", "pacto",
+	"onde age", "morada", "santuario", "templo"]
 ## Campos que são descrição (valem como texto do mundo: wiki, pesquisa, a voz dos personagens).
 const DESCRITIVOS := ["descric", "aparenc", "historia", "feito", "epoca", "nota", "apelido", "resumo", "biografia"]
 ## Campos que as próximas partes vão usar (não contam como pendência).
 const PLANEJADOS := {
 	"recurso": 9, "riqueza": 9, "moeda": 9,
-	"o que oferece": 8, "o que cobra": 8, "seguidores": 8, "vontade": 8, "como age": 8, "pacto": 8,
+
 }
 
 
@@ -66,6 +68,11 @@ static func listar(u: Universo) -> Array:
 		itens.append({"id": "ped:" + p["id"], "tipo": "pedido", "titulo": "Pedido do mundo", "texto": p["texto"],
 			"detalhe": "Poder narrativo: o mundo não decide sozinho. O que aconteceu?", "pedido": p["id"]})
 	for f in u.fatos.todos():
+		if f["canon"] and f["dados"].has("galho") and not f["dados"]["galho"].get("aberto", false) and not f["dados"].get("resolvido", false):
+			itens.append({"id": "galho:" + f["id"], "tipo": "galho", "titulo": "Viagem ao passado", "texto": f["descricao"],
+				"detalhe": "Abrir um galho da linha do tempo %d anos atrás? O galho vira um universo à parte; você decide qual segue como canon." % int(f["dados"]["galho"]["anos"]),
+				"fato": f["id"], "anos": int(f["dados"]["galho"]["anos"])})
+			continue
 		if f["canon"] and f["dados"].get("sem_efeito", false) and not f["dados"].get("resolvido", false):
 			itens.append({"id": "int:" + f["id"], "tipo": "intervencao", "titulo": "Intervenção sem efeito", "texto": f["descricao"],
 				"detalhe": "O programa registrou, mas não sabe o que isso muda.", "fato": f["id"], "termo": str(f["dados"].get("texto", ""))})
@@ -169,6 +176,8 @@ static func so_descricao(u: Universo, item: Dictionary) -> void:
 			Poderes.responder_pedido(u, item["pedido"], "")
 		"lei":
 			pass
+		"galho":
+			u.fatos.obter(item["fato"])["dados"]["resolvido"] = true
 	u.fatos.registrar({
 		"tipo": "decisão do autor", "descricao": "O autor decidiu que \"%s\" é só descrição." % item.get("chave", item.get("texto", "")),
 		"data": DataMundo.copiar(u.relogio), "origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": "pendencias"},

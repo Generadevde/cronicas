@@ -10,6 +10,7 @@ const ABAS := [
 	{"id": "universo", "nome": "Universo", "cor": "#6A2F4F", "script": preload("res://ui/book/aba_universo.gd")},
 	{"id": "sociedades", "nome": "Sociedades", "cor": "#2E5E5A", "script": preload("res://ui/book/aba_sociedades.gd")},
 	{"id": "guerras", "nome": "Guerras", "cor": "#5E1A3A", "script": preload("res://ui/book/aba_guerras.gd")},
+	{"id": "cosmos", "nome": "Cosmos", "cor": "#2A2F5E", "script": preload("res://ui/book/aba_cosmos.gd")},
 	{"id": "leis", "nome": "Leis", "cor": "#7A5A1A", "script": preload("res://ui/book/aba_leis.gd")},
 	{"id": "wiki", "nome": "Wiki", "cor": "#5B6B2A", "script": preload("res://ui/book/aba_wiki.gd")},
 	{"id": "criadores", "nome": "Criadores", "cor": "#5A3A7A", "script": preload("res://ui/book/aba_criadores.gd")},
@@ -20,7 +21,7 @@ const ABAS := [
 ]
 
 ## Abas que se redesenham sozinhas quando o tempo do mundo anda.
-const ABAS_VIVAS := ["jornal", "mundo", "mapa", "sociedades", "guerras", "leis", "wiki", "fatos", "indice"]
+const ABAS_VIVAS := ["jornal", "mundo", "mapa", "sociedades", "guerras", "cosmos", "leis", "wiki", "fatos", "indice"]
 
 var universo: Universo
 var aba_atual := ""

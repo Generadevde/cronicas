@@ -188,7 +188,28 @@ func _item(it: Dictionary) -> Control:
 			livro.avisar("Definido. Daqui em diante isso tem efeito.")
 			livro.atualizar_cabecalho()
 			livro.ir_para_aba("leis")))
-	botoes.append(definir)
+	if it["tipo"] != "galho":
+		botoes.append(definir)
+	if it["tipo"] == "galho":
+		var abrir_g := Tema.botao("Abrir o galho", "Cria um universo à parte, voltado para o passado; este continua guardado")
+		abrir_g.pressed.connect(func():
+			var f := u.fatos.obter(it["fato"])
+			var data := DataMundo.criar(maxi(0, int(u.relogio["ano"]) - int(it["anos"])), int(u.relogio["dia"]))
+			var g := Motor.galho(u, data)
+			f["dados"]["galho"]["aberto"] = true
+			f["dados"]["galho"]["universo"] = g.id
+			u.marcar_mudanca()
+			Cronica.biblioteca.salvar(g)
+			livro.avisar("Galho aberto: \"%s\" está na estante. Escolha qual universo segue como canon." % g.nome)
+			livro.atualizar_cabecalho()
+			livro.ir_para_aba("leis"))
+		botoes.append(abrir_g)
+		var nao_g := Tema.botao("Não abrir", "A viagem não muda nada")
+		nao_g.pressed.connect(func():
+			Pendencias.so_descricao(u, it)
+			livro.atualizar_cabecalho()
+			livro.ir_para_aba("leis"))
+		botoes.append(nao_g)
 	if it["tipo"] in ["intervencao", "campo", "duvida"]:
 		var so := Tema.botao("É só descrição")
 		so.pressed.connect(func():

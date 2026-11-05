@@ -19,6 +19,7 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 - `core/regras/` — leis escritas em português (`regras.gd`), peças de efeito (`pecas.gd`), poderes, corpo e vida, "ainda sem efeito" (`pendencias.gd`) (Parte 5).
 - `core/sociedade/` — governos e sucessão (`sociedades.gd`), humor do povo e revoltas, economia, reputação relativa, família e gerações (Parte 6).
 - `core/guerra/` — forças militares (`forcas.gd`), guerras, batalhas, intervenção e pós-guerra (`guerras.gd`), lutas em aberto (`lutas.gd`), lendas, títulos e nomes (`lendas.gd`) (Parte 7).
+- `core/cosmico/` — pactos e preços (`pactos.gd`), o Autor e o arauto (`autor.gd`), poderes que mudam o motor: pausa, sono, apagar, ver o futuro, galhos (`motor.gd`) (Parte 8).
 - `ui/` — telas montadas em código: `tema.gd` (visual de livro), `menu/`, `library/`, `book/` (livro com abas `aba_*.gd`, `paginas.gd` monta BBCode).
 - `tests/` — `run_tests.gd` roda todos os `test_*.gd`.
 - `assets/` — fontes (OFL) e a arte do menu (feita pelo autor).

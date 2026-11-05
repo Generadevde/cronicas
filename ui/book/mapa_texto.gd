@@ -40,6 +40,7 @@ var _sobre := Vector2i(-1, -1)
 var _arrastando := false
 var _rotulos: Array = []  ## retângulos já ocupados por letras
 var _guerra: Dictionary = {}  ## lugar → guerra (frentes e lugares ocupados)
+var _pactos: Dictionary = {}  ## lugares com pactos ainda não cobrados
 
 
 func _init() -> void:
@@ -140,6 +141,11 @@ func _draw() -> void:
 		return
 	_rotulos.clear()
 	_guerra = Guerras.lugares_em_guerra(u)
+	# Lugares onde mora alguém com um pacto ainda não cobrado (você vê, como deus).
+	_pactos = {}
+	for p in Pactos.todos(u):
+		if not p["cobrado"]:
+			_pactos[str(u.estado(str(p["com"])).get("local", ""))] = true
 	var c := _celula()
 	var cosmos := lugar == "" or Mapa.especie(u, lugar) == "cosmico"
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#E4CB97") if not cosmos else Color("#231A12"))
@@ -308,6 +314,10 @@ func _lugares(c: Vector2, cosmos: bool) -> void:
 				var nomes_ev: Array = evs.map(func(x): return Natureza.EVENTOS.get(x["tipo"], {}).get("nome", x["tipo"]))
 				if _guerra.has(eid):
 					nomes_ev.push_front("⚔ ocupada" if u.estado(eid).has("ocupado_por") else "⚔ guerra")
+				if u.estado(eid).has("adormecido"):
+					nomes_ev.push_front("☾ sono eterno")
+				if _pactos.has(eid):
+					nomes_ev.append("◉ pacto")
 				if not nomes_ev.is_empty():
 					var t2 := "(%s)" % ", ".join(nomes_ev)
 					var rr3 := _colocar_rotulo(Tema.F_FELL_IT, t2, 13, Vector2(rr2.get_center().x, rr2.end.y + 8), [Vector2.ZERO, Vector2(0, -rr2.size.y - 14)])

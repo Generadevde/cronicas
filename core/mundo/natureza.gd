@@ -357,7 +357,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 			_por_lugar[l0].append(e0["id"])
 	for e in u.entidades_ativas():
 		var lugar: String = e["id"]
-		if not tem_natureza(u, lugar):
+		if not tem_natureza(u, lugar) or Motor.adormecido(u, lugar):
 			continue
 		var reg := de(u, lugar)
 		reg["tecnica"] = tecnica
