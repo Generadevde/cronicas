@@ -66,6 +66,19 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - **Versões** de cada capítulo para restaurar
 - A wiki mostra "No mundo agora": vivo/morto, onde está, família, o que sente, o que quer, relações
 
+## Parte 3 — Mentes e tempo
+
+- **Relógio do mundo** (aba Mundo): avançar 1 dia, semana, mês, ano, 10 anos ou "até algo importante"; também pelo botão "Avançar o tempo" no alto
+- **Mundo vivo**: o tempo corre sozinho enquanto o livro está aberto; o lugar do capítulo aberto fica em foco (parado)
+- Quem **tem mente própria** (marcado em Criadores) decide sozinho, em passos semanais: treinar, buscar mestre, viajar atrás de alguém, confrontar, perdoar, se dedicar a uma ambição, conviver, se apaixonar, casar, fugir, viver o luto
+- **Personalidade** (10 traços) lida do texto livre da ficha ("rancoroso, corajoso…"); desejos e ambições da ficha viram objetivos
+- **Emoções** que esfriam com o tempo (o rancor dura mais, o amor quase não passa); memórias, diário, idade, força
+- **Notícias** correm com atraso (3 dias no mesmo lugar, ~25 em outro) e quem fica sabendo reage
+- Toda decisão vira fato com causa: dá para perguntar "Por quê?" e desfazer
+- **Jornal** com manchetes e bilhetes; cada notícia pode virar capítulo
+- **Linha do tempo** e **Observatório** (o que aconteceu com alguém, quem o influenciou)
+- Mesma semente = mesmo mundo (a simulação é reproduzível)
+
 O programa completo e polido fica para o fim da Parte 13. Até lá, cada parte termina com testes e uma tela de depuração.
 
 ## Plano

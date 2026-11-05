@@ -136,9 +136,65 @@ func desfazer_proposta(pid: String) -> void:
 	_avisar()
 
 
+## Desfaz um fato (de qualquer origem) e tudo o que ele causou: continuam guardados,
+## mas deixam de ser canon, e o mundo é reconstruído. Devolve quantos fatos saíram.
+func desfazer_fato(fid: String) -> int:
+	var fila: Array = [fid]
+	var n := 0
+	while not fila.is_empty():
+		var atual: String = fila.pop_front()
+		var f := fatos.obter(atual)
+		if f.is_empty() or not f["canon"]:
+			continue
+		f["canon"] = false
+		n += 1
+		for c in fatos.consequencias(atual):
+			fila.append(c["id"])
+	for p in propostas:
+		if p.get("fato", "") != "" and not fatos.obter(p["fato"]).get("canon", true) and p["status"] == "aceita":
+			p["status"] = "desfeita"
+	AutoAtualizador.reconstruir(self)
+	_avisar()
+	return n
+
+
+## Até onde o autor já leu o jornal (número de sequência do último fato visto).
+func jornal_lido_ate() -> int:
+	return int(extra("leitura", {"jornal": 0}).get("jornal", 0))
+
+
+func marcar_jornal_lido() -> void:
+	extra("leitura", {})["jornal"] = fatos.para_dicionario()["seq"]
+	_avisar()
+
+
+## Muda a data do mundo à mão (ex.: começar no ano 412). Não é um fato: é o calendário.
+func definir_relogio(data: Dictionary) -> void:
+	relogio = DataMundo.copiar(data)
+	_avisar()
+
+
 ## Sistemas das próximas partes que sabem aplicar operações próprias.
 func sistemas_de_mudanca() -> Array:
 	return []
+
+
+## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).
+## Cada um tem: static func passo(u, dias, rng) -> Array de ids de fatos.
+func sistemas_de_simulacao() -> Array:
+	return []
+
+
+## Dias de viagem entre dois lugares (-1 = não sabe; o mapa da Parte 4 responde).
+func dias_de_viagem(_de: String, _para: String) -> int:
+	return -1
+
+
+## Semente do universo: a mesma semente e os mesmos fatos dão o mesmo mundo.
+func semente() -> int:
+	if not extras.has("semente"):
+		extras["semente"] = abs(hash(id)) % 1000000007
+	return int(extras["semente"])
 
 
 func riscar_proposta(pid: String) -> void:

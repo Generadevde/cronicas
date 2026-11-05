@@ -220,3 +220,4 @@ static func reconstruir(u: Universo) -> void:
 	for f in fatos:
 		if f["canon"]:
 			Mudancas.aplicar(u, f["dados"].get("mudancas", []), f)
+	Informacao.reconstruir(u)

@@ -4,13 +4,18 @@ extends Control
 
 const ABAS := [
 	{"id": "escrever", "nome": "Escrever", "cor": "#8E2A22", "script": preload("res://ui/book/aba_escrever.gd")},
+	{"id": "jornal", "nome": "Jornal", "cor": "#2F6B6B", "script": preload("res://ui/book/aba_jornal.gd")},
+	{"id": "mundo", "nome": "Mundo", "cor": "#2F4F8A", "script": preload("res://ui/book/aba_mundo.gd")},
 	{"id": "wiki", "nome": "Wiki", "cor": "#5B6B2A", "script": preload("res://ui/book/aba_wiki.gd")},
 	{"id": "criadores", "nome": "Criadores", "cor": "#5A3A7A", "script": preload("res://ui/book/aba_criadores.gd")},
 	{"id": "pesquisa", "nome": "Pesquisa", "cor": "#8A4E22", "script": preload("res://ui/book/aba_pesquisa.gd")},
-	{"id": "notas", "nome": "Notas", "cor": "#2F6B6B", "script": preload("res://ui/book/aba_notas.gd")},
-	{"id": "indice", "nome": "Índice", "cor": "#2F4F8A", "script": preload("res://ui/book/aba_indice.gd")},
+	{"id": "notas", "nome": "Notas", "cor": "#4A4A44", "script": preload("res://ui/book/aba_notas.gd")},
+	{"id": "indice", "nome": "Índice", "cor": "#6B4F2A", "script": preload("res://ui/book/aba_indice.gd")},
 	{"id": "fatos", "nome": "Fatos", "cor": "#A87A2A", "script": preload("res://ui/book/aba_fatos.gd")},
 ]
+
+## Abas que se redesenham sozinhas quando o tempo do mundo anda.
+const ABAS_VIVAS := ["jornal", "mundo", "wiki", "fatos", "indice"]
 
 var universo: Universo
 var aba_atual := ""
@@ -21,6 +26,10 @@ var _fitas: Dictionary = {}
 var _data_label: Label
 var _busca: LineEdit
 var _adiados: Dictionary = {}
+var _dado_atual := ""
+var _status: Label
+var _timer_vivo: Timer
+var ritmo_vivo := 0  ## dias do mundo por segundo real (0 = pausado)
 
 
 func _ready() -> void:
@@ -60,7 +69,7 @@ func _construir() -> void:
 	topo.add_child(espaco)
 	_busca = LineEdit.new()
 	_busca.placeholder_text = "Pesquisar no universo…"
-	_busca.custom_minimum_size = Vector2(300, 0)
+	_busca.custom_minimum_size = Vector2(220, 0)
 	_busca.add_theme_stylebox_override("normal", Tema._caixa(Color(Tema.OURO, 0.08), Color("#8A6430"), 1, 3, 12, 6))
 	_busca.add_theme_stylebox_override("focus", Tema._caixa(Color(Tema.OURO, 0.15), Tema.OURO, 1, 3, 12, 6))
 	_busca.add_theme_color_override("font_color", Tema.TEXTO_CLARO)
@@ -70,6 +79,24 @@ func _construir() -> void:
 		ir_para_aba("pesquisa", t)
 		_busca.text = "")
 	topo.add_child(_busca)
+	_status = Tema.rotulo("", 15, Tema.F_FELL_IT, Tema.TEXTO_CLARO_SUAVE)
+	_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	topo.add_child(_status)
+	var avancar := MenuButton.new()
+	avancar.text = "Avançar o tempo ▾"
+	avancar.flat = false
+	avancar.add_theme_stylebox_override("normal", Tema._caixa(Color(Tema.OURO, 0.08), Color("#8A6430"), 1, 3, 14, 5))
+	avancar.add_theme_stylebox_override("hover", Tema._caixa(Color(Tema.OURO, 0.25), Tema.OURO, 1, 3, 14, 5))
+	avancar.add_theme_stylebox_override("pressed", Tema._caixa(Color(Tema.OURO, 0.4), Tema.OURO_CLARO, 1, 3, 14, 5))
+	avancar.add_theme_color_override("font_color", Tema.TEXTO_CLARO)
+	avancar.add_theme_color_override("font_hover_color", Color.WHITE)
+	avancar.add_theme_font_override("font", Tema.F_FELL)
+	var menu := avancar.get_popup()
+	var opcoes := [["1 dia", 1], ["1 semana", 7], ["1 mês", 30], ["1 ano", 360], ["10 anos", 3600], ["Até algo importante", -1]]
+	for i in opcoes.size():
+		menu.add_item(opcoes[i][0], i)
+	menu.id_pressed.connect(func(i: int): avancar_tempo(opcoes[i][1]))
+	topo.add_child(avancar)
 	var b_estante := Tema.botao_mesa("Estante")
 	b_estante.pressed.connect(func(): Cronica.ir_para("biblioteca"))
 	topo.add_child(b_estante)
@@ -117,6 +144,14 @@ func _construir() -> void:
 	corpo.add_child(fitas)
 	_estilizar_fitas()
 
+	_timer_vivo = Timer.new()
+	_timer_vivo.wait_time = 1.0
+	_timer_vivo.timeout.connect(_passo_vivo)
+	add_child(_timer_vivo)
+	ritmo_vivo = int(universo.extra("preferencias", {}).get("ritmo_vivo", 0))
+	definir_ritmo(ritmo_vivo)
+	atualizar_cabecalho()
+
 
 func _criar_pagina(pai: HBoxContainer, lombada: String, peso: float) -> VBoxContainer:
 	var p := PanelContainer.new()
@@ -155,9 +190,90 @@ func _atualizar_data() -> void:
 	_data_label.text = "· " + DataMundo.texto(universo.relogio)
 
 
+## Data, número de notícias novas na fita do Jornal e estado do mundo vivo.
+func atualizar_cabecalho() -> void:
+	if _data_label == null:
+		return
+	_atualizar_data()
+	var n := Observatorio.noticias(universo, universo.jornal_lido_ate(), 0.3).size()
+	if _fitas.has("jornal"):
+		_fitas["jornal"]["botao"].text = "Jornal (%d)" % n if n > 0 else "Jornal"
+	if ritmo_vivo > 0:
+		_status.text = "mundo vivo"
+	elif _status.text == "mundo vivo":
+		_status.text = ""
+
+
+## Avança o tempo do mundo. 'dias' = -1 avança até algo importante (no máximo 50 anos).
+func avancar_tempo(dias: int) -> void:
+	var antes := DataMundo.ordem(universo.relogio)
+	var novos: Array
+	if dias < 0:
+		novos = Simulador.avancar(universo, 360 * 50, {"parar_em_importante": true, "foco": foco()})
+	else:
+		novos = Simulador.avancar(universo, dias, {"foco": foco()})
+	var passou := DataMundo.ordem(universo.relogio) - antes
+	var importantes := novos.filter(func(f): return Simulador.importancia(universo, f) >= 0.35).size()
+	avisar("%d dias se passaram · %d acontecimentos importantes" % [passou, importantes])
+	_depois_de_simular()
+
+
+func _depois_de_simular() -> void:
+	atualizar_cabecalho()
+	if aba_atual in ABAS_VIVAS:
+		var dado := _dado_atual
+		ir_para_aba(aba_atual, dado)
+
+
+## Lugares em foco: os citados no capítulo aberto ficam parados enquanto você escreve.
+func foco() -> Array:
+	if aba_atual != "escrever" or not has_meta("ultimo_capitulo"):
+		return []
+	var cap := universo.capitulo(str(get_meta("ultimo_capitulo")))
+	if cap.is_empty():
+		return []
+	var lugares: Array = []
+	for m in Ligador.new(universo).encontrar(cap["texto"]):
+		if Sugestoes.categoria(universo.entidade(m["entidade"]).get("tipo", "")) == "lugar" and not lugares.has(m["entidade"]):
+			lugares.append(m["entidade"])
+	return lugares
+
+
+func definir_ritmo(dias_por_segundo: int) -> void:
+	ritmo_vivo = dias_por_segundo
+	universo.extra("preferencias", {})["ritmo_vivo"] = dias_por_segundo
+	if _timer_vivo == null:
+		return
+	if dias_por_segundo > 0:
+		_timer_vivo.start()
+	else:
+		_timer_vivo.stop()
+	atualizar_cabecalho()
+
+
+func _passo_vivo() -> void:
+	if ritmo_vivo <= 0:
+		return
+	var novos := Simulador.avancar(universo, ritmo_vivo, {"foco": foco()})
+	atualizar_cabecalho()
+	if aba_atual in ["jornal", "mundo"] and novos.any(func(f): return Simulador.importancia(universo, f) >= 0.35):
+		_depois_de_simular()
+
+
+## Mensagem curta no alto da tela, que some sozinha.
+func avisar(texto: String) -> void:
+	if _status == null:
+		return
+	_status.text = texto
+	get_tree().create_timer(6.0).timeout.connect(func():
+		if is_instance_valid(_status) and _status.text == texto:
+			_status.text = "mundo vivo" if ritmo_vivo > 0 else "")
+
+
 # ---------------------------------------------------------------- navegação
 
 func ir_para_aba(id: String, dado: String = "") -> void:
+	_dado_atual = dado
 	var def: Dictionary = {}
 	for a in ABAS:
 		if a["id"] == id:

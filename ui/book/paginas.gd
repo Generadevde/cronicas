@@ -82,7 +82,8 @@ static func entidade(u: Universo, eid: String) -> String:
 const NOMES_EMOCAO := {"odio": "ódio", "raiva": "raiva", "humilhacao": "humilhação", "luto": "luto",
 	"rancor": "rancor", "medo": "medo", "amor": "amor", "rivalidade": "rivalidade", "alegria": "alegria",
 	"esperanca": "esperança", "culpa": "culpa", "inveja": "inveja", "orgulho": "orgulho", "desespero": "desespero",
-	"solidao": "solidão", "gratidao": "gratidão", "ambicao": "ambição", "tristeza": "tristeza", "paz": "paz"}
+	"solidao": "solidão", "gratidao": "gratidão", "ambicao": "ambição", "tristeza": "tristeza", "paz": "paz",
+	"alivio": "alívio", "vazio": "vazio", "ciume": "ciúme"}
 
 
 ## O que o mundo sabe sobre a entidade agora (vivo/morto, onde, família, relações, mente).
@@ -108,8 +109,14 @@ static func estado(u: Universo, eid: String) -> String:
 	if float(st["reputacao"]) != 0.0:
 		linhas.append("[b]Fama:[/b] %s" % ("conhecido" if float(st["reputacao"]) > 0 else "mal falado"))
 	if mente:
-		var emocoes: Array = st["emocoes"].duplicate()
-		emocoes.sort_custom(func(a, b): return float(a["forca"]) > float(b["forca"]))
+		linhas.append("[b]Jeito de ser:[/b] %s" % Personalidade.resumo(Personalidade.tracos(u, eid)))
+		var idade := Estado.idade(u, eid)
+		if idade >= 0 and st["vivo"]:
+			linhas.append("[b]Idade:[/b] %d anos" % idade)
+		var p := Estado.poder(u, eid)
+		if p != 1.0:
+			linhas.append("[b]Força:[/b] %s" % _numero(p))
+		var emocoes: Array = Estado.emocoes_atuais(u, eid)
 		var txt: Array = []
 		for e in emocoes.slice(0, 5):
 			var alvo := ""
@@ -140,6 +147,16 @@ static func estado(u: Universo, eid: String) -> String:
 	if linhas.is_empty():
 		return ""
 	return secao("No mundo agora") + "\n".join(linhas) + "\n"
+
+
+static func _numero(v: float) -> String:
+	if v >= 1000000.0:
+		return "%.1f milhões" % (v / 1000000.0)
+	if v >= 10000.0:
+		return "%d mil" % roundi(v / 1000.0)
+	if v >= 100.0:
+		return str(roundi(v))
+	return "%.1f" % v
 
 
 static func _palavra_relacao(r: Dictionary) -> String:

@@ -25,7 +25,7 @@ const PADRAO := {
 }
 
 ## O que o autor define à mão e sobrevive à reconstrução do estado.
-const CHAVES_DO_AUTOR := ["tem_mente", "tracos_autor", "poder_base", "nascimento_autor"]
+const CHAVES_DO_AUTOR := ["tem_mente", "tracos_autor", "poder_base", "nascimento_autor", "favorito"]
 
 const RELACAO_PADRAO := {"afeto": 0.0, "confianca": 0.0, "respeito": 0.0, "medo": 0.0, "raiva": 0.0}
 
@@ -258,3 +258,66 @@ static func anotar(u: Universo, eid: String, texto: String, fato: Dictionary) ->
 
 static func objetivos_ativos(u: Universo, eid: String) -> Array:
 	return u.estado(eid)["objetivos"].filter(func(o): return o["estado"] == "ativo")
+
+
+## Força de uma emoção HOJE: emoções esfriam com o tempo, mais devagar em quem é rancoroso.
+## (Calculado na hora a partir da data em que surgiu: não precisa virar fato a cada dia.)
+static func forca_emocao(u: Universo, eid: String, e: Dictionary) -> float:
+	var dias := DataMundo.ordem(u.relogio) - DataMundo.ordem(e.get("desde", u.relogio))
+	if dias <= 0:
+		return float(e["forca"])
+	var rancor: float = float(Personalidade.tracos(u, eid).get("rancor", 0.5))
+	var meia_vida := 45.0 + rancor * 700.0
+	if e["emocao"] in ["luto"]:
+		meia_vida = 200.0
+	elif e["emocao"] in ["amor", "gratidao"]:
+		meia_vida = 900.0
+	return float(e["forca"]) * pow(0.5, float(dias) / meia_vida)
+
+
+## Emoções que ainda pesam (força atual >= 0.08), da mais forte para a mais fraca.
+static func emocoes_atuais(u: Universo, eid: String) -> Array:
+	var lista: Array = []
+	for e in u.estado(eid)["emocoes"]:
+		var f := forca_emocao(u, eid, e)
+		if f >= 0.08:
+			var c: Dictionary = e.duplicate()
+			c["forca_atual"] = f
+			lista.append(c)
+	lista.sort_custom(func(a, b): return a["forca_atual"] > b["forca_atual"])
+	return lista
+
+
+static func emocao_por(u: Universo, eid: String, alvo: String, emocoes: Array) -> float:
+	var maior := 0.0
+	for e in emocoes_atuais(u, eid):
+		if e["alvo"] == alvo and e["emocao"] in emocoes:
+			maior = maxf(maior, float(e["forca_atual"]))
+	return maior
+
+
+## Saúde hoje: ferimentos saram com o tempo (uns 100 dias para sarar do zero).
+static func saude_atual(u: Universo, eid: String) -> float:
+	var s := u.estado(eid)
+	if not s["vivo"]:
+		return 0.0
+	var saude: float = float(s["saude"])
+	if s["ferimentos"].is_empty():
+		return saude
+	var ultimo: Dictionary = s["ferimentos"].back()
+	var dias := DataMundo.ordem(u.relogio) - DataMundo.ordem(ultimo.get("data", u.relogio))
+	return clampf(saude + maxf(0, dias) * 0.01, 0.0, 1.0)
+
+
+## Idade em anos, se a data de nascimento for conhecida (-1 se não).
+static func idade(u: Universo, eid: String) -> int:
+	var n: Dictionary = u.estado(eid)["nascimento"]
+	if n.is_empty():
+		return -1
+	return int((DataMundo.ordem(u.relogio) - DataMundo.ordem(n)) / DataMundo.DIAS_POR_ANO)
+
+
+## Poder atual (escala livre do universo): base escrita na ficha + o que treinou.
+static func poder(u: Universo, eid: String) -> float:
+	var s := u.estado(eid)
+	return maxf(0.01, float(s.get("poder_base", Combate.poder_da_ficha(u, eid))) + float(s["poder"]))

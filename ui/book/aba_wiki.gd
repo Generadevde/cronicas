@@ -5,6 +5,7 @@ var _lista: ItemList
 var _filtro: LineEdit
 var _pagina: RichTextLabel
 var _atual := ""
+var _b_acompanhar: Button
 
 
 func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
@@ -27,7 +28,19 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	b_editar.pressed.connect(func():
 		if _atual != "":
 			livro.ir_para_aba("criadores", _atual))
-	dir.add_child(b_editar)
+	_b_acompanhar = Tema.botao("Acompanhar", "Avançar o tempo para quando algo acontecer com quem você acompanha")
+	_b_acompanhar.pressed.connect(func():
+		if _atual == "":
+			return
+		var st := u.estado(_atual)
+		st["favorito"] = not st.get("favorito", false)
+		u.marcar_mudanca()
+		_abrir(_atual))
+	var b_obs := Tema.botao("Observar", "Relatório do que aconteceu com esta entidade")
+	b_obs.pressed.connect(func():
+		if _atual != "":
+			livro.ir_para_aba("mundo", _atual))
+	dir.add_child(linha([b_editar, _b_acompanhar, b_obs]))
 
 	_atual = dado if u.entidades.has(dado) else ""
 	_preencher()
@@ -57,3 +70,5 @@ func _abrir(eid: String) -> void:
 		return
 	_pagina.text = Paginas.entidade(u, eid)
 	_pagina.scroll_to_line(0)
+	if _b_acompanhar != null:
+		_b_acompanhar.text = "Deixar de acompanhar" if u.estado(eid).get("favorito", false) else "Acompanhar"

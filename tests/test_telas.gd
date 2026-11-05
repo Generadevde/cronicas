@@ -100,6 +100,26 @@ func test_margem_mostra_e_aceita_propostas() -> void:
 	verdadeiro(aba._arvore != null, "estante montada")
 
 
+func test_avancar_o_tempo_pela_tela() -> void:
+	var c := _cronica()
+	var u := _universo_exemplo(c)
+	var livro := _abrir("res://ui/book/book.tscn")
+	await arvore.process_frame
+	livro.ir_para_aba("jornal")
+	var antes := DataMundo.ordem(u.relogio)
+	livro.avancar_tempo(360)
+	await arvore.process_frame
+	igual(DataMundo.ordem(u.relogio) - antes, 360, "um ano passou")
+	livro.ir_para_aba("mundo")
+	livro._aba_obj._modo = "observatorio"
+	livro._aba_obj._obs_ent = u.entidades_ativas()[0]["id"]
+	livro._aba_obj._montar_direita()
+	livro.definir_ritmo(7)
+	livro._passo_vivo()
+	livro.definir_ritmo(0)
+	verdadeiro(DataMundo.ordem(u.relogio) - antes == 367, "mundo vivo andou uma semana")
+
+
 func test_menu_posiciona_botoes_sobre_a_arte() -> void:
 	_cronica()
 	var menu := _abrir("res://ui/menu/menu.tscn")
