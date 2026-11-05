@@ -79,14 +79,17 @@ static func passo(u: Universo, dias: int, _rng: RandomNumberGenerator) -> Array:
 		rb["importado"] = float(rb.get("importado", 0.0)) + t
 		ra["exportado"] = float(ra.get("exportado", 0.0)) + t / peso
 		var al: Dictionary = rb["alertas"]
-		if t > 0.04 and al.get("fome", false) and not al.get("caravanas", false):
+		if t > 0.04 and (al.get("fome", false) or float(rb["comida"]) < 0.6) and not al.get("caravanas", false):
 			al["caravanas"] = true
+			var causa := str(al.get("fome_fato", ""))
+			if not u.fatos.existe(causa):
+				causa = Natureza._ultimo_fato_natural(u, b)
 			novos.append(_fato(u, b, "caravanas", "Caravanas de %s levaram comida a %s." % [u.entidade(melhor)["nome"], u.entidade(b)["nome"]],
-				0.4, [str(al.get("fome_fato", ""))], [melhor]))
+				0.4, [causa], [melhor]))
 	for p in povoados:
 		var reg2 := Natureza.de(u, p)
 		var al2: Dictionary = reg2["alertas"]
-		if not al2.get("fome", false):
+		if not al2.get("fome", false) and float(reg2["comida"]) >= 0.8:
 			al2.erase("caravanas")
 		var pr := preco(u, p)
 		if pr >= 2.5 and not al2.get("caro", false):

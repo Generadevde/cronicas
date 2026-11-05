@@ -126,7 +126,7 @@ func test_caravanas_levam_comida() -> void:
 	var u: Universo = m["u"]
 	Natureza.intervir(u, m["varn"], "uma seca terrível por um ano")
 	Natureza.intervir(u, m["kresk"], "fartura por um ano")
-	Simulador.avancar(u, 300)
+	Simulador.avancar(u, 360)
 	verdadeiro(u.fatos.todos().any(func(f): return f["tipo"] == "caravanas"), "caravanas de Kresk foram a Varn")
 	verdadeiro(Economia.riqueza(u, m["reino"]) > 0, "o reino juntou impostos")
 	verdadeiro(Economia.preco(u, m["varn"]) > Economia.preco(u, m["kresk"]), "o pão é mais caro onde falta")
