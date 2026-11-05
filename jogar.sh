@@ -25,5 +25,12 @@ if ! command -v "$GODOT_BIN" >/dev/null 2>&1 && [ ! -x "$GODOT_BIN" ]; then
   exit 1
 fi
 
+# Na primeira vez (ou depois de arquivos novos), o Godot precisa importar o projeto:
+# é isso que cria a lista de classes (Universo, Tema…) e converte as imagens.
+if [ ! -f .godot/global_script_class_cache.cfg ] || [ -n "$(find core ui assets -newer .godot/global_script_class_cache.cfg -print -quit 2>/dev/null)" ]; then
+  echo "Preparando o projeto (só demora na primeira vez)..."
+  "$GODOT_BIN" --headless --path . --import >/dev/null 2>&1 || true
+fi
+
 echo "Abrindo..."
 "$GODOT_BIN" --path . "$@"
