@@ -1,0 +1,10 @@
+# Godot
+.godot/
+/android/
+*.translation
+export_presets.cfg
+*.tmp
+
+# Sistema
+.DS_Store
+Thumbs.db
