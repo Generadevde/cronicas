@@ -11,7 +11,7 @@ const IMPORTANCIA := {
 	"morte_por": 1.0, "morte": 0.9, "vitoria": 0.6, "derrota": 0.6, "casamento": 0.7, "traicao": 0.75,
 	"ferimento": 0.45, "luta": 0.5, "nascimento": 0.5, "amor": 0.35, "odio": 0.35, "amizade": 0.3,
 	"ensino": 0.45, "aprendizado": 0.45, "chegada": 0.2, "filiacao": 0.3, "paternidade": 0.3,
-	"testemunho": 0.1, "medo": 0.3, "chegada_viagem": 0.25,
+	"testemunho": 0.1, "medo": 0.3, "chegada_viagem": 0.25, "usar_poder": 0.5, "regra": 0.5,
 }
 
 
@@ -70,7 +70,13 @@ static func _andar_relogio(u: Universo, dias: int) -> void:
 ## Antes de simular: desejos escritos na ficha viram objetivos (uma vez cada).
 static func preparar(u: Universo) -> Array:
 	var novos: Array = []
+	var preparo: Dictionary = u.extra("preparo", {})
 	for eid in _mentes(u):
+		# Só relê a ficha de quem mudou desde a última vez.
+		var assinatura := hash(u.entidade(eid).get("campos", []))
+		if int(preparo.get(eid, 0)) == assinatura:
+			continue
+		preparo[eid] = assinatura
 		var ja := {}
 		for f in u.fatos.sobre(eid):
 			if f["tipo"] == "desejo da ficha":
@@ -114,15 +120,17 @@ static func registrar(u: Universo, fato: Dictionary) -> String:
 		Mudancas.aplicar(u, dados["mudancas"], f)
 	elif Extrator.ACOES.has(dados.get("acao", "")):
 		AutoAtualizador.aplicar(u, fid, false)
+	if not dados.get("efeito_de_lei", false):
+		Regras.reagir(u, fid)
 	return fid
 
 
 ## O fato que explica por que alguém está onde está (chegou lá, nasceu lá ou foi criado).
 static func causa_de_presenca(u: Universo, eid: String) -> String:
 	var local: String = u.estado(eid)["local"]
-	var fatos := u.fatos.sobre(eid)
-	for i in range(fatos.size() - 1, -1, -1):
-		var f: Dictionary = fatos[i]
+	var ids := u.fatos.ids_sobre(eid)
+	for i in range(ids.size() - 1, -1, -1):
+		var f := u.fatos.obter(ids[i])
 		if f["canon"] and (local == "" or f["lugar"] == local):
 			return f["id"]
 	return u.entidade(eid).get("fato_criacao", u.fatos.todos()[0]["id"])

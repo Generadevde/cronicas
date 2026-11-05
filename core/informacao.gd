@@ -25,20 +25,49 @@ static func espalhar(u: Universo, rng: RandomNumberGenerator) -> Array:
 			por_lugar[l] = []
 		por_lugar[l].append(e["id"])
 
-	for f in u.fatos.todos():
+	# Só olha os fatos novos e os que ainda estão viajando (não a história inteira).
+	var ctrl: Dictionary = u.extra("noticias_ctrl", {"ate_seq": 0, "pendentes": []})
+	var candidatos: Array = []
+	var vistos := {}
+	for fid in ctrl["pendentes"]:
+		var fp := u.fatos.obter(fid)
+		if not fp.is_empty():
+			candidatos.append(fp)
+			vistos[fid] = true
+	var todos_f := u.fatos.todos()
+	for i in range(todos_f.size() - 1, -1, -1):
+		var fn: Dictionary = todos_f[i]
+		if int(fn["seq"]) <= int(ctrl["ate_seq"]):
+			break
+		if not vistos.has(fn["id"]):
+			candidatos.append(fn)
+	ctrl["ate_seq"] = todos_f.back()["seq"] if not todos_f.is_empty() else 0
+	var pendentes: Array = []
+	for f in candidatos:
 		if not f["canon"] or f["tipo"] in ["notícia", "rumor"]:
 			continue
 		var imp: float = float(f["dados"].get("importancia", Simulador.IMPORTANCIA.get(f["dados"].get("acao", ""), 0.0)))
 		if imp < IMPORTANCIA_MINIMA:
 			continue
+		if DataMundo.ordem(f["data"]) > hoje or hoje - DataMundo.ordem(f["data"]) <= JANELA_DIAS:
+			pendentes.append(f["id"])  # continua na fila até chegar a todo lugar
 		var idade := hoje - DataMundo.ordem(f["data"])
 		if idade < 0 or idade > JANELA_DIAS:
 			continue
-		var origem := _lugar_de_origem(u, f)
 		var reg: Dictionary = estado_noticias.get(f["id"], {})
+		if reg.get("completo", false):
+			continue  # já chegou a todo lugar onde há alguém
+		var origem := _lugar_de_origem(u, f)
 		if reg.is_empty():
 			reg = {"lugares": {}}
 			estado_noticias[f["id"]] = reg
+		var falta := false
+		for lugar in por_lugar:
+			if not reg["lugares"].has(lugar) and (lugar == origem or imp >= IMPORTANCIA_PARA_VIAJAR):
+				falta = true
+		if not falta:
+			reg["completo"] = true
+			continue
 		for lugar in por_lugar:
 			if reg["lugares"].has(lugar):
 				continue
@@ -76,6 +105,7 @@ static func espalhar(u: Universo, rng: RandomNumberGenerator) -> Array:
 				var r := Reacoes.ao_saber(u, p, f, nid)
 				if r != "":
 					novos.append(r)
+	ctrl["pendentes"] = pendentes.filter(func(fid): return not Dictionary(estado_noticias.get(fid, {})).get("completo", false) and u.fatos.obter(fid).get("canon", false))
 	return novos
 
 
@@ -109,3 +139,4 @@ static func reconstruir(u: Universo) -> void:
 				estado_noticias[de] = {"lugares": {}}
 			estado_noticias[de]["lugares"][f["lugar"]] = true
 	u.extras["noticias"] = estado_noticias
+	u.extras["noticias_ctrl"] = {"ate_seq": 0, "pendentes": []}

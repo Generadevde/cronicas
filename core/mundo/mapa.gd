@@ -161,7 +161,20 @@ static func especie(u: Universo, eid: String) -> String:
 	return especie_do_tipo(u.entidade(eid).get("tipo", ""))
 
 
+static var _cache_especie: Dictionary = {}
+
+
 static func especie_do_tipo(tipo: String) -> String:
+	if _cache_especie.has(tipo):
+		return _cache_especie[tipo]
+	var r := _especie_do_tipo(tipo)
+	if _cache_especie.size() > 2000:
+		_cache_especie.clear()
+	_cache_especie[tipo] = r
+	return r
+
+
+static func _especie_do_tipo(tipo: String) -> String:
 	var palavras := TextUtil.palavras(TextUtil.normalizar(tipo))
 	for par in ESPECIES_DE_LUGAR:
 		for p in palavras:
@@ -226,11 +239,32 @@ static func km_por_celula(u: Universo, eid: String) -> float:
 # ---------------------------------------------------------------- viagem
 
 ## Dias de viagem entre dois lugares do mapa (-1 = não dá para saber).
+static var _cache_viagem: Dictionary = {}
+
+
 static func dias_de_viagem(u: Universo, de: String, para: String) -> int:
 	if de == "" or para == "":
 		return -1
 	if de == para:
 		return 0
+	var chave := "%s|%s|%s|%d|%d|%d" % [u.id, de, para, hash(dados(u)["pos"]), hash(Cosmos.leis(u)), _hash_cadeia(u, de) + _hash_cadeia(u, para)]
+	if _cache_viagem.has(chave):
+		return _cache_viagem[chave]
+	if _cache_viagem.size() > 20000:
+		_cache_viagem.clear()
+	var d := _calcular_viagem(u, de, para)
+	_cache_viagem[chave] = d
+	return d
+
+
+static func _hash_cadeia(u: Universo, eid: String) -> int:
+	var h := hash(u.entidade(eid).get("campos", []))
+	for a in ancestrais(u, eid):
+		h = h * 31 + hash(u.entidade(a).get("campos", []))
+	return h
+
+
+static func _calcular_viagem(u: Universo, de: String, para: String) -> int:
 	if not no_mapa(u, de) or not no_mapa(u, para):
 		return -1
 	var cadeia_a: Array = [de] + ancestrais(u, de)
@@ -248,7 +282,8 @@ static func dias_de_viagem(u: Universo, de: String, para: String) -> int:
 	var pa := _ponto_em(u, cadeia_a, comum)
 	var pb := _ponto_em(u, cadeia_b, comum)
 	var km := pa.distance_to(pb) * escala
-	var vel := float(u.extra("leis", {}).get("velocidade_viagem", VELOCIDADE_KM_DIA))
+	# A tecnologia do universo encurta o caminho (carroças, estradas, navios, máquinas).
+	var vel := float(u.extra("leis", {}).get("velocidade_viagem", VELOCIDADE_KM_DIA * (0.75 + 0.9 * float(Cosmos.leis(u)["tecnologia"]))))
 	return maxi(1, ceili(km / maxf(vel, 0.1)))
 
 

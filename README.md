@@ -91,6 +91,19 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - **Gerar planeta** (clima, luas, regiões, terreno) e **Povoar** (povoados, famílias com mente própria, uma facção, figuras históricas que viram lenda), com **Desfazer povoamento**.
 - **Aba Universo**: leis (magia e tecnologia, o que é possível ou proibido), **eras**, acontecimentos antigos (lendas), **línguas** que aprendem com seus exemplos, povos e espécies, planetas.
 
+## Parte 5 — Sistemas por escrita e poder
+
+- **Leis do Universo** (aba Leis): escreva em português e o mundo passa a seguir. O programa separa **Quando** (vencer, perder, lutar, matar, morrer, casar, nascer, chegar, treinar, usar magia ou um poder; "a cada 100 anos"; ou um termo seu, como "beber da fonte de Varn"), **Quem** ("guerreiros de Kresk", "os elfos", alguém pelo nome), **O quê** e **Se** ("se estiver ferido", "30% das vezes").
+  - Exemplos que funcionam: "Neste mundo, quem usa magia envelhece um ano por feitiço."; "Guerreiros de Kresk ficam 10% mais fortes a cada vitória."; "Quem bebe da fonte de Varn esquece o último ano."; "A cada 100 anos, um eclipse desperta os mortos de Aldra."; "Os elfos vivem 700 anos."
+  - Efeitos: envelhecer/rejuvenescer, mais forte/mais fraco, esquecer, morrer, ferir, adoecer, curar, sentir algo, mudar o que sente por alguém, ir para um lugar, voltar à vida, seca/praga/peste…, espécies e lavouras ±%, mudar o jeito, ganhar uma **marca** ("amaldiçoado", "conhece o Autor").
+  - Cada efeito vira fato com a causa (o que disparou a lei). Dá para suspender, reescrever, apagar e desfazer.
+- **Nada sem efeito**: a lista "Ainda sem efeito" mostra campos de ficha que nenhum sistema lê, intervenções que o programa não entendeu, leis entendidas em parte, frases em dúvida e pedidos do mundo. Você **define o efeito escrevendo** (vira lei e vale daqui em diante) ou diz que é só descrição. Atalho: "chuva de sangue → todos em Varn sentem medo; lavouras caem 30%".
+- **Poderes**: qualquer entidade do tipo magia, dom, técnica… Quem a cita na ficha tem o poder e usa nas lutas. Na ficha do poder: "força", "custo" (ex.: envelhece um ano), "limite" (ex.: uma vez por mês) e "efeitos permitidos". Poderes **narrativos** (destino, realidade…) viram pedido para você decidir. Há um sistema de poder pronto, estilo shonen (aba Universo).
+- **Corpo e vida**: a idade conta o que as leis fazem envelhecer; a força cresce até a juventude e cai na velhice; morte natural pela expectativa de vida (da ficha, do povo ou de uma lei); cicatrizes de ferimentos graves.
+- Magia e tecnologia têm efeito: sem magia, poderes mágicos falham; mais tecnologia faz as lavouras renderem mais e as viagens ficarem mais rápidas.
+- **Fauna e flora** de cada terreno editáveis na aba Universo.
+- Simulação mais rápida (um planeta povoado com uns 150 personagens leva cerca de 30 segundos para avançar 10 anos).
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.

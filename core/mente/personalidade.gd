@@ -59,8 +59,17 @@ static func derivar(u: Universo, eid: String) -> Dictionary:
 
 
 ## Traços atuais (os da ficha mais o que a vida mudou).
+static var _cache_derivar: Dictionary = {}
+
+
 static func tracos(u: Universo, eid: String) -> Dictionary:
-	var base := derivar(u, eid)
+	var e := u.entidade(eid)
+	var chave := "%s|%s|%d|%d|%d" % [u.id, eid, hash(e.get("campos", [])), hash(e.get("tipo", "")), hash(u.estado(eid).get("tracos_autor", {}))]
+	if not _cache_derivar.has(chave):
+		if _cache_derivar.size() > 5000:
+			_cache_derivar.clear()
+		_cache_derivar[chave] = derivar(u, eid)
+	var base: Dictionary = _cache_derivar[chave].duplicate()
 	var vida: Dictionary = u.estado(eid)["tracos"]
 	for k in vida:
 		base[k] = clampf(float(base.get(k, 0.5)) + float(vida[k]) - 0.5, 0.0, 1.0)

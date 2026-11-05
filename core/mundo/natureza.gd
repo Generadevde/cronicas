@@ -38,7 +38,66 @@ const EVENTOS := {
 const FORCAS := {"leve": 0.5, "fraca": 0.5, "pequena": 0.6, "forte": 1.4, "terrivel": 1.7, "grande": 1.4,
 	"severa": 1.5, "intensa": 1.4, "devastadora": 1.9, "longa": 1.0, "rigoroso": 1.2}
 
+const PAPEIS := {"planta": "planta", "plantas": "planta", "presa": "presa", "presas": "presa", "caca": "presa",
+	"predador": "predador", "predadores": "predador", "cacador": "predador", "rara": "rara", "raro": "rara", "raras": "rara"}
+
 const OFICIOS_COMIDA := ["lavrador", "pastor", "pescador", "caçador"]
+
+
+# ---------------------------------------------------------------- espécies de cada terreno (editáveis)
+
+## Espécies de um terreno: as que você escreveu na aba Universo, ou as sugestões.
+static func especies_do_terreno(u: Universo, terreno: String) -> Array:
+	var meus: Dictionary = u.extra("biomas", {})
+	if meus.has(terreno):
+		return meus[terreno]
+	return BIOMAS.get(terreno, [])
+
+
+## Lê "cervos: presa" (uma por linha) e guarda como as espécies do terreno.
+## Vira fato; com 'aplicar', os lugares que já existem ganham as novas e perdem as tiradas.
+static func definir_terreno(u: Universo, terreno: String, texto: String, aplicar: bool = true) -> Array:
+	var lista: Array = []
+	for linha in texto.split("\n", false):
+		var partes := linha.split(":", true, 1)
+		var nome := partes[0].strip_edges().trim_prefix("•").trim_prefix("-").strip_edges()
+		if nome == "":
+			continue
+		var papel := "presa"
+		if partes.size() > 1:
+			papel = PAPEIS.get(TextUtil.normalizar(partes[1]).strip_edges(), "presa")
+		lista.append([nome, papel])
+	var antes := especies_do_terreno(u, terreno).map(func(p): return p[0])
+	u.extra("biomas", {})[terreno] = lista
+	u.fatos.registrar({
+		"tipo": "natureza", "descricao": "O autor definiu a vida de %s: %s." % [Mapa.TERRENOS.get(terreno, {}).get("nome", terreno), ", ".join(lista.map(func(p): return p[0]))],
+		"data": DataMundo.copiar(u.relogio), "origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": "biomas"},
+		"dados": {"importancia": 0.2, "terreno": terreno},
+	})
+	if aplicar:
+		var novos := lista.map(func(p): return p[0])
+		for lugar in dados(u):
+			var reg: Dictionary = dados(u)[lugar]
+			if not u.entidades.has(lugar):
+				continue
+			var comp := _composicao_do_lugar(u, lugar)
+			if float(comp.get(terreno, 0.0)) < 0.08:
+				continue
+			for nome in antes:
+				if not novos.has(nome) and reg["especies"].has(nome) and reg["especies"][nome].get("entidade", "") == "":
+					reg["especies"].erase(nome)
+			for p in lista:
+				if not reg["especies"].has(p[0]):
+					reg["especies"][p[0]] = {"n": 0.7, "papel": p[1], "peso": float(comp[terreno]), "entidade": ""}
+				else:
+					reg["especies"][p[0]]["papel"] = p[1]
+	u.marcar_mudanca()
+	return lista
+
+
+static func texto_do_terreno(u: Universo, terreno: String) -> String:
+	var nomes := {"planta": "planta", "presa": "presa", "predador": "predador", "rara": "rara"}
+	return "\n".join(especies_do_terreno(u, terreno).map(func(p): return "%s: %s" % [p[0], nomes.get(p[1], p[1])]))
 
 
 # ---------------------------------------------------------------- estado
@@ -86,9 +145,10 @@ static func _iniciar(u: Universo, lugar: String) -> Dictionary:
 	var comp := _composicao_do_lugar(u, lugar)
 	var esp := {}
 	for t in comp:
-		if float(comp[t]) < 0.08 or not BIOMAS.has(t):
+		var bioma := especies_do_terreno(u, t)
+		if float(comp[t]) < 0.08 or bioma.is_empty():
 			continue
-		for par in BIOMAS[t]:
+		for par in bioma:
 			var nome: String = par[0]
 			if not esp.has(nome):
 				esp[nome] = {"n": 0.75 + 0.2 * float(comp[t]), "papel": par[1], "peso": 0.0, "entidade": ""}
@@ -218,16 +278,24 @@ static func intervir(u: Universo, lugar: String, texto: String) -> Dictionary:
 	var nome_lugar: String = u.entidade(lugar)["nome"]
 	if not TextUtil.chave(desc).contains(TextUtil.chave(nome_lugar)):
 		desc = desc.trim_suffix(".") + " em " + nome_lugar + "."
+	var leis := Regras.termos_no_texto(u, texto)
 	var fid := Simulador.registrar(u, {
 		"tipo": "intervenção" if eventos.is_empty() else EVENTOS[eventos[0]["tipo"]]["nome"],
 		"descricao": desc,
 		"sujeitos": [lugar],
 		"lugar": lugar,
 		"origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": "intervir"},
-		"dados": {"importancia": 0.7 if not eventos.is_empty() else 0.5, "texto": texto, "mudancas": ops},
+		"dados": {"importancia": 0.7 if not eventos.is_empty() or not leis.is_empty() else 0.5, "texto": texto, "mudancas": ops,
+			"sem_efeito": eventos.is_empty() and leis.is_empty()},
 	})
+	# Termos que você definiu ("chuva de sangue → …") valem aqui também.
+	var por_lei: Array = []
+	for r in leis:
+		var fx := Regras.disparar(u, r, {"sujeito": "", "outro": "", "lugar": lugar}, fid)
+		if fx != "":
+			por_lei.append(r["texto"])
 	u.marcar_mudanca()
-	return {"fato": fid, "entendidos": eventos.map(func(e): return e["tipo"])}
+	return {"fato": fid, "entendidos": eventos.map(func(e): return e["tipo"]), "leis": por_lei}
 
 
 ## Acontecimentos naturais valendo agora num lugar (dele e dos lugares onde ele fica).
@@ -279,17 +347,27 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 	var novos: Array = []
 	var dt := dias / 7.0
 	var est := estacao(u.relogio)
+	var tecnica := 0.8 + 0.5 * float(Cosmos.leis(u)["tecnologia"])
+	_por_lugar = {"": []}
+	for e0 in u.entidades_ativas():
+		if Estado.tem_mente(u, e0["id"]) and Estado.vivo(u, e0["id"]):
+			var l0: String = u.estado(e0["id"])["local"]
+			if not _por_lugar.has(l0):
+				_por_lugar[l0] = []
+			_por_lugar[l0].append(e0["id"])
 	for e in u.entidades_ativas():
 		var lugar: String = e["id"]
 		if not tem_natureza(u, lugar):
 			continue
 		var reg := de(u, lugar)
+		reg["tecnica"] = tecnica
 		var evs := eventos_ativos(u, lugar)
 		novos.append_array(_fim_dos_eventos(u, lugar))
 		if _pode_ter_evento_espontaneo(u, lugar):
 			novos.append_array(_evento_espontaneo(u, lugar, reg, est, rng, dias))
 		_dinamica(reg, evs, est, dt, rng)
 		novos.append_array(_consequencias(u, lugar, reg, evs, rng, dias))
+	_por_lugar = {}
 	return novos
 
 
@@ -371,7 +449,7 @@ static func _dinamica(reg: Dictionary, evs: Array, est: String, dt: float, rng: 
 				n += dt * (0.1 * ef["plantas"] * n * (1.0 - n) + 0.01 * ef["plantas"] * (1.0 - n) - ef["decai_plantas"] * n - 0.02 * presas * n * (1.0 - ef["plantas"] * 0.5) + ruido)
 			"cultivo":
 				var cuidado := 1.0 if pop > 0 else 0.0
-				n += dt * (0.14 * ef["plantas"] * cuidado * (1.0 - n) - ef["decai_cultivo"] * n - (0.015 if est == "inverno" else 0.0) * n + ruido)
+				n += dt * (0.14 * ef["plantas"] * cuidado * float(reg.get("tecnica", 1.0)) * (1.0 - n) - ef["decai_cultivo"] * n - (0.015 if est == "inverno" else 0.0) * n + ruido)
 			"rebanho":
 				var pasto := plantas if plantas > 0 else 0.6
 				n += dt * (0.03 * n * (pasto - 0.4) - 0.04 * predadores * n * float(ef["predador"] > 0.0) - fome * 0.03 * n - ef["decai_presa"] * n + ruido)
@@ -423,7 +501,12 @@ static func _causa_principal(evs: Array, tipos: Array) -> String:
 	return evs[0]["fato"] if not evs.is_empty() else ""
 
 
+static var _por_lugar: Dictionary = {}  ## {lugar: [mentes]} durante um passo (rápido)
+
+
 static func _mentes_em(u: Universo, lugar: String) -> Array:
+	if not _por_lugar.is_empty():
+		return Array(_por_lugar.get(lugar, [])).filter(func(m): return Estado.vivo(u, m) and u.estado(m)["local"] == lugar)
 	var lista: Array = []
 	for e in u.entidades_ativas():
 		if Estado.tem_mente(u, e["id"]) and Estado.vivo(u, e["id"]) and u.estado(e["id"])["local"] == lugar:
@@ -558,9 +641,9 @@ static func _maior(reg: Dictionary, papel: String) -> String:
 
 ## O último fato natural do lugar (para encadear causas).
 static func _ultimo_fato_natural(u: Universo, lugar: String) -> String:
-	var fatos := u.fatos.sobre(lugar)
-	for i in range(fatos.size() - 1, -1, -1):
-		var f: Dictionary = fatos[i]
+	var ids := u.fatos.ids_sobre(lugar)
+	for i in range(ids.size() - 1, -1, -1):
+		var f := u.fatos.obter(ids[i])
 		if f["canon"] and (f["dados"].get("natureza", false) or f["origem"].get("ref", "") == "intervir"):
 			return f["id"]
 	return ""

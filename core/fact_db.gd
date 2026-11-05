@@ -15,6 +15,8 @@ var _fatos: Dictionary = {}            ## id -> fato
 var _consequencias: Dictionary = {}    ## id da causa -> Array de ids que ela causou
 var _por_entidade: Dictionary = {}     ## id da entidade -> Array de ids de fatos
 var _seq := 0
+var _todos_cache: Array = []
+var _todos_sujo := true
 
 
 ## Registra um fato e devolve o id dele.
@@ -44,6 +46,7 @@ func registrar(fato: Dictionary) -> String:
 		"dados": Dictionary(fato.get("dados", {})).duplicate(true),
 	}
 	_fatos[id] = novo
+	_todos_sujo = true
 	_indexar(novo)
 	return id
 
@@ -62,9 +65,11 @@ func quantidade() -> int:
 
 ## Todos os fatos em ordem de registro.
 func todos() -> Array:
-	var lista := _fatos.values()
-	lista.sort_custom(func(a, b): return a["seq"] < b["seq"])
-	return lista
+	if _todos_sujo:
+		_todos_cache = _fatos.values()
+		_todos_cache.sort_custom(func(a, b): return a["seq"] < b["seq"])
+		_todos_sujo = false
+	return _todos_cache.duplicate()
 
 
 ## Fatos que envolvem uma entidade (como sujeito ou como lugar), em ordem.
@@ -72,8 +77,12 @@ func sobre(entidade_id: String) -> Array:
 	var lista: Array = []
 	for id in _por_entidade.get(entidade_id, []):
 		lista.append(_fatos[id])
-	lista.sort_custom(func(a, b): return a["seq"] < b["seq"])
-	return lista
+	return lista  # o índice já está na ordem de registro
+
+
+## Ids dos fatos de uma entidade, na ordem de registro (sem copiar: só para ler).
+func ids_sobre(entidade_id: String) -> Array:
+	return _por_entidade.get(entidade_id, [])
 
 
 ## Fatos que este fato causou diretamente.
@@ -108,14 +117,17 @@ func _indexar(fato: Dictionary) -> void:
 		if not _consequencias.has(c):
 			_consequencias[c] = []
 		_consequencias[c].append(fato["id"])
-	var envolvidos: Array = fato["sujeitos"].duplicate()
+	var envolvidos := {}
+	for e in fato["sujeitos"]:
+		envolvidos[e] = true
 	if fato["lugar"] != "":
-		envolvidos.append(fato["lugar"])
+		envolvidos[fato["lugar"]] = true
 	for e in envolvidos:
 		if not _por_entidade.has(e):
 			_por_entidade[e] = []
-		if not _por_entidade[e].has(fato["id"]):
-			_por_entidade[e].append(fato["id"])
+		var lista: Array = _por_entidade[e]
+		if lista.is_empty() or lista.back() != fato["id"]:
+			lista.append(fato["id"])
 
 
 func para_dicionario() -> Dictionary:
@@ -132,6 +144,7 @@ func carregar_dicionario(d: Dictionary) -> void:
 		fato["seq"] = int(fato.get("seq", 0))
 		fato["data"] = DataMundo.copiar(fato.get("data", {}))
 		_fatos[fato["id"]] = fato
+	_todos_sujo = true
 	# Indexa depois de carregar tudo (causas podem vir antes ou depois na lista).
 	for fato in todos():
 		_indexar(fato)
@@ -142,4 +155,5 @@ func _inserir_cru(fato: Dictionary) -> void:
 	_seq += 1
 	fato["seq"] = _seq
 	_fatos[fato["id"]] = fato
+	_todos_sujo = true
 	_indexar(fato)

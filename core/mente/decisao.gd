@@ -107,10 +107,29 @@ static func _melhor_mestre(u: Universo, eid: String, ctx: Dictionary) -> String:
 
 # ---------------------------------------------------------------- relações
 
+## Numa semana, cada um convive de verdade com poucas pessoas: com quem tem laço
+## (família, amigos, inimigos) e alguns outros ao acaso — não com a cidade inteira.
+const CONTATOS_POR_SEMANA := 6
+
+
+static func _contatos(u: Universo, eid: String, perto: Array) -> Array:
+	if perto.size() <= CONTATOS_POR_SEMANA:
+		return perto
+	var rels: Dictionary = u.estado(eid)["relacoes"]
+	var proximos: Array = perto.filter(func(o): return rels.has(o))
+	var outros: Array = perto.filter(func(o): return not rels.has(o))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(eid + str(DataMundo.ordem(u.relogio)))
+	var escolhidos: Array = proximos.slice(0, CONTATOS_POR_SEMANA)
+	while escolhidos.size() < CONTATOS_POR_SEMANA and not outros.is_empty():
+		escolhidos.append(outros.pop_at(rng.randi() % outros.size()))
+	return escolhidos
+
+
 static func _opcoes_sociais(u: Universo, eid: String, ctx: Dictionary) -> Array:
 	var t: Dictionary = ctx["tracos"]
 	var lista: Array = []
-	for outro in ctx["perto"]:
+	for outro in _contatos(u, eid, ctx["perto"]):
 		var afeto := Estado.valor_relacao(u, eid, outro, "afeto")
 		var raiva := Estado.valor_relacao(u, eid, outro, "raiva")
 		var medo := Estado.valor_relacao(u, eid, outro, "medo")
@@ -133,7 +152,22 @@ static func _opcoes_sociais(u: Universo, eid: String, ctx: Dictionary) -> Array:
 
 
 ## Afinidade (0 a 1): gostos e valores parecidos aproximam; desgostos em comum também.
+static var _cache_afinidade: Dictionary = {}
+
+
 static func afinidade(u: Universo, a: String, b: String) -> float:
+	var chave := "%s|%s|%s|%d|%d|%d|%d" % [u.id, a, b, hash(u.entidade(a).get("campos", [])), hash(u.entidade(b).get("campos", [])),
+		hash(u.estado(a)["tracos"]), hash(u.estado(b)["tracos"])]
+	if _cache_afinidade.has(chave):
+		return _cache_afinidade[chave]
+	if _cache_afinidade.size() > 20000:
+		_cache_afinidade.clear()
+	var v := _afinidade(u, a, b)
+	_cache_afinidade[chave] = v
+	return v
+
+
+static func _afinidade(u: Universo, a: String, b: String) -> float:
 	var pa := _palavras_de(u, a, ["gost", "valor", "hobby", "paix"])
 	var pb := _palavras_de(u, b, ["gost", "valor", "hobby", "paix"])
 	var da := _palavras_de(u, a, ["desgost", "odeia", "detesta"])
@@ -198,7 +232,8 @@ static func _opcoes_de_emocao(u: Universo, eid: String, ctx: Dictionary) -> Arra
 
 
 static func _ja_anotou(u: Universo, eid: String, tipo: String, alvo: String) -> bool:
-	for f in u.fatos.sobre(eid):
+	for fid in u.fatos.ids_sobre(eid):
+		var f := u.fatos.obter(fid)
 		if f["dados"].get("rotina", "") == tipo and f["sujeitos"].has(alvo):
 			return true
 	return false
@@ -323,7 +358,9 @@ static func _dedicar(u: Universo, eid: String, op: Dictionary, causas: Array, rn
 
 ## Luta entre duas mentes. Resultado vira fato de vitória (ou morte) com as consequências.
 static func _confronto(u: Universo, eid: String, alvo: String, causas: Array, o: Dictionary, rng: RandomNumberGenerator, ate_a_morte: bool) -> Array:
-	var r := Combate.resolver(u, eid, alvo, rng, ate_a_morte)
+	# Antes do golpe decisivo, cada um pode usar um poder (magia, dom, técnica…).
+	var poderes := Poderes.na_luta(u, eid, alvo, rng, causas)
+	var r := Combate.resolver(u, eid, alvo, rng, ate_a_morte, poderes["bonus"])
 	var venc: String = r["vencedor"]
 	var perd: String = r["perdedor"]
 	var lugar: String = u.estado(eid)["local"]
@@ -334,9 +371,10 @@ static func _confronto(u: Universo, eid: String, alvo: String, causas: Array, o:
 		desc = "%s enfrentou %s, e %s matou %s." % [_n(u, eid), _n(u, alvo), _n(u, venc), _n(u, perd)]
 		acao = "morte_por"
 	var fid := Simulador.registrar(u, {"tipo": "luta", "descricao": desc, "sujeitos": [venc, perd], "lugar": lugar,
-		"causas": causas, "dados": {"acao": acao, "importancia": 1.0 if r["morte"] else 0.8, "chance": r["chance"]}})
+		"causas": causas + poderes["fatos"].slice(0, 1), "dados": {"acao": acao, "importancia": 1.0 if r["morte"] else 0.8, "chance": r["chance"]}})
 	if fid == "":
 		return []
+	ids.append_array(poderes["fatos"])
 	ids.append(fid)
 	if not o.is_empty() and o["tipo"] == "vingança":
 		if venc == eid:

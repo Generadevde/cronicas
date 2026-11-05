@@ -312,13 +312,32 @@ static func saude_atual(u: Universo, eid: String) -> float:
 
 ## Idade em anos, se a data de nascimento for conhecida (-1 se não).
 static func idade(u: Universo, eid: String) -> int:
-	var n: Dictionary = u.estado(eid)["nascimento"]
-	if n.is_empty():
-		return -1
-	return int((DataMundo.ordem(u.relogio) - DataMundo.ordem(n)) / DataMundo.DIAS_POR_ANO)
+	var d := idade_em_dias(u, eid)
+	return -1 if d < 0 else int(d / DataMundo.DIAS_POR_ANO)
+
+
+## Idade em dias: pelo nascimento, ou pela idade escrita na ficha (valendo na data em
+## que a entidade foi criada), mais o que regras e magias fizeram envelhecer.
+static func idade_em_dias(u: Universo, eid: String) -> int:
+	var s := u.estado(eid)
+	var n: Dictionary = s["nascimento"]
+	var agora := DataMundo.ordem(u.relogio)
+	if not s["vivo"] and s["morte"].has("data"):
+		agora = DataMundo.ordem(s["morte"]["data"])
+	var dias := 0
+	if not n.is_empty():
+		dias = agora - DataMundo.ordem(n)
+	else:
+		var v := u.valor_campo(eid, "idade")
+		var anos := Combate.ler_numero(v) if v != "" else -1.0
+		if anos < 0:
+			return -1 if int(s.get("envelhecido", 0)) == 0 else int(s.get("envelhecido", 0))
+		var f := u.fatos.obter(str(u.entidade(eid).get("fato_criacao", "")))
+		dias = int(anos * DataMundo.DIAS_POR_ANO) + agora - DataMundo.ordem(f.get("data", u.relogio))
+	return dias + int(s.get("envelhecido", 0))
 
 
 ## Poder atual (escala livre do universo): base escrita na ficha + o que treinou.
 static func poder(u: Universo, eid: String) -> float:
 	var s := u.estado(eid)
-	return maxf(0.01, float(s.get("poder_base", Combate.poder_da_ficha(u, eid))) + float(s["poder"]))
+	return maxf(0.01, (float(s.get("poder_base", Combate.poder_da_ficha(u, eid))) + float(s["poder"])) * Corpo.fator_idade(u, eid))

@@ -492,12 +492,22 @@ func _cartao_duvida(p: Dictionary) -> Control:
 	ensinar.pressed.connect(func():
 		u.ensinar(palavra.text, ids[opcoes.selected], p["id"])
 		_trocar_modo("margem"))
-	var ignorar := Tema.botao("Ignorar")
+	var ignorar := Tema.botao("Só descrição", "Esta frase não muda nada no mundo")
 	ignorar.pressed.connect(func():
 		u.riscar_proposta(p["id"])
 		_trocar_modo("margem"))
+	# Nenhuma ação da lista serve? Escreva o efeito: vira lei e vale sempre que a palavra aparecer.
+	var definir := Tema.botao("Definir efeito", "Escreva o que essa ação faz (vira lei do universo)")
+	definir.pressed.connect(func():
+		livro.pedir_texto("O que \"%s\" faz?" % palavra.text, "ex.: o outro fica ferido; o outro sente raiva", "", func(efeito: String):
+			if efeito.strip_edges() == "":
+				return
+			var item := {"tipo": "duvida", "proposta": p["id"], "palavra": palavra.text.strip_edges()}
+			Pendencias.definir(u, item, efeito)
+			livro.atualizar_cabecalho()
+			_trocar_modo("margem")))
 	v.add_child(linha([palavra, Tema.rotulo("=", 18), opcoes]))
-	v.add_child(linha([ensinar, ignorar]))
+	v.add_child(linha([ensinar, definir, ignorar]))
 	return v
 
 

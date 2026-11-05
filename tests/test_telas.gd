@@ -244,3 +244,22 @@ func test_mapa_pela_tela() -> void:
 	livro.ir_para_aba("universo")
 	await arvore.process_frame
 	verdadeiro(livro._esq.get_child_count() > 0, "aba Universo montou")
+
+
+func test_aba_leis_mostra_o_que_falta() -> void:
+	var c := _cronica()
+	var u := _universo_exemplo(c)
+	var kai := u.criar_entidade("Kai", "pessoa", [], [{"chave": "segredos", "valor": "matou o irmão"}])
+	Regras.criar(u, "Quem usa magia envelhece um ano por feitiço.")
+	var livro := _abrir("res://ui/book/book.tscn")
+	await arvore.process_frame
+	livro.ir_para_aba("leis")
+	await arvore.process_frame
+	verdadeiro(livro._fitas["leis"]["botao"].text.begins_with("Leis ("), "a fita mostra quantas coisas estão sem efeito")
+	var item: Dictionary = Pendencias.listar(u).filter(func(i): return i["tipo"] == "campo" and i["chave"] == "segredos")[0]
+	Pendencias.definir(u, item, "fica desconfiado")
+	livro.atualizar_cabecalho()
+	livro.ir_para_aba("leis")
+	await arvore.process_frame
+	verdadeiro(Regras.todas(u).size() == 2, "a definição virou lei")
+	verdadeiro(u.fatos.sobre(kai).any(func(f): return f["tipo"] == "efeito de lei"), "e já valeu para Kai")

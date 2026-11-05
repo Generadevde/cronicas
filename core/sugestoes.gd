@@ -55,7 +55,20 @@ const _NOMES := ["pessoa", "lugar", "poder", "objeto", "faccao", "criatura", "en
 ## Categoria aproximada de um tipo livre, só para as heurísticas internas
 ## (ex.: saber que "cidade flutuante" é um lugar). Nunca é mostrada como campo fixo.
 ## Devolve "" quando não reconhece.
+static var _cache_categoria: Dictionary = {}
+
+
 static func categoria(tipo: String) -> String:
+	if _cache_categoria.has(tipo):
+		return _cache_categoria[tipo]
+	var c := _categoria(tipo)
+	if _cache_categoria.size() > 2000:
+		_cache_categoria.clear()
+	_cache_categoria[tipo] = c
+	return c
+
+
+static func _categoria(tipo: String) -> String:
 	var palavras := TextUtil.palavras(TextUtil.normalizar(tipo))
 	# Primeiro, casamento exato; depois, aproximado.
 	for exato in [true, false]:

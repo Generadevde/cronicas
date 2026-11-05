@@ -290,3 +290,22 @@ func test_escrever_nome_da_natureza_no_mapa() -> void:
 	verdadeiro(u.entidades.has(rio["eid"]), "rio com página")
 	Mapa.nomear_acidente(u, m["vale"], achado, "Rio Azul")
 	verdadeiro(u.fatos.todos().any(func(f): return f["descricao"] == "Rio da Pedra Azul passou a se chamar Rio Azul."), "renomear vira fato")
+
+
+func test_autor_define_a_vida_de_cada_terreno() -> void:
+	var m := _mundo()
+	var u: Universo = m["u"]
+	var reg := Natureza.de(u, m["varn"])
+	var t: String = ""
+	for k in Natureza._composicao_do_lugar(u, m["varn"]):
+		if Natureza.BIOMAS.has(k) and float(Natureza._composicao_do_lugar(u, m["varn"])[k]) >= 0.08:
+			t = k
+			break
+	verdadeiro(t != "", "Varn tem um terreno com vida")
+	var velhos: Array = Natureza.BIOMAS[t].map(func(p): return p[0])
+	Natureza.definir_terreno(u, t, "unicórnios: presa\nmandrágoras: rara\ngrifos: predador")
+	igual(Natureza.especies_do_terreno(u, t).size(), 3, "três espécies")
+	verdadeiro(reg["especies"].has("unicórnios") and reg["especies"]["grifos"]["papel"] == "predador", "o lugar ganhou as novas")
+	falso(velhos.any(func(n): return reg["especies"].has(n) and not n in ["lavouras", "rebanhos", "peixes"] and Natureza.BIOMAS.values().filter(func(b): return b.any(func(p): return p[0] == n)).size() == 1), "as tiradas saíram")
+	Simulador.avancar(u, 90)
+	verdadeiro(float(reg["especies"]["unicórnios"]["n"]) > 0, "e são simuladas")

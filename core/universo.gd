@@ -24,6 +24,9 @@ var dicionario: Dictionary = {}  ## palavra ensinada pelo autor -> ação ("esmu
 var extras: Dictionary = {}      ## dados dos sistemas das próximas partes (mapa, regras, guerras...)
 
 var _indice_cache: Dictionary = {}
+var _ativas_cache: Array = []
+var _ativas_tam := -1
+var _ativas_sujo := true
 var _indice_sujo := true
 
 
@@ -46,12 +49,15 @@ static func novo(p_nome: String, p_descricao: String = "") -> Universo:
 func _avisar() -> void:
 	atualizado_em = Time.get_datetime_string_from_system()
 	_indice_sujo = true
+	_ativas_sujo = true
 	mudou.emit()
 
 
-## Para os sistemas avisarem que mudaram algo (salvar e refazer o índice).
+## Para os sistemas avisarem que mudaram algo (para salvar). O índice de nomes só
+## é refeito quando entidades ou capítulos mudam (ver _avisar).
 func marcar_mudanca() -> void:
-	_avisar()
+	atualizado_em = Time.get_datetime_string_from_system()
+	mudou.emit()
 
 
 ## Estado de simulação de uma entidade (cria os valores padrão se faltarem).
@@ -93,6 +99,15 @@ func aceitar_proposta(pid: String, ajustes: Dictionary = {}) -> String:
 	var eco: bool = p["status"] == "eco"
 	var cap := capitulo(p["capitulo"])
 	var dados := {"acao": p["acao"], "frase": p.get("frase", "")}
+	if p.has("regra"):
+		dados["regra"] = p["regra"]
+	if p["acao"] == "usar_poder":
+		for m in Ligador.new(self).encontrar(p.get("frase", "")):
+			if Poderes.eh_poder(self, m["entidade"]):
+				dados["poder"] = m["entidade"]
+				break
+		if p["sujeitos"].size() > 1:
+			dados["alvo"] = p["sujeitos"][1]
 	if eco:
 		dados["efeito"] = p.get("efeito", {})
 	var causa_eco: String = p.get("causa", "")
@@ -115,6 +130,9 @@ func aceitar_proposta(pid: String, ajustes: Dictionary = {}) -> String:
 	p["status"] = "aceita"
 	p["fato"] = fid
 	AutoAtualizador.aplicar(self, fid)
+	if dados.has("poder"):
+		Poderes.consequencias_do_uso(self, fid)
+	Regras.reagir(self, fid)
 	_avisar()
 	return fid
 
@@ -176,13 +194,13 @@ func definir_relogio(data: Dictionary) -> void:
 
 ## Sistemas das próximas partes que sabem aplicar operações próprias.
 func sistemas_de_mudanca() -> Array:
-	return [Viagens, Natureza]
+	return [Viagens, Natureza, Pecas]
 
 
 ## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).
 ## Cada um tem: static func passo(u, dias, rng) -> Array de ids de fatos.
 func sistemas_de_simulacao() -> Array:
-	return [Viagens, Natureza]
+	return [Viagens, Natureza, Regras, Corpo]
 
 
 ## Dias de viagem entre dois lugares, pelo mapa (-1 = não dá para saber).
@@ -357,12 +375,17 @@ func entidade(eid: String) -> Dictionary:
 
 ## Entidades ativas (não removidas), ordenadas por nome.
 func entidades_ativas() -> Array:
-	var lista: Array = []
-	for e in entidades.values():
-		if not e["removida"]:
-			lista.append(e)
-	lista.sort_custom(func(a, b): return TextUtil.chave(a["nome"]) < TextUtil.chave(b["nome"]))
-	return lista
+	var assinatura := entidades.size()
+	if _ativas_sujo or assinatura != _ativas_tam:
+		var lista: Array = []
+		for e in entidades.values():
+			if not e["removida"]:
+				lista.append(e)
+		lista.sort_custom(func(a, b): return TextUtil.chave(a["nome"]) < TextUtil.chave(b["nome"]))
+		_ativas_cache = lista
+		_ativas_tam = assinatura
+		_ativas_sujo = false
+	return _ativas_cache.duplicate()
 
 
 func valor_campo(eid: String, chave: String) -> String:

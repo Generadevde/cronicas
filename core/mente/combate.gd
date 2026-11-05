@@ -54,9 +54,9 @@ static func ler_numero(texto: String) -> float:
 
 
 ## Chance de A vencer B (0 a 1).
-static func chance(u: Universo, a: String, b: String) -> float:
-	var pa := _forca_efetiva(u, a, b)
-	var pb := _forca_efetiva(u, b, a)
+static func chance(u: Universo, a: String, b: String, bonus: Dictionary = {}) -> float:
+	var pa := _forca_efetiva(u, a, b) * float(bonus.get(a, 1.0))
+	var pb := _forca_efetiva(u, b, a) * float(bonus.get(b, 1.0))
 	var ka := pow(pa, 1.6)
 	var kb := pow(pb, 1.6)
 	return ka / (ka + kb)
@@ -75,8 +75,8 @@ static func _forca_efetiva(u: Universo, eid: String, contra: String) -> float:
 
 ## Resolve uma luta. Devolve {vencedor, perdedor, morte: bool, chance, gravidade}.
 ## 'ate_a_morte' aumenta muito a chance de alguém morrer.
-static func resolver(u: Universo, a: String, b: String, rng: RandomNumberGenerator, ate_a_morte: bool = false) -> Dictionary:
-	var ca := chance(u, a, b)
+static func resolver(u: Universo, a: String, b: String, rng: RandomNumberGenerator, ate_a_morte: bool = false, bonus: Dictionary = {}) -> Dictionary:
+	var ca := chance(u, a, b, bonus)
 	var a_vence := rng.randf() < ca
 	var venc := a if a_vence else b
 	var perd := b if a_vence else a

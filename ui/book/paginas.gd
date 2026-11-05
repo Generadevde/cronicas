@@ -123,6 +123,17 @@ static func estado(u: Universo, eid: String) -> String:
 		var p := Estado.poder(u, eid)
 		if p != 1.0:
 			linhas.append("[b]Força:[/b] %s" % _numero(p))
+		var pods := Poderes.de(u, eid)
+		if not pods.is_empty():
+			linhas.append("[b]Poderes:[/b] %s" % ", ".join(pods.map(func(x): return link("ent:" + x, u.entidade(x)["nome"]))))
+		var marcas := Pecas.marcas(u, eid)
+		if not marcas.is_empty():
+			linhas.append("[b]Marcas:[/b] %s" % ", ".join(marcas.map(func(x): return _e(x))))
+		var cic := Corpo.cicatrizes(u, eid)
+		if not cic.is_empty():
+			linhas.append("[b]Cicatrizes:[/b] %s" % ", ".join(cic.map(func(x): return _e(x))))
+		if idade >= 0 and st["vivo"]:
+			linhas.append("[color=#5A3A1A]Costuma-se viver uns %d anos[/color]" % int(Corpo.expectativa(u, eid)))
 		var emocoes: Array = Estado.emocoes_atuais(u, eid)
 		var txt: Array = []
 		for e in emocoes.slice(0, 5):

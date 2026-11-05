@@ -11,8 +11,8 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, _dado: String) -> void:
 	esq.add_child(rolagem(e))
 	var d := VBoxContainer.new()
 	dir.add_child(rolagem(d))
-	_leis(e)
 	_eras(e)
+	_poderes(e)
 	_linguas(d)
 	_povos_e_planetas(d)
 
@@ -32,47 +32,9 @@ func _texto(dica: String, valor: String, altura: int = 70) -> TextEdit:
 	return t
 
 
-# ---------------------------------------------------------------- leis
-
-func _leis(pai: VBoxContainer) -> void:
-	pai.add_child(Tema.titulo("Leis do Universo", 30))
-	var l := Cosmos.leis(u)
-	var sliders := {}
-	for k in [["magia", "Magia"], ["tecnologia", "Tecnologia"]]:
-		var rot := Tema.rotulo("%s: %s" % [k[1], Cosmos.palavra_nivel(float(l[k[0]]))], 17, Tema.F_FELL)
-		rot.custom_minimum_size = Vector2(200, 0)
-		var s := HSlider.new()
-		s.min_value = 0.0
-		s.max_value = 1.0
-		s.step = 0.05
-		s.value = float(l[k[0]])
-		s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		s.custom_minimum_size = Vector2(0, 26)
-		s.value_changed.connect(func(v: float): rot.text = "%s: %s" % [k[1], Cosmos.palavra_nivel(v)])
-		sliders[k[0]] = s
-		pai.add_child(linha([rot, s]))
-	pai.add_child(Tema.secao("Como o universo funciona"))
-	var texto := _texto("Ex.: A magia vem das estrelas e cobra memórias de quem a usa. Máquinas a vapor existem só no Império.", str(l["texto"]))
-	pai.add_child(texto)
-	pai.add_child(Tema.secao("O que é possível"))
-	var possivel := _texto("Ex.: telepatia, alquimia, viagem entre mundos pelos portais antigos", str(l["possivel"]), 50)
-	pai.add_child(possivel)
-	pai.add_child(Tema.secao("O que é impossível ou proibido"))
-	var impossivel := _texto("Ex.: ressuscitar os mortos; viajar no tempo", str(l["impossivel"]), 50)
-	pai.add_child(impossivel)
-	var salvar := Tema.botao_principal("Guardar as leis")
-	salvar.pressed.connect(func():
-		Cosmos.definir_leis(u, {"magia": sliders["magia"].value, "tecnologia": sliders["tecnologia"].value,
-			"texto": texto.text, "possivel": possivel.text, "impossivel": impossivel.text})
-		livro.avisar("Leis guardadas."))
-	pai.add_child(salvar)
-	pai.add_child(_dica("Por enquanto as leis são o texto de referência do universo. Na Parte 5 você poderá escrever regras em frases (\"quando…, então…\") que o mundo segue sozinho."))
-
-
 # ---------------------------------------------------------------- eras e lendas
 
 func _eras(pai: VBoxContainer) -> void:
-	pai.add_child(Tema.ornamento())
 	pai.add_child(Tema.titulo("Eras", 30))
 	var eras := Cosmos.eras(u)
 	if eras.is_empty():
@@ -126,6 +88,75 @@ func _eras(pai: VBoxContainer) -> void:
 			oque.text = "")
 	pai.add_child(linha([ano, oque]))
 	pai.add_child(registrar)
+
+
+# ---------------------------------------------------------------- poderes
+
+func _poderes(pai: VBoxContainer) -> void:
+	pai.add_child(Tema.ornamento())
+	pai.add_child(Tema.titulo("Poderes", 30))
+	pai.add_child(_dica("Um poder é qualquer entidade do tipo magia, dom, técnica, feitiço… Quem tem o poder é quem o cita na ficha (\"poderes: Chama Antiga\"). Na ficha do poder: \"força\" (quanto ajuda na luta), \"custo\" (ex.: envelhece um ano), \"limite\" (ex.: uma vez por mês) e \"efeitos permitidos\" (ex.: o outro fica ferido). Poderes que mexem com a realidade ou o destino viram pedido para você decidir."))
+	var lista := u.entidades_ativas().filter(func(e): return Poderes.eh_poder(u, e["id"]))
+	var s := ""
+	for p in lista:
+		var donos: Array = []
+		for e in u.entidades_ativas():
+			if Poderes.de(u, e["id"]).has(p["id"]):
+				donos.append(Paginas.link("ent:" + e["id"], e["nome"]))
+		s += "• %s · %s%s%s\n" % [Paginas.link("ent:" + p["id"], p["nome"]), Paginas._e(p["tipo"]),
+			" · [i]narrativo[/i]" if Poderes.narrativo(u, p["id"]) else "",
+			(" · de " + ", ".join(donos)) if not donos.is_empty() else " · [i]ninguém tem ainda[/i]"]
+	var txt := Tema.texto_rico()
+	txt.fit_content = true
+	txt.scroll_active = false
+	txt.meta_clicked.connect(livro.navegar)
+	txt.text = s if s != "" else "[i]Nenhum poder ainda.[/i]"
+	pai.add_child(txt)
+	var novo := Tema.botao("+ Novo poder")
+	novo.pressed.connect(func(): livro.ir_para_aba("criadores", "nova"))
+	var shonen := Tema.botao("Sistema estilo shonen", "Cria um sistema de poder pronto: cresce treinando e lutando, e quem perde volta mais forte")
+	shonen.pressed.connect(func():
+		var sid := u.criar_entidade("Poder de Luta", "sistema de poder", [], [
+			{"chave": "medida", "valor": "poder de luta (um número que pode chegar a milhares)"},
+			{"chave": "como cresce", "valor": "treino, lutas e momentos de fúria"},
+			{"chave": "transformações", "valor": "despertar: força dobrada por um tempo, com cansaço depois"}])
+		Regras.criar(u, "Quem perde uma luta fica 5% mais forte.")
+		Regras.criar(u, "Quem vence uma luta fica 3% mais forte.")
+		Regras.criar(u, "Quem treina fica 1% mais forte.")
+		livro.avisar("Sistema de poder criado, com três leis (veja a aba Leis).")
+		livro.ir_para_aba("wiki", sid))
+	pai.add_child(linha([novo, shonen]))
+
+
+# ---------------------------------------------------------------- fauna e flora
+
+var _terreno := "floresta"
+
+
+func _fauna_e_flora(pai: VBoxContainer) -> void:
+	pai.add_child(Tema.ornamento())
+	pai.add_child(Tema.titulo("Fauna e flora", 28))
+	pai.add_child(_dica("O que vive em cada terreno. Uma por linha, com o papel: planta, presa, predador ou rara (planta rara, que pode ser descoberta). Os números de cada uma são simulados em cada lugar."))
+	var ids: Array = Mapa.TERRENOS.keys().filter(func(k): return k != "vazio")
+	var op := OptionButton.new()
+	for i in ids.size():
+		op.add_item(Mapa.TERRENOS[ids[i]]["nome"])
+		if ids[i] == _terreno:
+			op.select(i)
+	op.item_selected.connect(func(i: int):
+		_terreno = ids[i]
+		livro.ir_para_aba("universo"))
+	pai.add_child(op)
+	var caixa := _texto("ex.: cervos: presa", Natureza.texto_do_terreno(u, _terreno), 110)
+	pai.add_child(caixa)
+	var aplicar := CheckBox.new()
+	aplicar.text = "Valer também para os lugares que já existem"
+	aplicar.button_pressed = true
+	var guardar := Tema.botao("Guardar")
+	guardar.pressed.connect(func():
+		Natureza.definir_terreno(u, _terreno, caixa.text, aplicar.button_pressed)
+		livro.avisar("A vida de %s foi definida." % Mapa.TERRENOS[_terreno]["nome"]))
+	pai.add_child(linha([guardar, aplicar]))
 
 
 # ---------------------------------------------------------------- línguas
@@ -204,6 +235,7 @@ func _povos_e_planetas(pai: VBoxContainer) -> void:
 	novo.pressed.connect(func(): livro.ir_para_aba("criadores", "nova"))
 	pai.add_child(novo)
 
+	_fauna_e_flora(pai)
 	pai.add_child(Tema.titulo("Planetas e mundos", 28))
 	var mundos := u.entidades_ativas().filter(func(e): return Mapa.especie(u, e["id"]) in ["planeta", "cosmico"])
 	var txt := Tema.texto_rico()

@@ -54,6 +54,10 @@ const ACOES := {
 			"partiu para", "voltou para", "voltou a", "entrou em", "fugiu para", "esta em", "estava em", "mora em", "morava em", "vive em"]},
 	"nascimento": {"nome": "nascimento", "papeis": "um",
 		"formas": ["nasceu"]},
+	"usar_poder": {"nome": "uso de poder", "papeis": "um",
+		"formas": ["usou magia", "usou a magia", "usou sua magia", "usou o poder", "usou seu poder", "usou o dom", "usou seu dom",
+			"lancou um feitico", "lancou feitico", "lancou uma magia", "lancou magia", "conjurou", "invocou", "fez um feitico",
+			"fez magia", "usou"]},
 }
 
 const NEGACOES := ["nao", "nunca", "jamais"]
@@ -95,7 +99,9 @@ static func analisar(u: Universo, cid: String) -> Array:
 			if ACOES[acao["acao"]]["papeis"] != "um":
 				posicoes_par[acao["pos"]] = true
 			da_frase.append(prop)
+		da_frase = da_frase.filter(func(p): return p["acao"] != "usar_poder" or _fala_de_poder(u, norm, mencoes))
 		da_frase = _juntar_luta_e_resultado(u, cid, frase, da_frase)
+		da_frase.append_array(Regras.propostas_da_frase(u, cid, frase, mencoes))
 		for prop in da_frase:
 			candidatas.append({"prop": prop, "idx": idx})
 		if da_frase.is_empty() and _pessoas_distintas(mencoes) >= 2:
@@ -116,6 +122,14 @@ static func analisar(u: Universo, cid: String) -> Array:
 	if not novas.is_empty():
 		u.marcar_mudanca()
 	return novas
+
+
+## "usou" só é uso de poder se a frase falar de magia ou citar um poder.
+static func _fala_de_poder(u: Universo, norm: String, mencoes: Array) -> bool:
+	for p in ["magia", "feitic", "encant", "poder", "dom "]:
+		if norm.contains(p):
+			return true
+	return mencoes.any(func(m): return Poderes.eh_poder(u, m["entidade"]))
 
 
 ## Divide um texto em frases (pontos finais, exclamações, interrogações e quebras de linha).
@@ -248,6 +262,7 @@ static func descrever(u: Universo, acao: String, sujeitos: Array, lugar: String)
 		"aprendizado": return "%s passou a aprender com %s." % [n.call(0), n.call(1)]
 		"chegada": return "%s foi para %s." % [n.call(0), u.entidade(lugar).get("nome", "?")]
 		"nascimento": return "%s nasceu%s." % [n.call(0), onde]
+		"usar_poder": return "%s usou um poder%s." % [n.call(0), onde]
 	return "Acontecimento envolvendo %s." % ", ".join(sujeitos.map(func(s): return u.entidade(s).get("nome", "?")))
 
 
