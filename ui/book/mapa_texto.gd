@@ -41,6 +41,8 @@ var _arrastando := false
 var _rotulos: Array = []  ## retângulos já ocupados por letras
 var _guerra: Dictionary = {}  ## lugar → guerra (frentes e lugares ocupados)
 var _pactos: Dictionary = {}  ## lugares com pactos ainda não cobrados
+var nevoa: Dictionary = {}    ## Modo Viver: células que o personagem enxerga (vazio = tudo)
+var voce := Vector2i(-1, -1)  ## Modo Viver: onde o personagem está
 
 
 func _init() -> void:
@@ -153,6 +155,8 @@ func _draw() -> void:
 		_estrelas(c)
 	else:
 		_terreno(c)
+	if not nevoa.is_empty():
+		_nevoa(c)
 	# Moldura dupla, como nos mapas impressos.
 	var tinta := Color(Tema.TINTA_SUAVE, 0.8) if not cosmos else Color(Tema.OURO, 0.5)
 	draw_rect(Rect2(Vector2(2, 2), size - Vector2(4, 4)), tinta, false, 1.6)
@@ -165,7 +169,11 @@ func _draw() -> void:
 	_rotulos.append(Rect2(centro_rosa - Vector2(r + 6, r + 14), Vector2(r * 2 + 12, r * 2 + 20)))
 	_rotulos.append(Rect2(Vector2(10, size.y - 30), Vector2(c.x * 8 + 170, 26)))
 	_lugares(c, cosmos)
-	if mostrar_natureza and not cosmos:
+	if voce.x >= 0:
+		var pv := Vector2((voce.x + 0.5) * c.x, (voce.y + 0.5) * c.y)
+		draw_arc(pv, c.y * 0.9, 0, TAU, 28, Color("#7A2418"), 2.2)
+		draw_arc(pv, c.y * 1.25, 0, TAU, 28, Color("#7A2418", 0.45), 1.2)
+	if mostrar_natureza and not cosmos and nevoa.is_empty():
 		_nomes_da_natureza(c)
 	if mostrar_eventos and lugar != "":
 		var k2 := 0
@@ -188,6 +196,18 @@ func _draw() -> void:
 			k2 += 1
 	_rosa_dos_ventos(centro_rosa, r, tinta)
 	_escala(c, tinta)
+
+
+## O que o personagem não conhece fica coberto, como papel em branco com hachuras.
+func _nevoa(c: Vector2) -> void:
+	for y in Mapa.LINHAS:
+		for x in Mapa.COLS:
+			if nevoa.has(Vector2i(x, y)):
+				continue
+			var r := Rect2(Vector2(x * c.x, y * c.y), c + Vector2(0.6, 0.6))
+			draw_rect(r, Color("#E4CB97", 0.93))
+			if (x + y) % 2 == 0:
+				draw_line(r.position + Vector2(0, c.y), r.position + Vector2(c.x, 0), Color(Tema.TINTA_SUAVE, 0.12), 1.0)
 
 
 func _estrelas(c: Vector2) -> void:
@@ -261,6 +281,8 @@ func _lugares(c: Vector2, cosmos: bool) -> void:
 		if de_acidente.has(eid):
 			continue
 		var pos := Mapa.posicao(u, eid)
+		if not nevoa.is_empty() and not nevoa.has(Vector2i(int(pos["x"]), int(pos["y"]))):
+			continue
 		var centro := Vector2((int(pos["x"]) + 0.5) * c.x, (int(pos["y"]) + 0.5) * c.y)
 		var esp := Mapa.especie(u, eid)
 		var nome: String = u.entidade(eid)["nome"]

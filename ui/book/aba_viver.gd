@@ -1,5 +1,5 @@
 extends AbaLivro
-## Aba "Viver": o mundo por dentro. Escolha um personagem e converse com ele (como
+## Aba "Conversar" (id "viver"): o mundo por dentro. Escolha um personagem e converse com ele (como
 ## deus, como um desconhecido ou como outro personagem), acompanhe-o de perto ou veja
 ## o mundo pelos olhos dele.
 

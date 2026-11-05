@@ -69,7 +69,7 @@ const NEGACOES := ["nao", "nunca", "jamais"]
 ## Analisa um capítulo e devolve as NOVAS propostas (já adicionadas ao universo).
 static func analisar(u: Universo, cid: String) -> Array:
 	var cap := u.capitulo(cid)
-	if cap.is_empty() or not cap["canon"]:
+	if cap.is_empty() or not cap["canon"] or cap.has("vivido"):
 		return []
 	var novas: Array = []
 	var lig := Ligador.new(u)

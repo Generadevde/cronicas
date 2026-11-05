@@ -56,7 +56,7 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 		deste_passo.append_array(Informacao.espalhar(u, rng))
 		var indice := _indice_de_lugares(u)
 		for eid in _mentes(u):
-			if foco.has(u.estado(eid)["local"]) or Viagens.viajando(u, eid) or Motor.dormindo(u, eid):
+			if foco.has(u.estado(eid)["local"]) or Viagens.viajando(u, eid) or Motor.dormindo(u, eid) or eid == Vivencia.encarnado(u):
 				continue
 			if not _deve_pensar(u, eid, int(ctrl["passos"])):
 				continue

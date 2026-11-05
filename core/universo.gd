@@ -202,7 +202,7 @@ func definir_relogio(data: Dictionary) -> void:
 
 ## Sistemas das próximas partes que sabem aplicar operações próprias.
 func sistemas_de_mudanca() -> Array:
-	return [Viagens, Natureza, Pecas, Guerras, Pactos, Motor, Tecnicas, Povos, Obras, Legado]
+	return [Viagens, Natureza, Pecas, Guerras, Pactos, Motor, Tecnicas, Povos, Obras, Legado, Vivencia]
 
 
 ## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).

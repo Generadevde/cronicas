@@ -190,6 +190,21 @@ Aba **Laboratório**:
 
 Teste: três futuros a partir da morte do rei, e um mundo povoado coerente depois de 10 mil acontecimentos.
 
+## Parte 13 — Modo Viver
+
+Aba **Modo Viver**: no Livro você é autor e deus; aqui você é um personagem. Só sabe o que ele sabe, só pode o que ele pode, e o resto do mundo segue simulando em volta (quem você vive não decide nada sozinho).
+
+- **Começar**: viver alguém que já existe, ou nascer alguém novo num lugar do mundo, com idade, jeito, ofício, origem e família ("filho de Marta" liga à Marta que já existe).
+- **A cena**: a data e a parte do dia, onde ele está (e em que canto: a forja, o mercado, o porto…), o clima e os acontecimentos do lugar, o humor do povo e quem está por perto.
+- **Mapa local**: a região em volta com a posição dele; só aparece o que ele conhece (onde esteve, a vizinhança de casa, o que descobriu explorando e o que ouviu falar). O resto fica em névoa.
+- **O caderno**: ficha (saúde, cansaço, fome, dinheiro, humor, ferimentos, poderes, o que sabe fazer, pertences e o que possui), relações, desejos e planos, lugares conhecidos, notícias que chegaram até ele (boatos incluídos) e o diário.
+- **Agir**: você escreve o que ele faz em palavras livres ("vou até a forja e peço trabalho a Lucas", "trabalho na forja durante um mês", "pergunto a Marta: o que você sabe de Kai?", "construo uma cabana perto do rio", "quero ser mestre ferreiro"). O programa interpreta, confere se ele consegue (dinheiro, saber o caminho, estar perto, cansaço) e as outras mentes reagem com a personalidade delas (o ferreiro gentil aceita, o desconfiado manda voltar outro dia; quem vê uma briga muda o que sente). Nada de lista fixa de comandos; o que não for entendido fica registrado como ação dele.
+- **Tempo**: cada ação simples leva uma parte do dia; trabalhos, treinos, viagens e esperas longas são resumidos. O mundo anda em semanas, como no Livro.
+- Tudo o que muda o mundo vira fato com causa. A sessão vira **capítulo** no livro "Vidas", em primeira ou terceira pessoa (sem ser reanalisado, porque os fatos já existem). Dá para sair para o Livro a qualquer momento e voltar.
+- A antiga aba "Viver" (Parte 10) agora se chama **Conversar**.
+
+Teste do plano: viver um ano como um morador comum de Varn e transformar a sessão em capítulo.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.
@@ -198,7 +213,7 @@ O programa completo e polido fica para o fim da Parte 13. Até lá, cada parte t
 
 ## Plano
 
-13 partes: Fundação · Texto vira fatos · Mentes e tempo · Universo e natureza · Sistemas por escrita e poder · Sociedades · Guerras e intervenção · Pactos e forças cósmicas · Mundo em transformação · Viver o mundo por dentro · Histórias e cultura · Laboratório e integridade · Modo Viver.
+13 partes: Fundação · Texto vira fatos · Mentes e tempo · Universo e natureza · Sistemas por escrita e poder · Sociedades · Guerras e intervenção · Pactos e forças cósmicas · Mundo em transformação · Viver o mundo por dentro · Histórias e cultura · Laboratório e integridade · Modo Viver. As 13 estão feitas.
 
 ## Licenças
 
