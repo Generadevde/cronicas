@@ -112,6 +112,12 @@ func aceitar_proposta(pid: String, ajustes: Dictionary = {}) -> String:
 			dados["alvo"] = p["sujeitos"][1]
 	if eco:
 		dados["efeito"] = p.get("efeito", {})
+	if p.has("ops_extra"):
+		dados["ops_extra"] = p["ops_extra"]
+	if p.has("luta"):
+		dados["luta_resolvida"] = true
+		dados["dias"] = int(p["luta"].get("dias", 1))
+		dados["chance"] = float(p["luta"].get("chance", 0.5))
 	var causa_eco: String = p.get("causa", "")
 	if eco and not fatos.obter(causa_eco).get("canon", false):
 		p["status"] = "riscada"
@@ -196,13 +202,13 @@ func definir_relogio(data: Dictionary) -> void:
 
 ## Sistemas das próximas partes que sabem aplicar operações próprias.
 func sistemas_de_mudanca() -> Array:
-	return [Viagens, Natureza, Pecas]
+	return [Viagens, Natureza, Pecas, Guerras]
 
 
 ## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).
 ## Cada um tem: static func passo(u, dias, rng) -> Array de ids de fatos.
 func sistemas_de_simulacao() -> Array:
-	return [Viagens, Natureza, Economia, Humor, Sociedades, Familia, Regras, Corpo]
+	return [Viagens, Natureza, Economia, Humor, Sociedades, Guerras, Lutas, Lendas, Familia, Regras, Corpo]
 
 
 ## Dias de viagem entre dois lugares, pelo mapa (-1 = não dá para saber).

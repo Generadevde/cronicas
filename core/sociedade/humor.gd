@@ -43,6 +43,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 	var novos: Array = []
 	var dt := dias / 7.0
 	var agora := DataMundo.ordem(u.relogio)
+	var em_guerra := Guerras.lugares_em_guerra(u)
 	for e in u.entidades_ativas():
 		var lugar: String = e["id"]
 		if Mapa.especie(u, lugar) != "povoado" or not Natureza.tem_natureza(u, lugar):
@@ -69,6 +70,11 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 					h["raiva"] = float(h["raiva"]) + 0.006 * dt
 				"fartura":
 					h["alegria"] = float(h["alegria"]) + 0.02 * dt
+		# Guerra: medo na frente de batalha; raiva de quem ocupa.
+		if em_guerra.has(lugar):
+			h["medo"] = float(h["medo"]) + 0.04 * dt
+			if u.estado(lugar).has("ocupado_por"):
+				h["raiva"] = float(h["raiva"]) + 0.02 * dt
 		if sid != "":
 			var l := Sociedades.lider(u, sid)
 			if l != "" and u.entidades.has(l):

@@ -11,7 +11,7 @@ const IMPORTANCIA := {
 	"morte_por": 1.0, "morte": 0.9, "vitoria": 0.6, "derrota": 0.6, "casamento": 0.7, "traicao": 0.75,
 	"ferimento": 0.45, "luta": 0.5, "nascimento": 0.5, "amor": 0.35, "odio": 0.35, "amizade": 0.3,
 	"ensino": 0.45, "aprendizado": 0.45, "chegada": 0.2, "filiacao": 0.3, "paternidade": 0.3,
-	"testemunho": 0.1, "medo": 0.3, "chegada_viagem": 0.25, "usar_poder": 0.5, "regra": 0.5,
+	"testemunho": 0.1, "medo": 0.3, "chegada_viagem": 0.25, "usar_poder": 0.5, "regra": 0.5, "guerra": 1.0,
 }
 
 

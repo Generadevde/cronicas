@@ -57,6 +57,8 @@ static func eh_sociedade(u: Universo, eid: String) -> bool:
 	var e := u.entidade(eid)
 	if e.is_empty() or e["removida"]:
 		return false
+	if Forcas.eh_forca(u, eid) or Guerras.eh_guerra(u, eid):
+		return false
 	if _campo(u, eid, ["forma de governo", "governo"] + CAMPOS_LIDER) != "":
 		return true
 	if Sugestoes.categoria(e["tipo"]) == "faccao":
@@ -130,12 +132,30 @@ static func _territorio(u: Universo, sid: String) -> Array:
 		for m in Ligador.new(u).encontrar(txt):
 			if Mapa.e_lugar(u, m["entidade"]) and not base.has(m["entidade"]):
 				base.append(m["entidade"])
+	# Terras tomadas na guerra (ocupadas ou entregues por tratado).
+	for e in u.entidades_ativas():
+		var st: Dictionary = e.get("sim", {})
+		if str(st.get("ocupado_por", st.get("dono", ""))) == sid and not base.has(e["id"]):
+			base.append(e["id"])
 	var tudo: Array = base.duplicate()
 	for b in base:
 		for d in Mapa.descendentes(u, b):
 			if not tudo.has(d):
 				tudo.append(d)
-	return tudo
+	# Menos o que outra sociedade tomou.
+	return tudo.filter(func(l): return _dono_por_guerra(u, l) in ["", sid])
+
+
+## Quem tomou o lugar (ou um lugar que o contém) numa guerra: "" se ninguém.
+static func _dono_por_guerra(u: Universo, lugar: String) -> String:
+	for c in [lugar] + Mapa.ancestrais(u, lugar):
+		if not u.entidades.has(c):
+			continue
+		var st: Dictionary = u.entidade(c).get("sim", {})
+		var por := str(st.get("ocupado_por", st.get("dono", "")))
+		if por != "":
+			return por
+	return ""
 
 
 ## A sociedade que manda num lugar (a mais próxima, de dentro para fora).
@@ -153,6 +173,9 @@ static func _tipos_mudados(u: Universo) -> String:
 
 
 static func _de_lugar(u: Universo, lugar: String) -> String:
+	var tomado := _dono_por_guerra(u, lugar)
+	if tomado != "" and u.entidades.has(tomado) and not u.entidade(tomado)["removida"]:
+		return tomado
 	var cadeia: Array = [lugar] + Mapa.ancestrais(u, lugar)
 	var melhor := ""
 	var melhor_nivel := 999

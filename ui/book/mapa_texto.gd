@@ -39,6 +39,7 @@ var mostrar_eventos := true
 var _sobre := Vector2i(-1, -1)
 var _arrastando := false
 var _rotulos: Array = []  ## retângulos já ocupados por letras
+var _guerra: Dictionary = {}  ## lugar → guerra (frentes e lugares ocupados)
 
 
 func _init() -> void:
@@ -117,6 +118,11 @@ static func descricao_curta(u: Universo, eid: String) -> String:
 			linhas.append("%s habitantes · %s" % [Paginas._numero(float(reg["pop"])), Natureza.palavra_comida(float(reg["comida"]))])
 	for ev in Natureza.eventos_ativos(u, eid):
 		linhas.append(Natureza.EVENTOS.get(ev["tipo"], {}).get("nome", ev["tipo"]))
+	var em_guerra := Guerras.lugares_em_guerra(u)
+	if em_guerra.has(eid):
+		linhas.append("⚔ %s%s" % [u.entidade(em_guerra[eid])["nome"], (" · ocupada por " + u.entidade(u.estado(eid)["ocupado_por"])["nome"]) if u.estado(eid).has("ocupado_por") else ""])
+	if str(u.estado(eid).get("nome_de_guerra", "")) != "":
+		linhas.append("hoje chamado de " + str(u.estado(eid)["nome_de_guerra"]))
 	var gente := Natureza._mentes_em(u, eid)
 	if not gente.is_empty():
 		var nomes: Array = gente.slice(0, 4).map(func(g): return u.entidade(g)["nome"])
@@ -133,6 +139,7 @@ func _draw() -> void:
 	if u == null:
 		return
 	_rotulos.clear()
+	_guerra = Guerras.lugares_em_guerra(u)
 	var c := _celula()
 	var cosmos := lugar == "" or Mapa.especie(u, lugar) == "cosmico"
 	draw_rect(Rect2(Vector2.ZERO, size), Color("#E4CB97") if not cosmos else Color("#231A12"))
@@ -156,6 +163,19 @@ func _draw() -> void:
 		_nomes_da_natureza(c)
 	if mostrar_eventos and lugar != "":
 		var k2 := 0
+		var aqui: Array = []
+		for l in _guerra:
+			if (l == lugar or Mapa.ancestrais(u, l).has(lugar)) and not aqui.has(_guerra[l]):
+				aqui.append(_guerra[l])
+		for g in aqui:
+			# Faixa de pergaminho por baixo, para não brigar com os nomes do mapa.
+			var tg := "⚔ %s" % u.entidade(g)["nome"]
+			var wg := Tema.F_FELL_IT.get_string_size(tg, HORIZONTAL_ALIGNMENT_LEFT, -1, 17).x
+			var yg := 26 + k2 * 22
+			draw_rect(Rect2(size.x / 2.0 - wg / 2.0 - 10, yg - 16, wg + 20, 22), Color("#EBD6A8"))
+			draw_rect(Rect2(size.x / 2.0 - wg / 2.0 - 10, yg - 16, wg + 20, 22), Color("#8A2A10"), false, 1.0)
+			_centrado(Tema.F_FELL_IT, size.x / 2.0, yg, tg, 17, Color("#8A2A10"))
+			k2 += 1
 		for ev in Natureza.eventos_ativos(u, lugar):
 			var s2: String = "— %s —" % Natureza.EVENTOS.get(ev["tipo"], {}).get("nome", ev["tipo"])
 			_centrado(Tema.F_FELL_IT, size.x / 2.0, 26 + k2 * 20, s2, 17, Color("#8A2A10"))
@@ -285,8 +305,11 @@ func _lugares(c: Vector2, cosmos: bool) -> void:
 			_texto(fonte, rr2, texto, fs2, Tema.TINTA if not cosmos else Tema.TEXTO_CLARO)
 			if mostrar_eventos:
 				var evs: Array = Natureza.eventos_ativos(u, eid).filter(func(x): return x["lugar"] == eid)
-				if not evs.is_empty():
-					var t2 := "(%s)" % ", ".join(evs.map(func(x): return Natureza.EVENTOS.get(x["tipo"], {}).get("nome", x["tipo"])))
+				var nomes_ev: Array = evs.map(func(x): return Natureza.EVENTOS.get(x["tipo"], {}).get("nome", x["tipo"]))
+				if _guerra.has(eid):
+					nomes_ev.push_front("⚔ ocupada" if u.estado(eid).has("ocupado_por") else "⚔ guerra")
+				if not nomes_ev.is_empty():
+					var t2 := "(%s)" % ", ".join(nomes_ev)
 					var rr3 := _colocar_rotulo(Tema.F_FELL_IT, t2, 13, Vector2(rr2.get_center().x, rr2.end.y + 8), [Vector2.ZERO, Vector2(0, -rr2.size.y - 14)])
 					if rr3.size.x > 0:
 						_texto(Tema.F_FELL_IT, rr3, t2, 13, Color("#8A2A10"))

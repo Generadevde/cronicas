@@ -52,6 +52,9 @@ const ACOES := {
 	"chegada": {"nome": "chegada", "papeis": "lugar",
 		"formas": ["chegou a", "chegou em", "chegou ao", "chegou a cidade de", "foi para", "viajou para", "mudou-se para",
 			"partiu para", "voltou para", "voltou a", "entrou em", "fugiu para", "esta em", "estava em", "mora em", "morava em", "vive em"]},
+	"guerra": {"nome": "declaração de guerra", "papeis": "par",
+		"formas": ["declarou guerra a", "declarou guerra ao", "declarou guerra contra", "declara guerra a", "declarou guerra", "entrou em guerra com",
+			"entrou em guerra contra", "invadiu", "invade", "marchou contra", "atacou o reino de"]},
 	"nascimento": {"nome": "nascimento", "papeis": "um",
 		"formas": ["nasceu"]},
 	"usar_poder": {"nome": "uso de poder", "papeis": "um",
@@ -75,6 +78,7 @@ static func analisar(u: Universo, cid: String) -> Array:
 		assinaturas[p["assinatura"]] = true
 
 	var ultimo_sujeito := ""
+	var recentes: Array = []  # pessoas citadas, da mais recente para a mais antiga
 	var candidatas: Array = []  # [{prop, idx}] na ordem do texto
 	var idx := -1
 	for frase in frases(cap["texto"]):
@@ -82,7 +86,15 @@ static func analisar(u: Universo, cid: String) -> Array:
 		var norm := TextUtil.normalizar(frase)
 		var mencoes := lig.encontrar(frase)
 		mencoes = _resolver_pronomes(norm, mencoes, ultimo_sujeito)
-		if mencoes.is_empty():
+		# "Eles lutaram por 10 dias": luta entre as duas últimas pessoas citadas.
+		var plural := _luta_no_plural(u, cid, frase, norm, mencoes, recentes)
+		if not plural.is_empty():
+			candidatas.append({"prop": plural, "idx": idx})
+		for m in mencoes:
+			if Estado.tem_mente(u, m["entidade"]) or Sugestoes.categoria(u.entidade(m["entidade"]).get("tipo", "")) == "pessoa":
+				recentes.erase(m["entidade"])
+				recentes.push_front(m["entidade"])
+		if mencoes.is_empty() or not plural.is_empty():
 			continue
 		for m in mencoes:
 			if not _eh_lugar(u, m["entidade"]):
@@ -122,6 +134,41 @@ static func analisar(u: Universo, cid: String) -> Array:
 	if not novas.is_empty():
 		u.marcar_mudanca()
 	return novas
+
+
+const LUTA_PLURAL := ["lutaram", "se enfrentaram", "duelaram", "batalharam", "travaram uma luta", "travaram um duelo", "se bateram", "brigaram",
+	"combateram", "se atracaram"]
+const PRONOMES_PLURAIS := ["eles", "elas", "os dois", "as duas", "ambos", "ambas"]
+
+
+static func _luta_no_plural(u: Universo, cid: String, frase: String, norm: String, mencoes: Array, recentes: Array) -> Dictionary:
+	if not LUTA_PLURAL.any(func(w): return (" " + norm + " ").contains(" " + w + " ") or (" " + norm).contains(" " + w)):
+		return {}
+	var pessoas: Array = []
+	for m in mencoes:
+		if not _eh_lugar(u, m["entidade"]) and not pessoas.has(m["entidade"]):
+			pessoas.append(m["entidade"])
+	if pessoas.size() < 2:
+		if not PRONOMES_PLURAIS.any(func(w): return (" " + norm + " ").contains(" " + w + " ")) and pessoas.size() == 0:
+			return {}
+		for r in recentes:
+			if pessoas.size() >= 2:
+				break
+			if not pessoas.has(r):
+				pessoas.append(r)
+	if pessoas.size() < 2:
+		return {}
+	var lugar := ""
+	for m in mencoes:
+		if _eh_lugar(u, m["entidade"]):
+			lugar = m["entidade"]
+	var s: Array = [pessoas[1], pessoas[0]] if mencoes.is_empty() else [pessoas[0], pessoas[1]]
+	return {
+		"id": Ids.novo("prp"), "capitulo": cid, "frase": frase.strip_edges(),
+		"acao": "luta", "sujeitos": s, "lugar": lugar, "status": "pendente",
+		"descricao": descrever(u, "luta", s, lugar),
+		"assinatura": "%s|%s|luta|%s" % [cid, TextUtil.chave(frase), ",".join(s)],
+	}
 
 
 ## "usou" só é uso de poder se a frase falar de magia ou citar um poder.
@@ -224,6 +271,14 @@ static func _montar(u: Universo, cid: String, frase: String, mencoes: Array, ach
 			if not sujeitos.has(m["entidade"]) and Sugestoes.categoria(u.entidade(m["entidade"]).get("tipo", "")) == "lugar":
 				lugar = m["entidade"]
 				break
+	# Guerra só entre sociedades diferentes (pessoas valem pela sociedade que governam).
+	if acao == "guerra":
+		var sa := Guerras.sociedade_de(u, a)
+		var sb := Guerras.sociedade_de(u, b)
+		if sa == "" or sb == "" or sa == sb:
+			return {}
+		sujeitos = [sa, sb]
+		lugar = b if Mapa.e_lugar(u, b) else ""
 	var prop := {
 		"id": Ids.novo("prp"), "capitulo": cid, "frase": frase.strip_edges(),
 		"acao": acao, "sujeitos": sujeitos, "lugar": lugar, "status": "pendente",
@@ -263,6 +318,7 @@ static func descrever(u: Universo, acao: String, sujeitos: Array, lugar: String)
 		"chegada": return "%s foi para %s." % [n.call(0), u.entidade(lugar).get("nome", "?")]
 		"nascimento": return "%s nasceu%s." % [n.call(0), onde]
 		"usar_poder": return "%s usou um poder%s." % [n.call(0), onde]
+		"guerra": return "%s declarou guerra a %s." % [n.call(0), n.call(1)]
 	return "Acontecimento envolvendo %s." % ", ".join(sujeitos.map(func(s): return u.entidade(s).get("nome", "?")))
 
 

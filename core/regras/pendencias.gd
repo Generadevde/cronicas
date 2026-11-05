@@ -19,12 +19,15 @@ const CAMPOS_LIDOS := ["personalid", "jeito", "gost", "valor", "hobby", "paix", 
 	"forma de governo", "governo", "quem governa", "governante", "lider", "rei", "rainha", "imperador", "chefe", "soberano",
 	"regente", "conselho", "nobres", "generais", "territorio", "terras", "dominio", "sede", "capital", "leis", "lei",
 	"religi", "fe", "crenc", "deus", "admir", "desprez", "tabu", "costum", "impost", "tribut", "sucess", "ofic", "profiss",
-	"cargo", "honram", "odeiam", "condenam"]
+	"cargo", "honram", "odeiam", "condenam",
+	"tipo de forc", "moral", "animo", "comandante", "general", "capitao", "almirante", "pertence", "lado", "pontos fortes", "pontos fracos",
+	"fraquez", "fraco", "vantage", "desvantage", "suprimento", "soldados", "efetivo", "aliad", "inimig", "rival", "exercito", "tropas",
+	"lados", "motivo", "titulo", "ferida", "ponto fraco"]
 ## Campos que são descrição (valem como texto do mundo: wiki, pesquisa, a voz dos personagens).
 const DESCRITIVOS := ["descric", "aparenc", "historia", "feito", "epoca", "nota", "apelido", "resumo", "biografia"]
 ## Campos que as próximas partes vão usar (não contam como pendência).
 const PLANEJADOS := {
-	"recurso": 9, "riqueza": 9, "moeda": 9, "aliad": 7, "inimig": 7, "exercito": 7, "tropas": 7,
+	"recurso": 9, "riqueza": 9, "moeda": 9,
 	"o que oferece": 8, "o que cobra": 8, "seguidores": 8, "vontade": 8, "como age": 8, "pacto": 8,
 }
 

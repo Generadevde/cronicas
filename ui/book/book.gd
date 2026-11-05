@@ -9,6 +9,7 @@ const ABAS := [
 	{"id": "mapa", "nome": "Mapa", "cor": "#3F6A3A", "script": preload("res://ui/book/aba_mapa.gd")},
 	{"id": "universo", "nome": "Universo", "cor": "#6A2F4F", "script": preload("res://ui/book/aba_universo.gd")},
 	{"id": "sociedades", "nome": "Sociedades", "cor": "#2E5E5A", "script": preload("res://ui/book/aba_sociedades.gd")},
+	{"id": "guerras", "nome": "Guerras", "cor": "#5E1A3A", "script": preload("res://ui/book/aba_guerras.gd")},
 	{"id": "leis", "nome": "Leis", "cor": "#7A5A1A", "script": preload("res://ui/book/aba_leis.gd")},
 	{"id": "wiki", "nome": "Wiki", "cor": "#5B6B2A", "script": preload("res://ui/book/aba_wiki.gd")},
 	{"id": "criadores", "nome": "Criadores", "cor": "#5A3A7A", "script": preload("res://ui/book/aba_criadores.gd")},
@@ -19,7 +20,7 @@ const ABAS := [
 ]
 
 ## Abas que se redesenham sozinhas quando o tempo do mundo anda.
-const ABAS_VIVAS := ["jornal", "mundo", "mapa", "sociedades", "leis", "wiki", "fatos", "indice"]
+const ABAS_VIVAS := ["jornal", "mundo", "mapa", "sociedades", "guerras", "leis", "wiki", "fatos", "indice"]
 
 var universo: Universo
 var aba_atual := ""
@@ -200,6 +201,9 @@ func atualizar_cabecalho() -> void:
 	var n := Observatorio.noticias(universo, universo.jornal_lido_ate(), 0.3).size()
 	if _fitas.has("jornal"):
 		_fitas["jornal"]["botao"].text = "Jornal (%d)" % n if n > 0 else "Jornal"
+	if _fitas.has("guerras"):
+		var ng := Guerras.ativas(universo).size()
+		_fitas["guerras"]["botao"].text = "Guerras (%d)" % ng if ng > 0 else "Guerras"
 	if _fitas.has("leis"):
 		var p := Pendencias.listar(universo).size()
 		_fitas["leis"]["botao"].text = "Leis (%d)" % p if p > 0 else "Leis"

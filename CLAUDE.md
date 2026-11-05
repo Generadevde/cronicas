@@ -18,6 +18,7 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 - `core/mundo/` — mapa (lugares dentro de lugares, terreno, acidentes com nome, rios), viagens, natureza, povoador, línguas, eras/leis gerais (Parte 4).
 - `core/regras/` — leis escritas em português (`regras.gd`), peças de efeito (`pecas.gd`), poderes, corpo e vida, "ainda sem efeito" (`pendencias.gd`) (Parte 5).
 - `core/sociedade/` — governos e sucessão (`sociedades.gd`), humor do povo e revoltas, economia, reputação relativa, família e gerações (Parte 6).
+- `core/guerra/` — forças militares (`forcas.gd`), guerras, batalhas, intervenção e pós-guerra (`guerras.gd`), lutas em aberto (`lutas.gd`), lendas, títulos e nomes (`lendas.gd`) (Parte 7).
 - `ui/` — telas montadas em código: `tema.gd` (visual de livro), `menu/`, `library/`, `book/` (livro com abas `aba_*.gd`, `paginas.gd` monta BBCode).
 - `tests/` — `run_tests.gd` roda todos os `test_*.gd`.
 - `assets/` — fontes (OFL) e a arte do menu (feita pelo autor).

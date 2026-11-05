@@ -30,7 +30,7 @@ const _GRUPOS := [
 		"campos": ["descrição", "quem fez", "poder", "raridade", "dono atual", "história"],
 	},
 	{
-		"palavras": ["faccao", "nacao", "guilda", "ordem", "seita", "exercito", "familia",
+		"palavras": ["faccao", "nacao", "guilda", "ordem", "seita", "familia",
 			"cla", "imperio", "republica", "igreja", "escola", "empresa", "associacao"],
 		"campos": ["forma de governo", "líder", "objetivos", "aliados", "inimigos", "riqueza",
 			"força", "leis", "história"],
@@ -46,10 +46,15 @@ const _GRUPOS := [
 		"campos": ["natureza", "vontade", "como age no mundo", "o que oferece", "o que cobra",
 			"seguidores"],
 	},
+	{
+		"palavras": ["exercito", "frota", "legiao", "tropa", "batalhao", "horda", "esquadra", "esquadrilha", "armada", "milicia",
+			"regimento", "cavalaria", "infantaria", "hoste"],
+		"campos": ["tamanho", "tipo de força", "pertence a", "comandante", "moral", "pontos fortes", "fraquezas"],
+	},
 ]
 
 
-const _NOMES := ["pessoa", "lugar", "poder", "objeto", "faccao", "criatura", "entidade"]
+const _NOMES := ["pessoa", "lugar", "poder", "objeto", "faccao", "criatura", "entidade", "forca"]
 
 
 ## Categoria aproximada de um tipo livre, só para as heurísticas internas

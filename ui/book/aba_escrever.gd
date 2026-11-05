@@ -464,6 +464,8 @@ func _cartao_fato(p: Dictionary) -> Control:
 
 
 func _cartao_eco(p: Dictionary) -> Control:
+	if p.has("luta"):
+		return _cartao_luta(p)
 	var v := _cartao("Eco proposto", Color("#233B66"), p["descricao"], "")
 	var aceitar := Tema.botao("Aceitar")
 	aceitar.pressed.connect(func():
@@ -474,6 +476,33 @@ func _cartao_eco(p: Dictionary) -> Control:
 		u.riscar_proposta(p["id"])
 		_trocar_modo("margem"))
 	v.add_child(linha([aceitar, riscar]))
+	return v
+
+
+## O resultado de uma luta em aberto: aceitar, trocar o vencedor ou manter o mistério.
+func _cartao_luta(p: Dictionary) -> Control:
+	var l: Dictionary = p["luta"]
+	var porque: Array = []
+	for x in l.get("fatores", []):
+		porque.append("%s: %s" % [u.entidade(x[0]).get("nome", "?").split(" ")[0], x[2]])
+	var detalhe := "Chance de quem venceu: %d%%%s" % [int(roundf(float(l["chance"]) * 100)), (" · " + "; ".join(porque)) if not porque.is_empty() else ""]
+	var v := _cartao("A luta foi decidida", Tema.VERMELHO, p["descricao"], "")
+	var dl := Tema.rotulo(detalhe, 15, Tema.italico(), Tema.TINTA_SUAVE)
+	dl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(dl)
+	var aceitar := Tema.botao("Aceitar")
+	aceitar.pressed.connect(func():
+		u.aceitar_proposta(p["id"])
+		_trocar_modo("margem"))
+	var trocar := Tema.botao("Trocar o vencedor", "Você decide quem venceu")
+	trocar.pressed.connect(func():
+		Lutas.trocar_vencedor(u, p["id"])
+		_trocar_modo("margem"))
+	var misterio := Tema.botao("Manter em mistério", "Ninguém fica sabendo quem venceu")
+	misterio.pressed.connect(func():
+		Lutas.manter_misterio(u, p["id"])
+		_trocar_modo("margem"))
+	v.add_child(linha([aceitar, trocar, misterio]))
 	return v
 
 

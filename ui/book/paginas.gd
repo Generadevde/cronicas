@@ -38,7 +38,13 @@ static func entidade(u: Universo, eid: String) -> String:
 		sub += " · também chamado de " + _e(", ".join(e["apelidos"]))
 	if e["removida"]:
 		sub += " · [color=#7A2418]retirado do universo[/color]"
-	var s := cabecalho(e["nome"], sub)
+	var ng := str(u.estado(eid).get("nome_de_guerra", ""))
+	if ng != "":
+		sub += " · hoje chamado de [b]%s[/b]" % _e(ng)
+	var nl := str(u.estado(eid).get("nome_lendario", ""))
+	if nl != "":
+		sub += " · lembrada como [b]%s[/b]" % _e(nl)
+	var s := cabecalho(Lendas.nome_com_titulo(u, eid), sub)
 
 	if e["campos"].is_empty():
 		s += "\n[i]Ficha ainda vazia. Abra em Criadores para preencher.[/i]\n"
@@ -51,6 +57,19 @@ static func entidade(u: Universo, eid: String) -> String:
 	s += estado(u, eid)
 	if Sociedades.eh_sociedade(u, eid):
 		s += sociedade(u, eid)
+	if Guerras.eh_guerra(u, eid) and not Guerras.dados(u, eid).is_empty():
+		s += guerra(u, eid)
+	if Forcas.eh_forca(u, eid):
+		s += forca(u, eid)
+	var ls := Lendas.de(u, eid)
+	if not ls.is_empty():
+		var linhas_l: Array = []
+		for f in ls:
+			var v := Lendas.versao(u, f)
+			if v["lenda"] != "":
+				linhas_l.append("[i]%s[/i] [color=#5A3A1A](o que aconteceu: %s)[/color]" % [_e(v["lenda"]), link("fato:" + f["id"], v["verdade"])])
+		if not linhas_l.is_empty():
+			s += secao("Lendas") + "\n".join(linhas_l) + "\n"
 	if Mapa.e_lugar(u, eid):
 		var l := lugar(u, eid)
 		if l != "":
@@ -210,7 +229,11 @@ static func lugar(u: Universo, eid: String) -> String:
 		linhas.append("[b]Pão:[/b] %s" % Economia.palavra_preco(Economia.preco(u, eid)))
 	var soc := Sociedades.de_lugar(u, eid)
 	if soc != "" and soc != eid:
-		linhas.append("[b]Quem manda:[/b] %s" % link("ent:" + soc, u.entidade(soc)["nome"]))
+		linhas.append("[b]Quem manda:[/b] %s%s" % [link("ent:" + soc, u.entidade(soc)["nome"]), " [color=#7A2418](ocupação)[/color]" if u.estado(eid).has("ocupado_por") else ""])
+	var em_guerra := Guerras.lugares_em_guerra(u)
+	if em_guerra.has(eid):
+		linhas.append("[b][color=#7A2418]Guerra:[/color][/b] %s (%s)" % [link("ent:" + em_guerra[eid], u.entidade(em_guerra[eid])["nome"]),
+			"ocupada" if u.estado(eid).has("ocupado_por") else "frente de batalha"])
 	var gente := Natureza._mentes_em(u, eid)
 	if not gente.is_empty():
 		linhas.append("[b]Quem está aqui:[/b] %s" % ", ".join(gente.map(func(g): return link("ent:" + g, u.entidade(g)["nome"]))))
@@ -277,8 +300,111 @@ static func sociedade(u: Universo, sid: String) -> String:
 	vistos.sort_custom(func(a, b): return absf(a[1]["valor"]) > absf(b[1]["valor"]))
 	if not vistos.is_empty():
 		linhas.append("[b]Como vê as pessoas:[/b] %s" % ", ".join(vistos.slice(0, 6).map(func(v): return "%s (%s)" % [link("ent:" + v[0], u.entidade(v[0])["nome"]), Reputacao.palavra(v[1])])))
+	var guerras: Array = []
+	for g in Guerras.ativas(u):
+		var lado := Guerras.lado_de(u, g, sid)
+		if lado != "":
+			var inimigos: Array = Guerras.dados(u, g)["b" if lado == "a" else "a"]
+			guerras.append("%s contra %s" % [link("ent:" + g, u.entidade(g)["nome"]), ", ".join(inimigos.map(func(x): return link("ent:" + x, u.entidade(x)["nome"])))])
+	if not guerras.is_empty():
+		linhas.append("[b][color=#7A2418]Em guerra:[/color][/b] %s" % " · ".join(guerras))
+	var exercitos := Forcas.da_sociedade(u, sid)
+	if not exercitos.is_empty():
+		linhas.append("[b]Forças:[/b] %s" % ", ".join(exercitos.map(func(f): return "%s (%s, %s)" % [link("ent:" + f, u.entidade(f)["nome"]), Forcas.numero(Forcas.tamanho(u, f)), Forcas.nome_tipo(u, f)])))
+	var rancores: Dictionary = u.estado(sid).get("rancores", {})
+	var rl: Array = []
+	for outro in rancores:
+		if float(rancores[outro]) >= 0.3 and u.entidades.has(outro):
+			rl.append("%s (%s)" % [link("ent:" + outro, u.entidade(outro)["nome"]), "ódio antigo" if float(rancores[outro]) >= 0.6 else "rancor"])
+	if not rl.is_empty():
+		linhas.append("[b]Rancores:[/b] %s" % ", ".join(rl))
 	linhas.append("[color=#5A3A1A]%d membros com mente própria[/color]" % Sociedades.membros(u, sid).size())
 	return secao("Sociedade") + "\n".join(linhas) + "\n"
+
+
+## A página de uma guerra: lados, forças, frente, previsão e por quê, batalhas, mortos.
+static func guerra(u: Universo, g: String) -> String:
+	var d := Guerras.dados(u, g)
+	var linhas: Array = []
+	var lados: Array = []
+	for lado in ["a", "b"]:
+		lados.append(", ".join(Array(d[lado]).map(func(x): return link("ent:" + x, u.entidade(x)["nome"]))))
+	linhas.append("[b]Lados:[/b] %s  [i]contra[/i]  %s" % lados)
+	if str(d.get("motivo", "")) != "":
+		linhas.append("[b]Motivo:[/b] %s" % _e(d["motivo"]))
+	linhas.append("[b]Começou:[/b] %s%s" % [DataMundo.texto(_data_de_ordem(int(d["inicio"]))),
+		(" · [b]acabou:[/b] " + DataMundo.texto(_data_de_ordem(int(d["fim"])))) if int(d.get("fim", -1)) > 0 else ""])
+	if d["ativa"]:
+		linhas.append("[b][color=#7A2418]Em andamento[/color][/b]")
+		var fr := Guerras.frente(u, g)
+		if fr != "":
+			linhas.append("[b]Frente de batalha:[/b] %s" % link("ent:" + fr, u.entidade(fr)["nome"]))
+		var p := Guerras.previsao(u, g)
+		linhas.append("[b]Previsão:[/b] %s" % _e(p["texto"]))
+		if not p["razoes"].is_empty():
+			linhas.append("[b]Por quê:[/b]\n" + "\n".join(p["razoes"].slice(0, 7).map(func(r): return "  • " + _e(r))))
+	else:
+		var v := str(d.get("vencedor", ""))
+		linhas.append("[b]Resultado:[/b] %s" % ("vitória de " + u.entidade(d[v][0])["nome"] if v != "" else "paz sem vencedor"))
+		if str(d.get("tratado", "")) != "":
+			linhas.append("[b]Tratado:[/b] %s" % link("fato:" + d["tratado"], str(u.fatos.obter(d["tratado"])["dados"].get("tratado", "o tratado"))))
+	if not d["ocupados"].is_empty():
+		linhas.append("[b]Ocupados:[/b] %s" % ", ".join(Array(d["ocupados"]).map(func(x): return link("ent:" + x, u.entidade(x)["nome"]))))
+	var forcas: Array = []
+	for lado in ["a", "b"]:
+		for f in Guerras.forcas_do_lado(u, g, lado):
+			var c := Forcas.comandante(u, f)
+			forcas.append("  • %s — %s %s · moral %s · suprimentos %d%%%s" % [link("ent:" + f, u.entidade(f)["nome"]), Forcas.numero(Forcas.tamanho(u, f)),
+				Forcas.nome_tipo(u, f), _palavra_moral(Forcas.moral(u, f)), int(roundf(Forcas.suprimentos(u, f) * 100)),
+				(" · comandante " + link("ent:" + c, Lendas.nome_com_titulo(u, c))) if c != "" else ""])
+	if not forcas.is_empty():
+		linhas.append("[b]Forças:[/b]\n" + "\n".join(forcas))
+	var mortos: Dictionary = d.get("mortos", {})
+	if not mortos.is_empty():
+		var ml: Array = []
+		for sid in mortos:
+			ml.append("%s: %s" % [u.entidade(sid).get("nome", "?"), Forcas.numero(float(mortos[sid]))])
+		linhas.append("[b]Mortos:[/b] %s" % " · ".join(ml))
+	if not d["batalhas"].is_empty():
+		var bl: Array = []
+		for b in d["batalhas"]:
+			var f := u.fatos.obter(b)
+			if f.get("canon", false):
+				bl.append("  • [color=#5A3A1A]%s[/color] — %s" % [DataMundo.texto(f["data"]), link("fato:" + b, f["descricao"])])
+		linhas.append("[b]Batalhas:[/b]\n" + "\n".join(bl))
+	return secao("Guerra") + "\n".join(linhas) + "\n"
+
+
+static func _palavra_moral(m: float) -> String:
+	if m >= 0.85:
+		return "inabalável"
+	if m >= 0.65:
+		return "alta"
+	if m >= 0.45:
+		return "média"
+	if m >= 0.25:
+		return "baixa"
+	return "quebrada"
+
+
+## A página de uma força militar.
+static func forca(u: Universo, f: String) -> String:
+	var linhas: Array = []
+	var sid := Forcas.lado(u, f)
+	linhas.append("[b]De:[/b] %s" % (link("ent:" + sid, u.entidade(sid)["nome"]) if sid != "" else "[i]ninguém (escreva \"pertence a\")[/i]"))
+	linhas.append("[b]Tamanho agora:[/b] %s de %s · [b]tipo:[/b] %s" % [Forcas.numero(Forcas.tamanho(u, f)), Forcas.numero(Forcas.tamanho_inicial(u, f) + float(u.estado(f).get("reforcos", 0.0))), Forcas.nome_tipo(u, f)])
+	linhas.append("[b]Moral:[/b] %s · [b]suprimentos:[/b] %d%%" % [_palavra_moral(Forcas.moral(u, f)), int(roundf(Forcas.suprimentos(u, f) * 100))])
+	var c := Forcas.comandante(u, f)
+	if c != "":
+		linhas.append("[b]Comandante:[/b] %s%s" % [link("ent:" + c, Lendas.nome_com_titulo(u, c)), "" if Estado.vivo(u, c) else " [color=#7A2418](morto)[/color]"])
+	var t: Dictionary = Forcas.TIPOS[Forcas.tipo(u, f)]
+	var bom: Array = []
+	for alvo in Forcas.VANTAGEM.get(Forcas.tipo(u, f), {}):
+		if float(Forcas.VANTAGEM[Forcas.tipo(u, f)][alvo]) > 1.05:
+			bom.append(Forcas.TIPOS[alvo]["nome"])
+	linhas.append("[color=#5A3A1A]%s: luta com %s%s%s[/color]" % [t["nome"].capitalize(), ", ".join(t["armas"].slice(2, 5) if t["armas"].size() > 3 else t["armas"]),
+		("; leva vantagem sobre " + ", ".join(bom)) if not bom.is_empty() else "", "; precisa de magia" if t["depende"] == "magia" else ("; precisa de técnica" if t["depende"] == "tecnologia" else "")])
+	return secao("Força militar") + "\n".join(linhas) + "\n"
 
 
 static func _data_de_ordem(ordem: int) -> Dictionary:

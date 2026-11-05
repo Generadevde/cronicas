@@ -89,6 +89,20 @@ static func mudancas_de(u: Universo, f: Dictionary) -> Array:
 			ops.append({"op": "nascer", "quem": a, "lugar": f["lugar"]})
 	if acao.begins_with("eco_"):
 		ops.append_array(_ops_de_eco(f["dados"].get("efeito", {})))
+	# Uma guerra declarada no capítulo: cria a guerra e levanta os exércitos.
+	if acao == "guerra" and a != "" and b != "":
+		var sa := Guerras.sociedade_de(u, a)
+		var sb := Guerras.sociedade_de(u, b)
+		if sa != "" and sb != "" and sa != sb and Guerras.em_guerra(u, sa, sb) == "":
+			if f["dados"].has("guerra_ops"):
+				ops.append_array(f["dados"]["guerra_ops"])
+			else:
+				var gops := Guerras.ops_de_declaracao(u, sa, sb, f["id"], "escrito no capítulo")
+				f["dados"]["guerra_ops"] = gops
+				f["dados"]["guerra"] = gops[0]["guerra"]
+				ops.append_array(gops)
+	# Consequências calculadas antes (ex.: o resultado de uma luta em aberto).
+	ops.append_array(f["dados"].get("ops_extra", []))
 	# Quem estava num lugar durante uma cena passa a estar lá.
 	if f["lugar"] != "" and acao in ["vitoria", "derrota", "luta", "ferimento", "morte_por", "testemunho", "amizade", "traicao"]:
 		for e in s:

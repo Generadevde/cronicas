@@ -115,6 +115,18 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - Leis da sociedade valem só no território dela ("a magia é proibida" faz quem usa magia ali virar fugitivo).
 - Teste do plano: uma seca vira fome, a fome vira revolta e a revolta derruba o governo, com a cadeia de causas inteira.
 
+## Parte 7 — Guerras e intervenção
+
+- **Forças militares** são entidades com ficha livre: "tamanho" (20 mil), "tipo de força" (infantaria, cavalaria, frota, aviões, naves, magos, monstros, máquinas, sobrenaturais), "pertence a", "comandante", "moral", "pontos fortes" ("imune a balas, invisível na areia") e "fraquezas" ("some com a luz do dia"). Cada tipo tem vantagens e fraquezas contra os outros: quem não alcança o ar não acerta aviões, magia fere o sobrenatural, frotas lutam mal em terra.
+- **Guerras nascem da simulação** (fome em casa e fartura no vizinho, vingança de guerras passadas, ódio entre governantes, fé, ambição, "inimigos" na ficha) ou de você: no capítulo ("Sokovia declarou guerra a Bermudit") ou na aba **Guerras**.
+- **Painel da guerra**: lados e aliados, forças (tamanho, tipo, moral, comandante, suprimentos), frente de batalha, **previsão de quem vence e por quê**, batalhas e mortos. Botões para intervir: reforços, traição, desastre, aliado inesperado, morte de um general, fazer a paz, ou **escrever** ("o rei fez um pacto com o Ser da Quinta Dimensão e recebeu um exército de fantasmas do deserto"): o ser vira entidade, os fantasmas viram força, e a guerra recalcula.
+- **Batalhas em resumo** (força, terreno, dia ou noite, estação, moral, suprimentos, sorte), cada uma com nome ("A Noite dos Fantasmas do Deserto", "Os Dez Dias de Aldra"), mortos, heróis, generais que caem, ocupação de cidades e refugiados.
+- **Depois da guerra**: tratado, terras que mudam de dono, rancor entre povos por gerações, veteranos, heróis com título ("o Conquistador", "Senhor da Noite"), lugares com nome de guerra ("as Areias Vermelhas"), e guerras longas lembradas como "A Guerra dos N Anos".
+- **Lutas em aberto**: escreva a luta sem dizer quem venceu ("Eles lutaram por 10 dias; apenas um ficou em pé"). Ao avançar o tempo, o programa decide (força, resistência, fraquezas, poderes, terreno, amigos por perto, sorte) e o resultado chega na margem: aceitar, trocar o vencedor ou manter em mistério.
+- **Lendas**: com os anos, dez dias viram trinta e o vencedor vira um deus; a verdade fica no fato. Heróis lendários dão moral ao seu povo, e cultos surgem em volta deles.
+- No mapa, guerras e cidades ocupadas aparecem marcadas com ⚔.
+- Teste do plano: Sokovia contra Bermudit com o exército de fantasmas.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.
