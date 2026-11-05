@@ -2,7 +2,26 @@
 
 > *Um universo não é feito apenas daquilo que aconteceu, mas também de tudo aquilo que ainda pode acontecer.*
 
-Criador de universos em texto, com cara de livro antigo. Você cria o mundo e escreve a história; tudo vira fato num banco de fatos, e o mundo lembra, organiza e (nas próximas partes) reage sozinho.
+Criador de universos em texto, com cara de livro antigo. **Você escreve, e o mundo nasce e anda junto com a escrita.** Tudo vira fato num banco de fatos; o mundo lembra, simula e reage sozinho.
+
+## Escrever é o jogo
+
+Abra um universo e escreva — qualquer mundo, qualquer regra:
+
+> Existe apenas uma ilha, chamada Aru, com 30 pessoas. Essas pessoas precisam sobreviver. À noite, slimes começam a aparecer e atacam as pessoas.
+
+A cada frase terminada, o mundo muda:
+
+- **"uma ilha chamada Aru com 30 pessoas"** → a ilha nasce no mapa, cercada de mar, com 30 pessoas com nome, idade, jeito e ofício;
+- **"precisam sobreviver"** → a comida passa a ser contada: quem pode, junta comida; falta vira fome, briga e roubo;
+- **"à noite, slimes aparecem e atacam"** → a criatura nasce e passa a atacar toda noite: gente ferida, gente que revida e vira herói, medo, defesas inventadas (fogueiras, vigia, paliçada), fraquezas descobertas;
+- **"um rei cruel chamado Odo"**, **"o povo odeia o rei"** → a pessoa, o cargo, o jeito, o que todos sentem (e o mundo decide se o povo se revolta);
+- **"Neste mundo, quem mente perde a voz"** → uma lei do universo;
+- **"Três anos depois…"** → o tempo anda (se a frase só conta algo, anda um dia).
+
+Na **margem**, cada frase ganha um cartão: o que ela criou (com **Desfazer**), quanto tempo passou e o que o mundo fez enquanto isso. O mundo também **sugere uma continuação** — com ressalva: só entra no texto se você clicar em "Usar no texto". Apagar ou mudar uma frase desfaz o que ela criou. A caixa "O tempo anda" deixa você escrever sem o relógio andar.
+
+As fitas são só quatro: **Escrever** (o centro), **O mundo** (páginas, mapa, lugares, povos, guerras, leis, cosmos, histórias), **Linha do tempo** (jornal e fatos) e **Bastidores** (Modo Viver, conversar, laboratório, criadores, pesquisa, notas).
 
 Feito em **Godot 4.7** e GDScript. Projeto de hobby.
 

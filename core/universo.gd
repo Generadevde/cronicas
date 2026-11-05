@@ -202,13 +202,13 @@ func definir_relogio(data: Dictionary) -> void:
 
 ## Sistemas das próximas partes que sabem aplicar operações próprias.
 func sistemas_de_mudanca() -> Array:
-	return [Viagens, Natureza, Pecas, Guerras, Pactos, Motor, Tecnicas, Povos, Obras, Legado, Vivencia]
+	return [Viagens, Natureza, Pecas, Guerras, Pactos, Motor, Tecnicas, Povos, Obras, Legado, Vivencia, Ameacas, Recursos]
 
 
 ## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).
 ## Cada um tem: static func passo(u, dias, rng) -> Array de ids de fatos.
 func sistemas_de_simulacao() -> Array:
-	return [Viagens, Natureza, Economia, Humor, Sociedades, Guerras, Lutas, Lendas, Pactos, Autor, Tecnicas, Religioes, Cidades, Intriga, Aventura, Povos, Diretor, Fios, Obras, Legado, Enredo, Destinos, Familia, Regras, Corpo]
+	return [Viagens, Natureza, Ameacas, Recursos, Economia, Humor, Sociedades, Guerras, Lutas, Lendas, Pactos, Autor, Tecnicas, Religioes, Cidades, Intriga, Aventura, Povos, Diretor, Fios, Obras, Legado, Enredo, Destinos, Familia, Regras, Corpo]
 
 
 ## Dias de viagem entre dois lugares, pelo mapa (-1 = não dá para saber).

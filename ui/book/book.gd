@@ -24,6 +24,17 @@ const ABAS := [
 	{"id": "fatos", "nome": "Fatos", "cor": "#A87A2A", "script": preload("res://ui/book/aba_fatos.gd")},
 ]
 
+## As fitas: poucas, e a escrita no centro. Cada fita junta páginas parecidas
+## (uma fileira de botões no alto da página esquerda troca entre elas).
+const GRUPOS := [
+	{"id": "g_escrever", "nome": "Escrever", "cor": "#8E2A22", "abas": [["escrever", "Escrever"]]},
+	{"id": "g_mundo", "nome": "O mundo", "cor": "#2F4F8A", "abas": [["wiki", "Páginas"], ["mapa", "Mapa"], ["mundo", "Lugares"], ["sociedades", "Povos"],
+		["guerras", "Guerras"], ["leis", "Leis"], ["cosmos", "Cosmos"], ["historias", "Histórias"], ["universo", "Universo"], ["indice", "Índice"]]},
+	{"id": "g_tempo", "nome": "Linha do tempo", "cor": "#2F6B6B", "abas": [["jornal", "Jornal"], ["fatos", "Fatos"]]},
+	{"id": "g_bastidores", "nome": "Bastidores", "cor": "#4A4A44", "abas": [["modo_viver", "Modo Viver"], ["viver", "Conversar"],
+		["laboratorio", "Laboratório"], ["criadores", "Criadores"], ["pesquisa", "Pesquisa"], ["notas", "Notas"]]},
+]
+
 ## Abas que se redesenham sozinhas quando o tempo do mundo anda.
 const ABAS_VIVAS := ["jornal", "mundo", "mapa", "sociedades", "guerras", "cosmos", "leis", "wiki", "fatos", "indice"]
 
@@ -37,6 +48,9 @@ var _data_label: Label
 var _busca: LineEdit
 var _adiados: Dictionary = {}
 var _dado_atual := ""
+var grupo_atual := ""
+var _sub_botoes: Dictionary = {}
+var _ultima_do_grupo: Dictionary = {}
 var _status: Label
 var _timer_vivo: Timer
 var ritmo_vivo := 0  ## dias do mundo por segundo real (0 = pausado)
@@ -135,18 +149,19 @@ func _construir() -> void:
 	var topo_fitas := Control.new()
 	topo_fitas.custom_minimum_size = Vector2(0, 12)
 	fitas.add_child(topo_fitas)
-	for a in ABAS:
+	for a in GRUPOS:
 		var f := Button.new()
 		f.text = a["nome"]
 		f.focus_mode = Control.FOCUS_NONE
 		f.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		f.add_theme_font_override("font", Tema.F_FELL)
 		f.add_theme_font_size_override("font_size", Tema.px(15))
-		var claro: bool = a["id"] == "fatos"
+		var claro := false
 		var cor_texto := Color("#1E1006") if claro else Color("#F5E6C4")
 		for estado in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 			f.add_theme_color_override(estado, cor_texto)
-		f.pressed.connect(ir_para_aba.bind(a["id"], ""))
+		var gid: String = a["id"]
+		f.pressed.connect(func(): ir_para_aba(str(_ultima_do_grupo.get(gid, a["abas"][0][0])), ""))
 		_fitas[a["id"]] = {"botao": f, "cor": Color(a["cor"])}
 		fitas.add_child(f)
 	corpo.add_child(fitas)
@@ -177,7 +192,7 @@ func _estilizar_fitas() -> void:
 	for id in _fitas:
 		var f: Button = _fitas[id]["botao"]
 		var cor: Color = _fitas[id]["cor"]
-		var ativa: bool = id == aba_atual
+		var ativa: bool = id == grupo_atual
 		for estado in ["normal", "hover", "pressed", "focus"]:
 			var s := StyleBoxFlat.new()
 			s.bg_color = cor.lightened(0.12) if estado == "hover" else cor
@@ -191,7 +206,7 @@ func _estilizar_fitas() -> void:
 				s.shadow_color = Color(0, 0, 0, 0.45)
 				s.shadow_size = 4
 			f.add_theme_stylebox_override(estado, s)
-		f.custom_minimum_size = Vector2(150 if ativa else 132, 0)
+		f.custom_minimum_size = Vector2(156 if ativa else 138, 40)
 
 
 func _atualizar_data() -> void:
@@ -204,15 +219,17 @@ func atualizar_cabecalho() -> void:
 		return
 	_atualizar_data()
 	var n := Observatorio.noticias(universo, universo.jornal_lido_ate(), 0.3).size()
-	if _fitas.has("jornal"):
-		_fitas["jornal"]["botao"].text = "Jornal (%d)" % n if n > 0 else "Jornal"
-	if _fitas.has("guerras"):
+	if _fitas.has("g_tempo"):
+		_fitas["g_tempo"]["botao"].text = "Linha do tempo (%d)" % n if n > 0 else "Linha do tempo"
+	if _sub_botoes.has("jornal") and is_instance_valid(_sub_botoes["jornal"]):
+		_sub_botoes["jornal"].text = "Jornal (%d)" % n if n > 0 else "Jornal"
+	if _sub_botoes.has("guerras") and is_instance_valid(_sub_botoes["guerras"]):
 		var ng := Guerras.ativas(universo).size()
-		_fitas["guerras"]["botao"].text = "Guerras (%d)" % ng if ng > 0 else "Guerras"
-	if _fitas.has("leis"):
+		_sub_botoes["guerras"].text = "Guerras (%d)" % ng if ng > 0 else "Guerras"
+	if _sub_botoes.has("leis") and is_instance_valid(_sub_botoes["leis"]):
 		var p := Pendencias.listar(universo).size()
-		_fitas["leis"]["botao"].text = "Leis (%d)" % p if p > 0 else "Leis"
-		_fitas["leis"]["botao"].tooltip_text = "%d coisa(s) ainda sem efeito no mundo" % p if p > 0 else ""
+		_sub_botoes["leis"].text = "Leis (%d)" % p if p > 0 else "Leis"
+		_sub_botoes["leis"].tooltip_text = "%d coisa(s) ainda sem efeito no mundo" % p if p > 0 else ""
 	if ritmo_vivo > 0:
 		_status.text = "mundo vivo"
 	elif _status.text == "mundo vivo":
@@ -296,11 +313,70 @@ func ir_para_aba(id: String, dado: String = "") -> void:
 	if def.is_empty():
 		return
 	aba_atual = id
+	grupo_atual = grupo_de(id)
+	_ultima_do_grupo[grupo_atual] = id
 	Tema.limpar(_esq)
 	Tema.limpar(_dir)
+	_sub_botoes = {}
+	_esq.add_child(_barra_do_grupo())
 	_aba_obj = def["script"].new(self)
 	_aba_obj.montar(_esq, _dir, dado)
+	# A aba Escrever remonta a página inteira: a fileira volta ao topo.
+	if _esq.get_child_count() > 0 and not _esq.get_child(0).has_meta("barra_do_grupo"):
+		_esq.add_child(_barra_do_grupo())
+		_esq.move_child(_esq.get_child(_esq.get_child_count() - 1), 0)
 	_estilizar_fitas()
+	atualizar_cabecalho()
+
+
+static func grupo_de(id: String) -> String:
+	for g in GRUPOS:
+		for a in g["abas"]:
+			if a[0] == id:
+				return g["id"]
+	return "g_bastidores"
+
+
+## A fileira de botões das páginas da fita (vazia na fita Escrever).
+func _barra_do_grupo() -> Control:
+	var barra := HFlowContainer.new()
+	barra.set_meta("barra_do_grupo", true)
+	barra.add_theme_constant_override("h_separation", 2)
+	barra.add_theme_constant_override("v_separation", 2)
+	for g in GRUPOS:
+		if g["id"] != grupo_atual or g["abas"].size() <= 1:
+			continue
+		for a in g["abas"]:
+			var b := Button.new()
+			b.text = a[1]
+			b.flat = true
+			b.toggle_mode = true
+			b.button_pressed = a[0] == aba_atual
+			b.focus_mode = Control.FOCUS_NONE
+			b.add_theme_font_override("font", Tema.F_VERSALETE)
+			b.add_theme_font_size_override("font_size", Tema.px(15))
+			var cor := Color(g["cor"])
+			b.add_theme_color_override("font_color", Color(Tema.TINTA_SUAVE, 0.9))
+			b.add_theme_color_override("font_pressed_color", cor.darkened(0.2))
+			b.add_theme_color_override("font_hover_color", cor)
+			var sub := StyleBoxFlat.new()
+			sub.bg_color = Color(cor, 0.14)
+			sub.border_width_bottom = 2
+			sub.border_color = cor
+			sub.content_margin_left = 6
+			sub.content_margin_right = 6
+			b.add_theme_stylebox_override("pressed", sub)
+			var vazio := StyleBoxEmpty.new()
+			vazio.content_margin_left = 6
+			vazio.content_margin_right = 6
+			b.add_theme_stylebox_override("normal", vazio)
+			b.add_theme_stylebox_override("hover", vazio)
+			b.add_theme_stylebox_override("focus", vazio)
+			var aid: String = a[0]
+			b.pressed.connect(func(): ir_para_aba(aid, ""))
+			_sub_botoes[aid] = b
+			barra.add_child(b)
+	return barra
 
 
 ## Abre um link: "ent:<id>", "cap:<id>", "fato:<id>", "nota:<id>".

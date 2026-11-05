@@ -1,6 +1,7 @@
 extends AbaLivro
-## Aba "Escrever": o capítulo na página esquerda; na direita, a estante,
-## a margem (fatos propostos, ecos, dúvidas, avisos de continuidade) e as versões.
+## Aba "Escrever", o centro do Crônica: o capítulo na página esquerda; na direita,
+## a margem viva (o que cada frase criou, o que o mundo fez enquanto isso e o que ele
+## sugere escrever), a estante e as versões. Cada frase terminada molda o mundo.
 
 var _cap_atual := ""
 var _esq: VBoxContainer
@@ -12,11 +13,17 @@ var _rodape: RichTextLabel
 var _arvore: Tree
 var _botoes_modo: Dictionary = {}
 var _conteudo_dir: VBoxContainer
+var _spin_ano: SpinBox
+var _spin_dia: SpinBox
 
 
 func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	_esq = esq
 	_dir = dir
+	# Um universo sem nada escrito já abre numa página em branco.
+	if u.livros.is_empty():
+		var l0 := u.criar_livro("Crônica de " + u.nome)
+		u.criar_capitulo(l0, "Começo")
 	_cap_atual = dado if u.capitulos.has(dado) else ""
 	if _cap_atual == "" and livro.has_meta("ultimo_capitulo") and u.capitulos.has(livro.get_meta("ultimo_capitulo")):
 		_cap_atual = livro.get_meta("ultimo_capitulo")
@@ -44,6 +51,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 
 	_mostrar_capitulo()
 	if _cap_atual != "":
+		Escrita.preparar(u, _cap_atual)
 		Extrator.analisar(u, _cap_atual)
 	_trocar_modo(_modo_dir)
 
@@ -157,6 +165,7 @@ func _abrir_capitulo(cid: String) -> void:
 	_cap_atual = cid
 	_mostrar_capitulo()
 	if cid != "":
+		Escrita.preparar(u, cid)
 		Extrator.analisar(u, cid)
 	_atualizar_rotulo_margem()
 
@@ -243,7 +252,7 @@ func _mostrar_capitulo() -> void:
 		_esq.add_child(Tema.titulo("Escrever"))
 		_esq.add_child(Tema.ornamento())
 		var dica := Tema.rotulo("Crie um livro na estante ao lado e comece a escrever.\n\n" +
-			"Os nomes das entidades viram links sozinhos, e o que acontece no texto aparece na margem para você confirmar.",
+			"O que você escreve vira mundo: lugares, gente, criaturas, leis. E o mundo anda junto com a história.",
 			19, Tema.italico(), Tema.TINTA_SUAVE)
 		dica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		dica.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -261,12 +270,14 @@ func _mostrar_capitulo() -> void:
 	_esq.add_child(titulo)
 
 	var ano := SpinBox.new()
+	_spin_ano = ano
 	ano.min_value = -1000000
 	ano.max_value = 1000000
 	ano.value = cap["data"]["ano"]
 	ano.prefix = "Ano"
 	ano.tooltip_text = "Ano em que o capítulo acontece no mundo"
 	var dia := SpinBox.new()
+	_spin_dia = dia
 	dia.min_value = 1
 	dia.max_value = DataMundo.DIAS_POR_ANO
 	dia.value = cap["data"]["dia"]
@@ -296,7 +307,7 @@ func _mostrar_capitulo() -> void:
 
 	_editor = TextEdit.new()
 	_editor.text = cap["texto"]
-	_editor.placeholder_text = "Era uma vez…"
+	_editor.placeholder_text = "Escreva o mundo. Por exemplo:\n\nExiste apenas uma ilha, chamada Aru, com 30 pessoas. Essas pessoas precisam sobreviver. À noite, slimes começam a aparecer e atacam as pessoas."
 	_editor.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	_editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_editor.add_theme_font_override("font", Tema.escrita())
@@ -305,7 +316,7 @@ func _mostrar_capitulo() -> void:
 	_editor.text_changed.connect(func():
 		u.atualizar_capitulo(_cap_atual, {"texto": _editor.text})
 		livro.adiar(_atualizar_rodape)
-		livro.adiar(_analisar_depois_de_parar, 2.0))
+		livro.adiar(_ler_frases, 1.2))
 	_esq.add_child(_editor)
 
 	_leitura = Tema.texto_rico()
@@ -328,6 +339,25 @@ func _mostrar_capitulo() -> void:
 	_rodape.meta_clicked.connect(livro.navegar)
 	_esq.add_child(_rodape)
 	_atualizar_rodape()
+
+
+## Cada frase terminada molda o mundo (e o tempo anda); a margem mostra o que aconteceu.
+func _ler_frases() -> void:
+	if _cap_atual == "" or not u.capitulos.has(_cap_atual):
+		return
+	var novos := Escrita.processar(u, _cap_atual)
+	if novos.is_empty():
+		return
+	livro.atualizar_cabecalho()
+	var cap := u.capitulo(_cap_atual)
+	if _spin_ano != null and is_instance_valid(_spin_ano):
+		_spin_ano.set_value_no_signal(cap["data"]["ano"])
+		_spin_dia.set_value_no_signal(cap["data"]["dia"])
+	_atualizar_rodape()
+	if _modo_dir == "margem":
+		_trocar_modo("margem")
+	else:
+		_atualizar_rotulo_margem()
 
 
 func _analisar_depois_de_parar() -> void:
@@ -375,32 +405,37 @@ func _montar_margem() -> void:
 		_conteudo_dir.add_child(Tema.rotulo("Abra um capítulo para ver a margem.", 18, Tema.italico(), Tema.TINTA_SUAVE))
 		return
 	var topo := HBoxContainer.new()
-	var titulo := Tema.rotulo("Ecos do capítulo", 26, Tema.F_FELL_IT)
+	var titulo := Tema.rotulo("O mundo, enquanto você escreve", 24, Tema.F_FELL_IT)
 	titulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	topo.add_child(titulo)
-	var b_analisar := Tema.botao("Analisar agora", "Ler o capítulo de novo e propor fatos")
-	b_analisar.pressed.connect(func():
-		Extrator.analisar(u, _cap_atual)
-		_trocar_modo("margem"))
-	topo.add_child(b_analisar)
+	var tempo := CheckBox.new()
+	tempo.text = "O tempo anda"
+	tempo.tooltip_text = "Ligado: cada frase que conta algo faz o mundo andar (um dia, ou o que a frase disser: \"três anos depois\").\nDesligado: o que você escreve ainda cria e muda o mundo, mas o relógio fica parado."
+	tempo.button_pressed = not u.extras.get("escrita_sem_tempo", false)
+	tempo.toggled.connect(func(v: bool):
+		u.extras["escrita_sem_tempo"] = not v
+		u.marcar_mudanca())
+	topo.add_child(tempo)
 	_conteudo_dir.add_child(topo)
 
 	var lista := VBoxContainer.new()
-	lista.add_theme_constant_override("separation", 12)
-	_conteudo_dir.add_child(rolagem(lista))
+	lista.add_theme_constant_override("separation", 14)
+	var rol := rolagem(lista)
+	_conteudo_dir.add_child(rol)
 
 	if not cap["canon"]:
-		lista.add_child(_aviso("Rascunho", "Este capítulo é rascunho: não gera fatos nem muda o mundo. Marque \"Canon\" quando quiser que valha.", Tema.TINTA_SUAVE))
-
+		lista.add_child(_aviso("Rascunho", "Este capítulo é rascunho: o que você escreve aqui não muda o mundo. Marque \"Canon\" quando quiser que valha.", Tema.TINTA_SUAVE))
 	for a in Continuidade.verificar_capitulo(u, _cap_atual):
 		lista.add_child(_aviso("Continuidade", a["mensagem"], Tema.VERMELHO))
-
-	var pendentes := u.propostas_do_capitulo(_cap_atual)
-	if pendentes.is_empty() and cap["canon"]:
-		var vazio := Tema.rotulo("Nada novo por aqui. Escreva: quando alguém vencer, morrer, chegar a algum lugar, se casar, trair… a margem propõe o fato.", 16, Tema.italico(), Tema.TINTA_SUAVE)
+	var cards := Escrita.cartoes(u, _cap_atual)
+	if cards.is_empty() and cap["canon"]:
+		var vazio := Tema.rotulo("Escreva e veja o mundo nascer aqui: cada frase terminada vira lugares, gente, criaturas, leis e acontecimentos. Quando a história conta algo, o tempo anda e o mundo responde.", 17, Tema.italico(), Tema.TINTA_SUAVE)
 		vazio.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lista.add_child(vazio)
-	for p in pendentes:
+	for c in cards.slice(maxi(0, cards.size() - 25)):
+		lista.add_child(_cartao_da_frase(c))
+	# O que ficou de fora das frases: propostas antigas e dúvidas.
+	for p in u.propostas_do_capitulo(_cap_atual):
 		match p["status"]:
 			"pendente":
 				lista.add_child(_cartao_fato(p))
@@ -408,19 +443,90 @@ func _montar_margem() -> void:
 				lista.add_child(_cartao_eco(p))
 			"duvida":
 				lista.add_child(_cartao_duvida(p))
+	# Sempre mostra o mais recente (embaixo).
+	await livro.get_tree().process_frame
+	if is_instance_valid(rol):
+		rol.scroll_vertical = int(rol.get_v_scroll_bar().max_value)
 
-	var aceitas: Array = u.propostas.filter(func(p): return p["capitulo"] == _cap_atual and p["status"] == "aceita")
-	if not aceitas.is_empty():
-		lista.add_child(Tema.secao("Já valendo no mundo (%d)" % aceitas.size()))
-		for p in aceitas:
-			var l := Tema.rotulo("• " + p["descricao"], 16)
-			l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			var b := Tema.botao("Desfazer", "O fato continua guardado, mas deixa de valer; o mundo é recalculado sem ele")
-			b.pressed.connect(func():
-				u.desfazer_proposta(p["id"])
-				_trocar_modo("margem"))
-			lista.add_child(linha([l, b]))
+
+const CORES_ITEM := {"lugar": "#2F4F8A", "gente": "#3F6A3A", "criatura": "#7A2418", "recurso": "#8A6A1A", "pessoa": "#2E5E5A", "sentimento": "#6B3A5A", "lei": "#7A5A1A", "acao": "#1E1006"}
+const NOMES_ITEM := {"lugar": "lugar", "gente": "gente", "criatura": "criatura", "recurso": "necessidade", "pessoa": "pessoa", "sentimento": "sentimento", "lei": "lei", "acao": "aconteceu"}
+
+
+## O cartão de uma frase: o que ela criou, quanto tempo passou, o que o mundo fez e a sugestão.
+func _cartao_da_frase(c: Dictionary) -> Control:
+	var painel := PanelContainer.new()
+	var estilo := StyleBoxFlat.new()
+	estilo.bg_color = Color("#F3E4BE", 0.55)
+	estilo.border_width_left = 3
+	estilo.border_color = Color("#8E2A22", 0.55) if not c.get("desfeita", false) else Color(Tema.TINTA_SUAVE, 0.3)
+	estilo.content_margin_left = 10
+	estilo.content_margin_right = 8
+	estilo.content_margin_top = 6
+	estilo.content_margin_bottom = 6
+	painel.add_theme_stylebox_override("panel", estilo)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 3)
+	painel.add_child(v)
+	var frase := Tema.rotulo("“%s”" % str(c["frase"]), 15, Tema.italico(), Tema.TINTA_SUAVE)
+	frase.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	v.add_child(frase)
+	if c.get("desfeita", false):
+		v.add_child(Tema.rotulo(str(c.get("texto", "Desfeito: o que esta frase criou não vale mais.")), 15, Tema.italico(), Tema.TINTA_SUAVE))
+		return painel
+	var t := Tema.texto_rico()
+	t.fit_content = true
+	t.scroll_active = false
+	t.meta_clicked.connect(livro.navegar)
+	var s := ""
+	for i in c["itens"]:
+		var cor: String = CORES_ITEM.get(i["tipo"], "#1E1006")
+		var txt := Paginas._e(str(i["texto"]))
+		if str(i.get("id", "")) != "" and u.entidades.has(str(i["id"])):
+			txt = Paginas.link("ent:" + str(i["id"]), str(i["texto"]))
+		elif str(i.get("id", "")) != "" and u.fatos.existe(str(i["id"])):
+			txt = Paginas.link("fato:" + str(i["id"]), str(i["texto"]))
+		s += "[color=%s][font_size=%d]%s[/font_size][/color]  %s\n" % [cor, Tema.px(13), NOMES_ITEM.get(i["tipo"], i["tipo"]).to_upper(), txt]
+	if int(c.get("dias", 0)) > 0:
+		s += "[color=#5A3A1A][i]⧗ %s · agora é %s[/i][/color]\n" % [Vivencia._tempo(int(c["dias"])) + (" se passou" if Vivencia._tempo(int(c["dias"])).begins_with("um") else " se passaram"), DataMundo.texto(c["data"])]
+	for m in Array(c.get("mundo", [])).slice(0, 6):
+		s += "— %s\n" % Paginas.link("fato:" + str(m["fato"]), str(m["texto"]))
+	if c["itens"].is_empty() and Array(c.get("mundo", [])).is_empty() and int(c.get("dias", 0)) == 0:
+		s += "[color=#5A3A1A][i]Nada mudou no mundo com esta frase.[/i][/color]\n"
+	t.text = s.strip_edges()
+	v.add_child(t)
+	if str(c.get("raiz", "")) != "" and not c["itens"].is_empty():
+		var desfazer := Tema.botao("Desfazer", "O que esta frase criou sai do mundo (fica guardado). A frase continua no texto, mas não vale mais.")
+		desfazer.pressed.connect(func():
+			Escrita.desfazer(u, _cap_atual, str(c["raiz"]))
+			livro.atualizar_cabecalho()
+			_trocar_modo("margem"))
+		v.add_child(linha([desfazer]))
+	for pid in c.get("duvidas", []):
+		var p := u.proposta(pid)
+		if not p.is_empty() and p["status"] == "duvida":
+			v.add_child(_cartao_duvida(p))
+	if str(c.get("sugestao", "")) != "" and not c.get("sugestao_usada", false):
+		var caixa := VBoxContainer.new()
+		caixa.add_child(Tema.rotulo("O mundo sugere (com ressalva: só entra se você quiser)", 13, Tema.F_VERSALETE, Color("#2F4F8A")))
+		var sg := Tema.rotulo(str(c["sugestao"]), 16, Tema.italico(), Color("#2A3550"))
+		sg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		caixa.add_child(sg)
+		var usar := Tema.botao("Usar no texto", "O texto entra no capítulo como está (os fatos já aconteceram; nada é criado de novo)")
+		usar.pressed.connect(func():
+			Escrita.usar_sugestao(u, _cap_atual, str(c["sugestao"]))
+			c["sugestao_usada"] = true
+			if _editor != null and is_instance_valid(_editor):
+				_editor.text = u.capitulo(_cap_atual)["texto"]
+				_editor.set_caret_line(_editor.get_line_count() - 1)
+			_trocar_modo("margem"))
+		var deixar := Tema.botao("Deixar")
+		deixar.pressed.connect(func():
+			c["sugestao_usada"] = true
+			_trocar_modo("margem"))
+		caixa.add_child(linha([usar, deixar]))
+		v.add_child(caixa)
+	return painel
 
 
 func _aviso(titulo: String, texto: String, cor: Color) -> Control:

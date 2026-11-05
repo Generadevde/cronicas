@@ -60,6 +60,9 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 				continue
 			if not _deve_pensar(u, eid, int(ctrl["passos"])):
 				continue
+			# Passos curtos (a escrita anda dia a dia): cada mente pensa na mesma medida.
+			if passo < PASSO_DIAS and rng.randf() > float(passo) / PASSO_DIAS:
+				continue
 			deste_passo.append_array(Decisao.decidir(u, eid, rng, indice))
 		for sistema in u.sistemas_de_simulacao():
 			# Cada sistema tem a sua sorte (um sistema novo não muda o que os outros sorteiam).

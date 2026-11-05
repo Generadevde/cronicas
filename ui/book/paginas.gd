@@ -61,6 +61,12 @@ static func entidade(u: Universo, eid: String) -> String:
 		s += guerra(u, eid)
 	if Forcas.eh_forca(u, eid):
 		s += forca(u, eid)
+	if not Ameacas.dados(u, eid).is_empty():
+		s += secao("Ameaça") + _e(Ameacas.resumo(u, eid)) + "\n"
+	if not Recursos.de(u, eid).is_empty():
+		s += secao("Sobrevivência") + _e(Recursos.resumo(u, eid)) + "\n"
+	if Ameacas.defesa(u, eid) > 0.0:
+		s += "Defesas do lugar: %d%%\n" % int(Ameacas.defesa(u, eid) * 100)
 	s += pactos(u, eid)
 	s += criacoes(u, eid)
 	if u.estado(eid).get("apagado", false):

@@ -43,9 +43,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, _dado: String) -> void:
 	var b_todas := Tema.botao("Ver as novas" if _todas else "Edições anteriores")
 	b_todas.pressed.connect(func():
 		_todas = not _todas
-		Tema.limpar(esq)
-		Tema.limpar(dir)
-		montar(esq, dir, ""))
+		livro.ir_para_aba("jornal"))
 	topo.add_child(b_todas)
 	dir.add_child(topo)
 	var lista_b := VBoxContainer.new()

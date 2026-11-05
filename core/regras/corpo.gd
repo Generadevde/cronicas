@@ -72,7 +72,7 @@ static func fator_idade(u: Universo, eid: String) -> float:
 
 ## Chance de morrer de velhice num ano.
 static func risco_anual(idade: float, e: float) -> float:
-	if idade < e * 0.5:
+	if idade < e * 0.6:
 		return 0.0
 	return clampf(0.35 * exp((idade - e) / (e * 0.12)), 0.0, 0.7)
 
@@ -99,7 +99,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 		if causa == "":
 			causa = str(e.get("fato_criacao", ""))
 		var fid := Simulador.registrar(u, {
-			"tipo": "morte natural", "descricao": "%s morreu de velhice, aos %d anos." % [e["nome"], int(anos)],
+			"tipo": "morte natural", "descricao": ("%s morreu de velhice, aos %d anos." if anos >= expectativa(u, eid) * 0.75 else "%s morreu de uma doença, aos %d anos.") % [e["nome"], int(anos)],
 			"sujeitos": [eid], "lugar": u.estado(eid)["local"], "causas": [causa] if u.fatos.existe(causa) else [],
 			"dados": {"acao": "morte", "importancia": 0.8, "mudancas": [{"op": "morrer", "quem": eid}]},
 		})

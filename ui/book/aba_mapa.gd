@@ -29,6 +29,11 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 			sel = dado
 	if lugar != "" and (not u.entidades.has(lugar) or u.entidade(lugar)["removida"]):
 		lugar = ""
+	# Sem lugar escolhido: abre no mundo onde a história está (o único planeta, se houver um só).
+	if lugar == "" and not livro.has_meta("mapa_lugar"):
+		var planetas: Array = Mapa.filhos(u, "").filter(func(x): return Mapa.especie(u, x) == "planeta")
+		if planetas.size() == 1:
+			lugar = planetas[0]
 	_modo = str(livro.get_meta("mapa_modo", "ver"))
 	livro.set_meta("mapa_lugar", lugar)
 	livro.set_meta("mapa_sel", sel)

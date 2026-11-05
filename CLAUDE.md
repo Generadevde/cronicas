@@ -4,6 +4,8 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 
 ## Regras do projeto
 
+0. **A escrita é o centro.** O que o autor escreve molda o mundo frase a frase, e o mundo anda junto. Todo sistema novo deve poder nascer de uma frase (via `Leitor`) e aparecer na margem.
+
 1. **O banco de fatos é a verdade.** Toda mudança no mundo vira fato em `BancoDeFatos` (o quê, quem, onde, quando, origem, causas). A IA (quando existir) só dá voz e texto; nunca decide nem guarda verdade.
 2. **Todo fato registra sua causa.** Fatos de origem `simulacao` precisam de causa; `autor` e `capitulo` podem ser raízes. Causas inexistentes são recusadas.
 3. **Nada de campos fixos.** Tipos, temas, campos de ficha, sociedades etc. são texto livre. Listas de sugestão são só atalhos (`core/sugestoes.gd`).
@@ -13,9 +15,10 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 
 ## Estrutura
 
+- `core/escrita/` — **o centro**: `leitor.gd` (cada frase vira mundo: lugares, gente, criaturas, necessidades, pessoas, sentimentos, leis, tempo; cada frase tem um fato-raiz para desfazer) e `escrita.gd` (lê o capítulo frase a frase, aceita as ações, faz o tempo andar, monta os cartões da margem e a sugestão do mundo).
 - `core/` — dados e regras, sem interface: `universo.gd`, `fact_db.gd` (BancoDeFatos), `auditor.gd`, `ligador.gd` (nomes → links), `pesquisa.gd`, `biblioteca.gd` (salvar/carregar), `text_util.gd`, `data_mundo.gd`, `cronica.gd` (autoload).
 - `core/mente/` — personalidade, decisões, reações, combate, objetivos (Parte 3).
-- `core/mundo/` — mapa (lugares dentro de lugares, terreno, acidentes com nome, rios), viagens, natureza, povoador, línguas, eras/leis gerais (Parte 4).
+- `core/mundo/` — mapa (lugares dentro de lugares, terreno, acidentes com nome, rios), viagens, natureza, povoador, línguas, eras/leis gerais (Parte 4); criaturas que atacam (`ameacas.gd`) e recursos de sobrevivência (`recursos.gd`).
 - `core/regras/` — leis escritas em português (`regras.gd`), peças de efeito (`pecas.gd`), poderes, corpo e vida, "ainda sem efeito" (`pendencias.gd`) (Parte 5).
 - `core/sociedade/` — governos e sucessão (`sociedades.gd`), humor do povo e revoltas, economia, reputação relativa, família e gerações (Parte 6).
 - `core/guerra/` — forças militares (`forcas.gd`), guerras, batalhas, intervenção e pós-guerra (`guerras.gd`), lutas em aberto (`lutas.gd`), lendas, títulos e nomes (`lendas.gd`) (Parte 7).
@@ -24,7 +27,7 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 - `core/vida/` — conversar com personagens (`conversa.gd`), acompanhar e ponto de vista (`acompanhar.gd`), IA local opcional que só dá voz (`ia_local.gd`) (Parte 10); Modo Viver: viver um personagem por dentro, ações em texto livre, diário e capítulo (`vivencia.gd`) (Parte 13).
 - `core/historia/` — fios e arcos (`fios.gd`), obras (`obras.gd`), legado cultural (`legado.gd`), cronista, diretor de drama e tom (`diretor.gd`), ganchos, segredos, boatos e sementes (`enredo.gd`) (Parte 11).
 - `core/integridade/` — ramos e comparação (`laboratorio.gd`), versões (`versoes.gd`), destinos do autor (`destinos.gd`), auditores, recuperação e memória (`integridade.gd`), importar/exportar (`troca.gd`) (Parte 12).
-- `ui/` — telas montadas em código: `tema.gd` (visual de livro), `menu/`, `library/`, `book/` (livro com abas `aba_*.gd`, `paginas.gd` monta BBCode).
+- `ui/` — telas montadas em código: `tema.gd` (visual de livro), `menu/`, `library/`, `book/` (livro com quatro fitas — Escrever, O mundo, Linha do tempo, Bastidores — que juntam as abas `aba_*.gd`; `paginas.gd` monta BBCode).
 - `tests/` — `run_tests.gd` roda todos os `test_*.gd`.
 - `assets/` — fontes (OFL) e a arte do menu (feita pelo autor).
 

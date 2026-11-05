@@ -255,7 +255,7 @@ func test_aba_leis_mostra_o_que_falta() -> void:
 	await arvore.process_frame
 	livro.ir_para_aba("leis")
 	await arvore.process_frame
-	verdadeiro(livro._fitas["leis"]["botao"].text.begins_with("Leis ("), "a fita mostra quantas coisas estão sem efeito")
+	verdadeiro(livro._sub_botoes["leis"].text.begins_with("Leis ("), "a fita mostra quantas coisas estão sem efeito")
 	var item: Dictionary = Pendencias.listar(u).filter(func(i): return i["tipo"] == "campo" and i["chave"] == "segredos")[0]
 	Pendencias.definir(u, item, "fica desconfiado")
 	livro.atualizar_cabecalho()
