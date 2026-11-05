@@ -5,8 +5,8 @@ extends RefCounted
 ## recebe esse material e apenas reescreve a fala no jeito dele, sem inventar fatos.
 ##
 ## Configuração (em user://config.cfg, seção "ia"):
-##   comando = caminho do executável (ex.: llama-cli, do llama.cpp)
-##   modelo  = caminho do arquivo do modelo (.gguf)
+##   comando = caminho do executável: ollama (o plano) ou llama-cli (do llama.cpp)
+##   modelo  = o nome do modelo no Ollama (ex.: llama3.2) ou o arquivo .gguf no llama.cpp
 ## Sem isso, as conversas usam respostas montadas a partir de modelos de frase.
 
 const ARQUIVO := "user://config.cfg"
@@ -30,7 +30,15 @@ static func salvar_config(comando: String, modelo: String, ligada: bool = true) 
 
 static func disponivel() -> bool:
 	var c := config()
-	return not c.is_empty() and c["ligada"] and c["comando"] != "" and FileAccess.file_exists(c["comando"]) and (c["modelo"] == "" or FileAccess.file_exists(c["modelo"]))
+	if c.is_empty() or not c["ligada"] or c["comando"] == "" or not FileAccess.file_exists(c["comando"]):
+		return false
+	if _ollama(c):
+		return c["modelo"] != ""
+	return c["modelo"] == "" or FileAccess.file_exists(c["modelo"])
+
+
+static func _ollama(c: Dictionary) -> bool:
+	return str(c["comando"]).get_file().to_lower().begins_with("ollama")
 
 
 ## O pedido que vai para a IA: quem é o personagem, o que ele sabe (só isso), o que
@@ -55,9 +63,12 @@ static func voz(u: Universo, eid: String, pergunta: String, base: String, sabe: 
 	var c := config()
 	var pedido := montar_pedido(u, eid, pergunta, base, sabe, tom)
 	var args: Array = []
-	if c["modelo"] != "":
-		args.append_array(["-m", c["modelo"]])
-	args.append_array(["-n", "120", "--temp", "0.7", "-no-cnv", "-p", pedido])
+	if _ollama(c):
+		args = ["run", c["modelo"], pedido]
+	else:
+		if c["modelo"] != "":
+			args.append_array(["-m", c["modelo"]])
+		args.append_array(["-n", "120", "--temp", "0.7", "-no-cnv", "-p", pedido])
 	var saida: Array = []
 	var codigo := OS.execute(c["comando"], PackedStringArray(args), saida, true)
 	if codigo != 0 or saida.is_empty():

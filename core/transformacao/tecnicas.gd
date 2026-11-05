@@ -158,7 +158,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 		var tr := Personalidade.tracos(u, eid)
 		if float(tr["curiosidade"]) < 0.6 or Estado.idade(u, eid) < 16 or de(u, eid).size() >= 3:
 			continue
-		var p := 0.0012 * float(tr["curiosidade"]) * (1.0 + float(tr["ambicao"])) * (2.0 if Simulador.detalhe(u, eid) == "alto" else 1.0)
+		var p := 0.0012 * Diretor.fator(u, "invencao") * float(tr["curiosidade"]) * (1.0 + float(tr["ambicao"])) * (2.0 if Simulador.detalhe(u, eid) == "alto" else 1.0)
 		if rng.randf() < p:
 			novos.append(inventar(u, eid, rng))
 	if ano:

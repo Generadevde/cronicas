@@ -711,7 +711,7 @@ static func _evento_espontaneo(u: Universo, lugar: String, reg: Dictionary, est:
 		"fartura": 0.0009 if est in ["primavera", "verão"] else 0.0,
 	}
 	for tipo in chances:
-		if rng.randf() < float(chances[tipo]) * fator:
+		if rng.randf() < float(chances[tipo]) * fator * Diretor.fator(u, tipo):
 			var forca := rng.randf_range(0.7, 1.3)
 			var nome_ev: String = EVENTOS[tipo]["nome"]
 			var artigo := "um" if tipo in ["inverno"] else "uma"

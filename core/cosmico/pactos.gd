@@ -309,7 +309,7 @@ static func _procurar(u: Universo, ser: String, rng: RandomNumberGenerator) -> A
 			dm = d
 			melhor = eid
 	# Quanto mais sem saída, mais depressa a entidade aparece.
-	if melhor == "" or rng.randf() > 0.25 + 0.6 * (float(dm["desespero"]) - 0.55) / 0.45:
+	if melhor == "" or rng.randf() > (0.25 + 0.6 * (float(dm["desespero"]) - 0.55) / 0.45) * Diretor.fator(u, "pacto"):
 		return []
 	var preco := ler_preco(preco_escrito(u, ser), hash(melhor))
 	var causa := _causa_do_desespero(u, melhor, dm)

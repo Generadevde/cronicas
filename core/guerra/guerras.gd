@@ -244,7 +244,7 @@ static func _nome(u: Universo, a: String, b: String, motivo: String) -> String:
 	var nome := base
 	var i := 2
 	while u.entidades_ativas().any(func(e): return e["nome"] == nome):
-		nome = "%s (%s)" % [base, _ordinal(i)]
+		nome = "%s (%s)" % [base, _ordinal(i) if i <= 10 else "%dª" % i]
 		i += 1
 	return nome
 
@@ -759,12 +759,12 @@ static func _talvez_declarar(u: Universo, rng: RandomNumberGenerator) -> Array:
 		return []
 	for a in socs:
 		for b in socs:
-			if a == b or em_guerra(u, a, b) != "" or _aliados(u, a, b):
+			if a == b or em_guerra(u, a, b) != "" or _aliados(u, a, b) or _tregua(u, a, b):
 				continue
 			var m := motivo(u, a, b)
 			if float(m["forca"]) < 0.7:
 				continue
-			if rng.randf() < clampf((float(m["forca"]) - 0.7) * 0.2, 0.0, 0.3):
+			if rng.randf() < clampf((float(m["forca"]) - 0.7) * 0.2 * Diretor.fator(u, "guerra"), 0.0, 0.3):
 				var g := declarar(u, a, b, m["texto"], m["causas"])
 				if g != "":
 					return [dados(u, g)["declaracao"]]
@@ -846,6 +846,12 @@ static func _comida(u: Universo, sid: String) -> Dictionary:
 			if c > 0.95:
 				r["fartura"] = true
 		return r)
+
+
+## Depois de um tratado, uma trégua de dez anos (ninguém aguenta guerra atrás de guerra).
+static func _tregua(u: Universo, a: String, b: String) -> bool:
+	var t := _ultimo_tratado(u, a, b)
+	return t != "" and DataMundo.ordem(u.relogio) - DataMundo.ordem(u.fatos.obter(t)["data"]) < 10 * DataMundo.DIAS_POR_ANO
 
 
 static func _ultimo_tratado(u: Universo, a: String, b: String) -> String:

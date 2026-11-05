@@ -84,7 +84,11 @@ static func espalhar(u: Universo, rng: RandomNumberGenerator) -> Array:
 			for p in quem:
 				ops.append({"op": "conhecer", "quem": p, "fato": f["id"]})
 			var texto := ""
-			if lugar == "":
+			# Notícia que viaja longe chega distorcida (um boato).
+			var boato: Variant = lugar != origem and atraso >= 20 and rng.randf() < 0.25
+			if boato:
+				texto = "Um boato chegou a %s: %s" % [u.entidade(lugar).get("nome", "?") if lugar != "" else "toda parte", Enredo.distorcer(f["descricao"], rng)]
+			elif lugar == "":
 				texto = "Rumores correram pelo mundo: %s" % f["descricao"]
 			elif lugar == origem:
 				texto = "A notícia correu por %s: %s" % [u.entidade(lugar).get("nome", "?"), f["descricao"]]
@@ -96,7 +100,7 @@ static func espalhar(u: Universo, rng: RandomNumberGenerator) -> Array:
 				"sujeitos": [],
 				"lugar": lugar,
 				"causas": [f["id"]],
-				"dados": {"importancia": 0.12, "noticia_de": f["id"], "mudancas": ops},
+				"dados": {"importancia": 0.12, "noticia_de": f["id"], "boato": boato, "mudancas": ops},
 			})
 			if nid == "":
 				continue

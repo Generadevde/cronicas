@@ -19,7 +19,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 	if agora - int(ctrl["t"]) >= DataMundo.DIAS_POR_ANO:
 		ctrl["t"] = agora
 		for sid in Sociedades.todas(u):
-			if rng.randf() < 0.35:  # nem todo ano há torneio
+			if rng.randf() < 0.35 * Diretor.fator(u, "torneio"):  # nem todo ano há torneio
 				novos.append(torneio(u, sid, rng))
 	return novos.filter(func(x): return x != "")
 

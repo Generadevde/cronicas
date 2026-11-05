@@ -243,6 +243,7 @@ static func inspiracao(u: Universo, nossos: Array, deles: Array) -> float:
 	for sid in nossos:
 		for eid in _herois_de(u, sid):
 			b += 0.05
+		b += 0.03 * mini(3, Legado.cancoes_de(u, sid))  # os soldados cantam os heróis
 	return minf(b, 1.2)
 
 

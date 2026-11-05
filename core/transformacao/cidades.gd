@@ -46,6 +46,8 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 		var agora_p := porte_de(pop)
 		if antes == "":
 			u.estado(l)["porte"] = agora_p  # o porte inicial não é notícia
+			if agora_p == "ruínas":
+				u.estado(l)["ruina"] = true
 			continue
 		if agora_p != antes:
 			var cresceu := PORTES.map(func(p): return p[1]).find(agora_p) > PORTES.map(func(p): return p[1]).find(antes)

@@ -13,6 +13,7 @@ const ABAS := [
 	{"id": "cosmos", "nome": "Cosmos", "cor": "#2A2F5E", "script": preload("res://ui/book/aba_cosmos.gd")},
 	{"id": "leis", "nome": "Leis", "cor": "#7A5A1A", "script": preload("res://ui/book/aba_leis.gd")},
 	{"id": "viver", "nome": "Viver", "cor": "#3E5E3A", "script": preload("res://ui/book/aba_viver.gd")},
+	{"id": "historias", "nome": "Histórias", "cor": "#6B3A5A", "script": preload("res://ui/book/aba_historias.gd")},
 	{"id": "wiki", "nome": "Wiki", "cor": "#5B6B2A", "script": preload("res://ui/book/aba_wiki.gd")},
 	{"id": "criadores", "nome": "Criadores", "cor": "#5A3A7A", "script": preload("res://ui/book/aba_criadores.gd")},
 	{"id": "pesquisa", "nome": "Pesquisa", "cor": "#8A4E22", "script": preload("res://ui/book/aba_pesquisa.gd")},
@@ -128,9 +129,9 @@ func _construir() -> void:
 	_dir = _criar_pagina(paginas, "esquerda", 1.18)
 
 	var fitas := VBoxContainer.new()
-	fitas.add_theme_constant_override("separation", 3)
+	fitas.add_theme_constant_override("separation", 2)
 	var topo_fitas := Control.new()
-	topo_fitas.custom_minimum_size = Vector2(0, 22)
+	topo_fitas.custom_minimum_size = Vector2(0, 12)
 	fitas.add_child(topo_fitas)
 	for a in ABAS:
 		var f := Button.new()
@@ -138,7 +139,7 @@ func _construir() -> void:
 		f.focus_mode = Control.FOCUS_NONE
 		f.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		f.add_theme_font_override("font", Tema.F_FELL)
-		f.add_theme_font_size_override("font_size", Tema.px(16))
+		f.add_theme_font_size_override("font_size", Tema.px(15))
 		var claro: bool = a["id"] == "fatos"
 		var cor_texto := Color("#1E1006") if claro else Color("#F5E6C4")
 		for estado in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
@@ -180,8 +181,8 @@ func _estilizar_fitas() -> void:
 			s.bg_color = cor.lightened(0.12) if estado == "hover" else cor
 			s.content_margin_left = 14
 			s.content_margin_right = 26 if ativa else 16
-			s.content_margin_top = 4
-			s.content_margin_bottom = 4
+			s.content_margin_top = 2
+			s.content_margin_bottom = 2
 			s.corner_radius_top_right = 3
 			s.corner_radius_bottom_right = 3
 			if ativa:

@@ -161,8 +161,22 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
   - Promessas, confissões e dúvidas plantadas viram **propostas** (você aceita ou risca; avançar o tempo não aceita sozinho). A conversa pode virar **cena** (capítulo em rascunho).
   - **Acompanhar**: siga alguém por um dia, uma semana ou um mês (cena a cena, resumo do dia ou só o importante) — o que faz, o que acontece em volta, o que ouve dizer e o que pensa e sente. Salve como rascunho de capítulo.
   - **Ponto de vista**: o mundo pelos olhos dele — o que viveu, o que ouviu dizer, o que sente, o que quer e quantas coisas importantes ainda não chegaram até ele.
-- **IA local** (opcional, botão "IA local…"): um programa no seu computador (ex.: llama.cpp) só é chamado quando você conversa, e só reescreve a fala no jeito do personagem — recebe apenas o que ele sabe. Sem ela, as respostas são montadas a partir dos fatos.
+- **IA local** (opcional, botão "IA local…"): um programa no seu computador (Ollama ou llama.cpp) só é chamado quando você conversa, e só reescreve a fala no jeito do personagem — recebe apenas o que ele sabe. Sem ela, as respostas são montadas a partir dos fatos.
 - Teste do plano: perguntar a Daren por que ele odeia Kai.
+
+## Parte 11 — Histórias e cultura
+
+- **Aba Histórias**:
+  - **Fios de história**: cada objetivo forte (vingança, amor, ambição) é um fio, com estado (nascendo, crescendo, em tensão, perto do clímax, resolvido, abandonado) e os caminhos possíveis. Mudanças de rumo viram notícia ("O fio 'A vingança de Daren' mudou: Daren hesitou"). Você puxa, deixa correr ou corta; fios abandonados podem voltar anos depois. **Arcos** de personagem (da vingança para a dúvida) ficam marcados para você fechar.
+  - **Sementes**: "Surpreenda-me" — o mundo sugere uma história curta com personagens, lugar e conflito reais ("Nelia, de Sokov, esconde Tarik, ferido, em plena guerra"), com título, resumo e gancho. Você escreve, descarta ou deixa o mundo resolver.
+  - **Obras**: escritores, bardos, pintores, dramaturgos, sacerdotes e veteranos criam obras sobre o que viveram — cada uma com autor, tema real (o fato), estilo e **viés**. Obras são copiadas, proibidas, queimadas por ocupantes, perdidas em ruínas e **reencontradas**: quem acha lê com os valores do seu tempo, e as duas versões circulam (uma leitura empática diminui o rancor entre os povos).
+  - **Cultura**: o legado dos acontecimentos — guerra vira feriado ou dia de luto, herói vira canção (que dá moral na guerra), traição vira provérbio, escola vira tradição, pacto vira superstição. Legados mudam com o tempo (o luto vira festa, a canção ganha versos, o provérbio perde o sentido), e a verdade fica no fato.
+  - **Cronista**: anais do ano, biografias e relatos de guerra, como historiador neutro, com o viés de um povo ou como um bardo exagerado.
+  - **Segredos e ganchos**: quem sabe e quem suspeita de cada segredo, e quando ele vem à tona (você marca). Promessas, profecias e objetos citados voltam (a promessa é posta à prova, a profecia se cumpre, o objeto reaparece).
+  - **Diretor de drama**: ritmo (calmo, equilibrado, intenso) e tom (sombrio, esperançoso, trágico, épico, misto). Ele alterna calmaria, tensão, clímax e reconstrução, e depois de calmaria longa acende uma faísca num conflito que já existia.
+- **Boatos**: notícias que viajam longe podem chegar distorcidas ("Um boato chegou a Kresk: …").
+- IA local: agora também pelo **Ollama** (como no plano) — em "IA local…", o caminho do ollama e o nome do modelo.
+- Teste do plano: um livro escrito por um soldado, reinterpretado séculos depois.
 
 ## Ajustes de leitura
 
