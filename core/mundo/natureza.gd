@@ -674,14 +674,22 @@ static func _destino_com_comida(u: Universo, lugar: String) -> String:
 static func _fim_dos_eventos(u: Universo, lugar: String) -> Array:
 	var novos: Array = []
 	var agora := DataMundo.ordem(u.relogio)
+	# Dois acontecimentos do mesmo tipo que acabam no mesmo dia viram um fato só.
+	var por_tipo := {}
 	for ev in u.estado(lugar).get("eventos_naturais", []):
 		if ev.get("fim", false) or int(ev["ate"]) >= agora:
 			continue
-		var nome_ev: String = EVENTOS.get(ev["tipo"], {}).get("nome", ev["tipo"])
+		if not por_tipo.has(ev["tipo"]):
+			por_tipo[ev["tipo"]] = []
+		por_tipo[ev["tipo"]].append(ev)
+	for tipo in por_tipo:
+		var evs: Array = por_tipo[tipo]
+		var nome_ev: String = EVENTOS.get(tipo, {}).get("nome", tipo)
 		var fid := _fato(u, lugar, "fim de " + nome_ev, "Terminou a %s em %s." % [nome_ev, u.entidade(lugar)["nome"]] if not nome_ev in ["inverno rigoroso", "terremoto", "incêndio"] else "Terminou o %s em %s." % [nome_ev, u.entidade(lugar)["nome"]],
-			0.35, [ev["fato"]], [{"op": "fim_evento", "lugar": lugar, "evento": ev["fato"]}])
+			0.35, evs.map(func(ev): return ev["fato"]), evs.map(func(ev): return {"op": "fim_evento", "lugar": lugar, "evento": ev["fato"]}))
 		if fid == "":
-			ev["fim"] = true
+			for ev in evs:
+				ev["fim"] = true
 		novos.append(fid)
 	return novos.filter(func(f): return f != "")
 

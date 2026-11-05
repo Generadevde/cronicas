@@ -150,6 +150,27 @@ func carregar_dicionario(d: Dictionary) -> void:
 		_indexar(fato)
 
 
+## Tira fatos do banco (só o gerenciador de memória usa, depois de guardá-los no arquivo).
+func remover_varios(ids: Array) -> void:
+	var sai := {}
+	for id in ids:
+		sai[id] = true
+	for id in ids:
+		var f: Dictionary = _fatos.get(id, {})
+		if f.is_empty():
+			continue
+		for c in f["causas"]:
+			if _consequencias.has(c):
+				_consequencias[c] = Array(_consequencias[c]).filter(func(x): return not sai.has(x))
+		var envolvidos: Array = Array(f["sujeitos"]) + ([f["lugar"]] if f["lugar"] != "" else [])
+		for e in envolvidos:
+			if _por_entidade.has(e):
+				_por_entidade[e] = Array(_por_entidade[e]).filter(func(x): return not sai.has(x))
+		_consequencias.erase(id)
+		_fatos.erase(id)
+	_todos_sujo = true
+
+
 ## Uso interno do auditor e dos testes: insere sem validar (para simular dados corrompidos).
 func _inserir_cru(fato: Dictionary) -> void:
 	_seq += 1

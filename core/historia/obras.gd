@@ -213,6 +213,7 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 			novos.append(_reencontrar(u, o, rng))
 			continue
 		var lugares: Array = d.get("copias", {}).keys()
+		var copiado := {}
 		for l in lugares:
 			if not u.entidades.has(l):
 				continue
@@ -240,7 +241,8 @@ static func passo(u: Universo, dias: int, rng: RandomNumberGenerator) -> Array:
 			# Copiada: a obra se espalha para o vizinho (se não for proibida lá).
 			if rng.randf() < 0.25:
 				var viz := Aventura._vizinho(u, l)
-				if viz != "" and not d.get("proibida_em", {}).has(Sociedades.de_lugar(u, viz)):
+				if viz != "" and not copiado.has(viz) and not d.get("proibida_em", {}).has(Sociedades.de_lugar(u, viz)):
+					copiado[viz] = true
 					novos.append(Simulador.registrar(u, {"tipo": "obra copiada", "lugar": viz, "sujeitos": [o, viz], "causas": [str(u.entidade(o).get("fato_criacao", ""))],
 						"descricao": "Cópias de \"%s\" chegaram a %s." % [u.entidade(o)["nome"], u.entidade(viz)["nome"]],
 						"dados": {"importancia": 0.2, "mudancas": [{"op": "obra_copias", "obra": o, "lugar": viz, "delta": 1}]}}))

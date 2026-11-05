@@ -105,7 +105,7 @@ static func dormindo(u: Universo, eid: String) -> bool:
 ## Roda a simulação numa cópia do mundo e devolve o que vai acontecer de importante.
 ## A cópia usa a mesma semente: se ninguém mudar nada, a visão se cumpre.
 static func prever(u: Universo, dias: int = 360) -> Array:
-	var copia := Universo.de_dicionario(u.para_dicionario())
+	var copia := Universo.de_dicionario(u.para_dicionario().duplicate(true))
 	copia.id = u.id + "~visao"
 	var antes := copia.fatos.quantidade()
 	Simulador.avancar(copia, dias, {"aceitar_ecos": false})
@@ -123,7 +123,7 @@ static func prever(u: Universo, dias: int = 360) -> Array:
 ## Abre um galho: uma cópia do universo voltada para a data escolhida. Os fatos de depois
 ## continuam guardados no galho, mas fora do canon (nada se perde). Devolve o novo universo.
 static func galho(u: Universo, data: Dictionary, nome: String = "") -> Universo:
-	var copia := Universo.de_dicionario(u.para_dicionario())
+	var copia := Universo.de_dicionario(u.para_dicionario().duplicate(true))
 	copia.id = Ids.novo("uni")
 	copia.nome = nome if nome != "" else "%s — galho de %s" % [u.nome, DataMundo.texto(data)]
 	var limite := DataMundo.ordem(data)

@@ -178,6 +178,18 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - IA local: agora também pelo **Ollama** (como no plano) — em "IA local…", o caminho do ollama e o nome do modelo.
 - Teste do plano: um livro escrito por um soldado, reinterpretado séculos depois.
 
+## Parte 12 — Laboratório e integridade
+
+Aba **Laboratório**:
+
+- **Ramos (e se…?)** — abre uma cópia do universo e escreve o que muda ("o rei Ostric morre", "a general Varga dá um golpe", "o conselheiro faz um pacto com a Mãe das Cinzas"). Cada ramo avança sozinho, sem tocar o canon. **Comparar** mostra lado a lado quem governa, quem morreu, as guerras e as lendas de cada um. **Tornar canon** troca a história; a antiga fica guardada como versão.
+- **Versões** — fotos do universo para voltar atrás; voltar guarda a situação de agora antes.
+- **Destinos do autor** — "Daren encontra Kai antes do ano 420". O mundo empurra de leve (uma vontade de viajar, um sentimento, ambição), sem criar o acontecimento. Cumprido ou não, vira fato.
+- **Integridade** — auditores de causalidade, continuidade (ninguém age depois de morto), conhecimento (ninguém sabe segredo sem fonte) e simulação (nada repetido); recuperação de fatos desfeitos; memória e arquivo de notícias antigas (vão para um arquivo, nada se perde).
+- **Importar e exportar** — exporta uma pasta com `universo.json`, uma página `.md` por entidade, leis, cronologia e mapas em texto; importa universos exportados e páginas de texto (WikidPad, `.txt`, `.md`, com `chave: valor` e `[chave: valor]`).
+
+Teste: três futuros a partir da morte do rei, e um mundo povoado coerente depois de 10 mil acontecimentos.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.
