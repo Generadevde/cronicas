@@ -16,7 +16,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	_lista.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_lista.item_selected.connect(func(i: int): _mostrar(_fatos[i]["id"]))
 	esq.add_child(_lista)
-	esq.add_child(Tema.rotulo("%d fatos registrados" % u.fatos.quantidade(), 15, Tema.F_ITALICO, Tema.TINTA_SUAVE))
+	esq.add_child(Tema.rotulo("%d fatos registrados" % u.fatos.quantidade(), 15, Tema.italico(), Tema.TINTA_SUAVE))
 
 	_pagina = Tema.texto_rico()
 	_pagina.meta_clicked.connect(func(meta):

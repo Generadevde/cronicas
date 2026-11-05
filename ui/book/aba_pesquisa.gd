@@ -20,7 +20,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	_resultados.item_selected.connect(_mostrar)
 	_resultados.item_activated.connect(func(_i): _abrir_selecionado())
 	esq.add_child(_resultados)
-	var dica := Tema.rotulo("Clique duas vezes para abrir.", 15, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+	var dica := Tema.rotulo("Clique duas vezes para abrir.", 15, Tema.italico(), Tema.TINTA_SUAVE)
 	esq.add_child(dica)
 
 	_previa = Tema.texto_rico()

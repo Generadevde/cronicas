@@ -70,8 +70,8 @@ func _construir() -> void:
 	_busca = LineEdit.new()
 	_busca.placeholder_text = "Pesquisar no universo…"
 	_busca.custom_minimum_size = Vector2(220, 0)
-	_busca.add_theme_stylebox_override("normal", Tema._caixa(Color(Tema.OURO, 0.08), Color("#8A6430"), 1, 3, 12, 6))
-	_busca.add_theme_stylebox_override("focus", Tema._caixa(Color(Tema.OURO, 0.15), Tema.OURO, 1, 3, 12, 6))
+	_busca.add_theme_stylebox_override("normal", Tema._traco(Color(Tema.OURO, 0.05), Color(Tema.OURO, 0.35), 1, 6, 5))
+	_busca.add_theme_stylebox_override("focus", Tema._traco(Color(Tema.OURO, 0.1), Tema.OURO_CLARO, 1, 6, 5))
 	_busca.add_theme_color_override("font_color", Tema.TEXTO_CLARO)
 	_busca.add_theme_color_override("font_placeholder_color", Tema.TEXTO_CLARO_SUAVE)
 	_busca.add_theme_color_override("caret_color", Tema.TEXTO_CLARO)
@@ -85,18 +85,16 @@ func _construir() -> void:
 	var avancar := MenuButton.new()
 	avancar.text = "Avançar o tempo ▾"
 	avancar.flat = false
-	avancar.add_theme_stylebox_override("normal", Tema._caixa(Color(Tema.OURO, 0.08), Color("#8A6430"), 1, 3, 14, 5))
-	avancar.add_theme_stylebox_override("hover", Tema._caixa(Color(Tema.OURO, 0.25), Tema.OURO, 1, 3, 14, 5))
-	avancar.add_theme_stylebox_override("pressed", Tema._caixa(Color(Tema.OURO, 0.4), Tema.OURO_CLARO, 1, 3, 14, 5))
-	avancar.add_theme_color_override("font_color", Tema.TEXTO_CLARO)
-	avancar.add_theme_color_override("font_hover_color", Color.WHITE)
-	avancar.add_theme_font_override("font", Tema.F_FELL)
+	Tema.estilo_mesa(avancar)
 	var menu := avancar.get_popup()
 	var opcoes := [["1 dia", 1], ["1 semana", 7], ["1 mês", 30], ["1 ano", 360], ["10 anos", 3600], ["Até algo importante", -1]]
 	for i in opcoes.size():
 		menu.add_item(opcoes[i][0], i)
 	menu.id_pressed.connect(func(i: int): avancar_tempo(opcoes[i][1]))
 	topo.add_child(avancar)
+	var b_leitura := Tema.botao_mesa("Aa", "Ajustes de leitura: fonte e tamanho da letra")
+	b_leitura.pressed.connect(abrir_ajustes_de_leitura)
+	topo.add_child(b_leitura)
 	var b_estante := Tema.botao_mesa("Estante")
 	b_estante.pressed.connect(func(): Cronica.ir_para("biblioteca"))
 	topo.add_child(b_estante)
@@ -133,7 +131,7 @@ func _construir() -> void:
 		f.focus_mode = Control.FOCUS_NONE
 		f.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		f.add_theme_font_override("font", Tema.F_FELL)
-		f.add_theme_font_size_override("font_size", 17)
+		f.add_theme_font_size_override("font_size", Tema.px(17))
 		var claro: bool = a["id"] == "fatos"
 		var cor_texto := Color("#1E1006") if claro else Color("#F5E6C4")
 		for estado in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
@@ -318,6 +316,22 @@ func adiar(f: Callable, segundos: float = 0.4) -> void:
 
 
 # ---------------------------------------------------------------- diálogos
+
+## Fonte do texto, fonte da escrita e tamanho da letra. Ao confirmar, o livro se remonta.
+func abrir_ajustes_de_leitura() -> void:
+	AjustesLeitura.abrir(self, func():
+		var aba := aba_atual
+		var dado := _dado_atual
+		for c in get_children():
+			if c is Window:
+				continue
+			remove_child(c)
+			c.queue_free()
+		_fitas.clear()
+		theme = Tema.construir()
+		_construir()
+		ir_para_aba(aba, dado))
+
 
 func pedir_texto(titulo: String, dica: String, inicial: String, ao_confirmar: Callable) -> void:
 	var d := ConfirmationDialog.new()

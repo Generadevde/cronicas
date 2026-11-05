@@ -244,7 +244,7 @@ func _mostrar_capitulo() -> void:
 		_esq.add_child(Tema.ornamento())
 		var dica := Tema.rotulo("Crie um livro na estante ao lado e comece a escrever.\n\n" +
 			"Os nomes das entidades viram links sozinhos, e o que acontece no texto aparece na margem para você confirmar.",
-			19, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+			19, Tema.italico(), Tema.TINTA_SUAVE)
 		dica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		dica.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_esq.add_child(dica)
@@ -253,7 +253,7 @@ func _mostrar_capitulo() -> void:
 
 	var titulo := campo("Título do capítulo", cap["titulo"])
 	titulo.add_theme_font_override("font", Tema.F_FELL)
-	titulo.add_theme_font_size_override("font_size", 26)
+	titulo.add_theme_font_size_override("font_size", Tema.px(26))
 	titulo.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	titulo.text_changed.connect(func(t: String):
 		u.atualizar_capitulo(_cap_atual, {"titulo": t})
@@ -299,7 +299,9 @@ func _mostrar_capitulo() -> void:
 	_editor.placeholder_text = "Era uma vez…"
 	_editor.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	_editor.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_editor.add_theme_font_size_override("font_size", 20)
+	_editor.add_theme_font_override("font", Tema.escrita())
+	_editor.add_theme_font_size_override("font_size", Tema.px_escrita(21))
+	_editor.add_theme_constant_override("line_spacing", 6)
 	_editor.text_changed.connect(func():
 		u.atualizar_capitulo(_cap_atual, {"texto": _editor.text})
 		livro.adiar(_atualizar_rodape)
@@ -322,7 +324,7 @@ func _mostrar_capitulo() -> void:
 	_rodape.bbcode_enabled = true
 	_rodape.fit_content = true
 	_rodape.scroll_active = false
-	_rodape.add_theme_font_size_override("normal_font_size", 16)
+	_rodape.add_theme_font_size_override("normal_font_size", Tema.px_texto(16))
 	_rodape.meta_clicked.connect(livro.navegar)
 	_esq.add_child(_rodape)
 	_atualizar_rodape()
@@ -370,7 +372,7 @@ func _atualizar_rodape() -> void:
 func _montar_margem() -> void:
 	var cap := u.capitulo(_cap_atual)
 	if cap.is_empty():
-		_conteudo_dir.add_child(Tema.rotulo("Abra um capítulo para ver a margem.", 18, Tema.F_ITALICO, Tema.TINTA_SUAVE))
+		_conteudo_dir.add_child(Tema.rotulo("Abra um capítulo para ver a margem.", 18, Tema.italico(), Tema.TINTA_SUAVE))
 		return
 	var topo := HBoxContainer.new()
 	var titulo := Tema.rotulo("Ecos do capítulo", 26, Tema.F_FELL_IT)
@@ -395,7 +397,7 @@ func _montar_margem() -> void:
 
 	var pendentes := u.propostas_do_capitulo(_cap_atual)
 	if pendentes.is_empty() and cap["canon"]:
-		var vazio := Tema.rotulo("Nada novo por aqui. Escreva: quando alguém vencer, morrer, chegar a algum lugar, se casar, trair… a margem propõe o fato.", 16, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+		var vazio := Tema.rotulo("Nada novo por aqui. Escreva: quando alguém vencer, morrer, chegar a algum lugar, se casar, trair… a margem propõe o fato.", 16, Tema.italico(), Tema.TINTA_SUAVE)
 		vazio.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lista.add_child(vazio)
 	for p in pendentes:
@@ -439,7 +441,7 @@ func _cartao(cabecalho: String, cor: Color, descricao: String, frase: String) ->
 	d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	v.add_child(d)
 	if frase != "":
-		var f := Tema.rotulo("“%s”" % frase, 15, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+		var f := Tema.rotulo("“%s”" % frase, 15, Tema.italico(), Tema.TINTA_SUAVE)
 		f.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		v.add_child(f)
 	return v
@@ -557,7 +559,7 @@ func _montar_versoes() -> void:
 	_conteudo_dir.add_child(rolagem(lista))
 	var versoes: Array = cap.get("versoes", [])
 	if versoes.is_empty():
-		lista.add_child(Tema.rotulo("Nenhuma versão ainda. Uma versão é guardada sempre que você troca de capítulo.", 16, Tema.F_ITALICO, Tema.TINTA_SUAVE))
+		lista.add_child(Tema.rotulo("Nenhuma versão ainda. Uma versão é guardada sempre que você troca de capítulo.", 16, Tema.italico(), Tema.TINTA_SUAVE))
 	for i in range(versoes.size() - 1, -1, -1):
 		var ver: Dictionary = versoes[i]
 		var quando: String = str(ver["quando"]).replace("T", " às ")

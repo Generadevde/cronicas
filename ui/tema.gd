@@ -19,108 +19,260 @@ const VERMELHO := Color("#7A2418")
 const AZUL_LINK := Color("#233B66")
 
 const F_CORPO := preload("res://assets/fonts/EBGaramond.ttf")
-const F_ITALICO := preload("res://assets/fonts/EBGaramond-Italic.ttf")
 const F_FELL := preload("res://assets/fonts/IMFellEnglish.ttf")
 const F_FELL_IT := preload("res://assets/fonts/IMFellEnglish-Italic.ttf")
 const F_VERSALETE := preload("res://assets/fonts/IMFellEnglishSC.ttf")
 const F_GOTICA := preload("res://assets/fonts/UnifrakturMaguntia.ttf")
 
-static var _tema: Theme
+## Fontes que o autor pode escolher (Ajustes de leitura). "ajuste" corrige o
+## tamanho aparente de cada uma (a Caveat, por exemplo, é pequena).
+const FONTES := {
+	"garamond": {"nome": "EB Garamond — livro impresso", "normal": "EBGaramond.ttf", "italico": "EBGaramond-Italic.ttf", "ajuste": 1.0},
+	"fell": {"nome": "IM Fell — livro antigo", "normal": "IMFellEnglish.ttf", "italico": "IMFellEnglish-Italic.ttf", "ajuste": 1.0},
+	"kalam": {"nome": "Kalam — manuscrita, bem legível", "normal": "Kalam.ttf", "italico": "", "ajuste": 0.92},
+	"caveat": {"nome": "Caveat — escrita à mão", "normal": "Caveat.ttf", "italico": "", "ajuste": 1.22},
+	"dancing": {"nome": "Dancing Script — cursiva", "normal": "DancingScript.ttf", "italico": "", "ajuste": 1.1},
+	"petit": {"nome": "Petit Formal Script — caligrafia de pena", "normal": "PetitFormalScript.ttf", "italico": "", "ajuste": 0.88},
+}
+const PASTA_FONTES := "res://assets/fonts/"
+const CONFIG := "user://config.cfg"
+const PREFS_PADRAO := {"texto": "garamond", "escrita": "caveat", "tamanho": 1.0}
 
+static var _tema: Theme
+static var prefs: Dictionary = {}
+static var _cache_fontes: Dictionary = {}
+
+
+# ---------------------------------------------------------------- ajustes de leitura
+
+static func carregar_preferencias() -> void:
+	prefs = PREFS_PADRAO.duplicate()
+	var cfg := ConfigFile.new()
+	if cfg.load(CONFIG) == OK:
+		for k in PREFS_PADRAO:
+			prefs[k] = cfg.get_value("leitura", k, PREFS_PADRAO[k])
+	if not FONTES.has(prefs["texto"]):
+		prefs["texto"] = PREFS_PADRAO["texto"]
+	if not FONTES.has(prefs["escrita"]):
+		prefs["escrita"] = PREFS_PADRAO["escrita"]
+	prefs["tamanho"] = clampf(float(prefs["tamanho"]), 0.75, 1.6)
+
+
+## Guarda as escolhas e refaz o tema (as telas precisam se remontar depois).
+static func salvar_preferencias(novas: Dictionary) -> void:
+	_garantir_prefs()
+	for k in novas:
+		prefs[k] = novas[k]
+	prefs["tamanho"] = clampf(float(prefs["tamanho"]), 0.75, 1.6)
+	var cfg := ConfigFile.new()
+	cfg.load(CONFIG)
+	for k in PREFS_PADRAO:
+		cfg.set_value("leitura", k, prefs[k])
+	cfg.save(CONFIG)
+	_tema = null
+
+
+static func _garantir_prefs() -> void:
+	if prefs.is_empty():
+		carregar_preferencias()
+
+
+static func _fonte(arquivo: String) -> Font:
+	if not _cache_fontes.has(arquivo):
+		_cache_fontes[arquivo] = load(PASTA_FONTES + arquivo)
+	return _cache_fontes[arquivo]
+
+
+static func _fonte_de(id: String, italica: bool) -> Font:
+	var d: Dictionary = FONTES.get(id, FONTES["garamond"])
+	if italica:
+		if d["italico"] != "":
+			return _fonte(d["italico"])
+		var chave: String = "inclinada:" + id
+		if not _cache_fontes.has(chave):
+			var v := FontVariation.new()
+			v.base_font = _fonte(d["normal"])
+			v.variation_transform = Transform2D(Vector2(1, 0), Vector2(0.18, 1), Vector2.ZERO)
+			_cache_fontes[chave] = v
+		return _cache_fontes[chave]
+	return _fonte(d["normal"])
+
+
+## Fonte do texto (wiki, páginas, listas).
+static func corpo() -> Font:
+	_garantir_prefs()
+	return _fonte_de(prefs["texto"], false)
+
+
+static func italico() -> Font:
+	_garantir_prefs()
+	return _fonte_de(prefs["texto"], true)
+
+
+## Fonte da escrita (o capítulo que você escreve e lê).
+static func escrita() -> Font:
+	_garantir_prefs()
+	return _fonte_de(prefs["escrita"], false)
+
+
+static func caminho_escrita() -> String:
+	_garantir_prefs()
+	return PASTA_FONTES + FONTES[prefs["escrita"]]["normal"]
+
+
+## Tamanho em pixels já com a escala escolhida.
+static func px(tamanho: float) -> int:
+	_garantir_prefs()
+	return int(round(tamanho * float(prefs["tamanho"])))
+
+
+static func px_texto(tamanho: float) -> int:
+	_garantir_prefs()
+	return px(tamanho * float(FONTES[prefs["texto"]]["ajuste"]))
+
+
+static func px_escrita(tamanho: float) -> int:
+	_garantir_prefs()
+	return px(tamanho * float(FONTES[prefs["escrita"]]["ajuste"]))
+
+
+# ---------------------------------------------------------------- o tema
 
 static func construir() -> Theme:
 	if _tema != null:
 		return _tema
+	_garantir_prefs()
 	var t := Theme.new()
-	t.default_font = F_CORPO
-	t.default_font_size = 19
+	t.default_font = corpo()
+	t.default_font_size = px_texto(19)
 
 	var negrito := FontVariation.new()
-	negrito.base_font = F_CORPO
+	negrito.base_font = corpo()
 	negrito.variation_embolden = 0.7
 
 	for tipo in ["Label", "CheckBox", "CheckButton", "ItemList", "Tree", "LineEdit", "TextEdit",
 			"RichTextLabel", "AcceptDialog", "PopupMenu", "SpinBox"]:
 		t.set_color("font_color", tipo, TINTA)
 	t.set_color("default_color", "RichTextLabel", TINTA)
-	t.set_font("normal_font", "RichTextLabel", F_CORPO)
-	t.set_font("italics_font", "RichTextLabel", F_ITALICO)
+	t.set_font("normal_font", "RichTextLabel", corpo())
+	t.set_font("italics_font", "RichTextLabel", italico())
 	t.set_font("bold_font", "RichTextLabel", negrito)
-	t.set_font_size("normal_font_size", "RichTextLabel", 19)
-	t.set_font_size("italics_font_size", "RichTextLabel", 19)
-	t.set_font_size("bold_font_size", "RichTextLabel", 19)
+	for k in ["normal_font_size", "italics_font_size", "bold_font_size"]:
+		t.set_font_size(k, "RichTextLabel", px_texto(19))
 	t.set_color("selection_color", "RichTextLabel", Color(OURO, 0.4))
+	t.set_constant("line_separation", "RichTextLabel", 2)
 
-	# Botões: moldura de tinta sobre papel, dourado ao passar o mouse.
+	# Botões: só a palavra, com um traço de tinta embaixo. Ao passar o mouse o
+	# traço escurece e ganha um leve brilho de vela; marcado, o traço fica grosso.
 	t.set_font("font", "Button", F_FELL)
-	t.set_font_size("font_size", "Button", 19)
+	t.set_font_size("font_size", "Button", px(19))
 	t.set_color("font_color", "Button", TINTA)
-	t.set_color("font_hover_color", "Button", TINTA)
-	t.set_color("font_pressed_color", "Button", TINTA)
+	t.set_color("font_hover_color", "Button", Color("#6A3410"))
+	t.set_color("font_pressed_color", "Button", VERMELHO)
+	t.set_color("font_hover_pressed_color", "Button", VERMELHO)
 	t.set_color("font_focus_color", "Button", TINTA)
-	t.set_color("font_disabled_color", "Button", Color(TINTA, 0.4))
-	t.set_stylebox("normal", "Button", _caixa(Color(PAPEL_CLARO, 0.55), TINTA_SUAVE, 1, 2, 12, 5))
-	t.set_stylebox("hover", "Button", _caixa(Color(OURO_CLARO, 0.45), OURO, 2, 2, 12, 5))
-	t.set_stylebox("pressed", "Button", _caixa(Color(OURO, 0.6), TINTA, 2, 2, 12, 5))
-	t.set_stylebox("focus", "Button", _caixa(Color(0, 0, 0, 0), OURO, 2, 2, 12, 5))
-	t.set_stylebox("disabled", "Button", _caixa(Color(PAPEL_CLARO, 0.25), Color(TINTA_SUAVE, 0.4), 1, 2, 12, 5))
+	t.set_color("font_disabled_color", "Button", Color(TINTA, 0.35))
+	t.set_stylebox("normal", "Button", _traco(Color(0, 0, 0, 0), Color(TINTA_SUAVE, 0.35), 1))
+	t.set_stylebox("hover", "Button", _traco(Color(OURO_CLARO, 0.16), Color("#8A5A20"), 1))
+	t.set_stylebox("pressed", "Button", _traco(Color(OURO, 0.14), VERMELHO, 2))
+	t.set_stylebox("hover_pressed", "Button", _traco(Color(OURO, 0.2), VERMELHO, 2))
+	t.set_stylebox("focus", "Button", _traco(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0))
+	t.set_stylebox("disabled", "Button", _traco(Color(0, 0, 0, 0), Color(TINTA_SUAVE, 0.15), 1))
+	for tipo in ["OptionButton", "MenuButton"]:
+		for estado in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+			t.set_stylebox(estado, tipo, t.get_stylebox(estado, "Button"))
+		t.set_font("font", tipo, F_FELL)
+		t.set_font_size("font_size", tipo, px(18))
+		t.set_color("font_color", tipo, TINTA)
+		t.set_color("font_hover_color", tipo, Color("#6A3410"))
+		t.set_color("font_pressed_color", tipo, TINTA)
+		t.set_color("font_focus_color", tipo, TINTA)
 
-	# Campos de texto: papel um pouco mais claro com borda fina.
-	var campo := _caixa(Color(PAPEL_CLARO, 0.7), Color(TINTA_SUAVE, 0.6), 1, 2, 10, 6)
-	var campo_foco := _caixa(Color(PAPEL_CLARO, 0.9), OURO, 2, 2, 10, 6)
+	# Campos: sem caixa, só a linha do caderno; com foco, a linha fica dourada.
+	var campo := _traco(Color(PAPEL_CLARO, 0.25), Color(TINTA_SUAVE, 0.45), 1, 4, 4)
+	var campo_foco := _traco(Color(PAPEL_CLARO, 0.45), Color("#9A6A24"), 2, 4, 4)
 	for tipo in ["LineEdit", "TextEdit"]:
 		t.set_stylebox("normal", tipo, campo)
 		t.set_stylebox("focus", tipo, campo_foco)
 		t.set_stylebox("read_only", tipo, campo)
 		t.set_color("caret_color", tipo, TINTA)
 		t.set_color("selection_color", tipo, Color(OURO, 0.45))
-		t.set_color("font_placeholder_color", tipo, Color(TINTA_SUAVE, 0.65))
+		t.set_color("font_placeholder_color", tipo, Color(TINTA_SUAVE, 0.6))
 		t.set_color("font_readonly_color", tipo, TINTA_SUAVE)
 	t.set_color("background_color", "TextEdit", Color(0, 0, 0, 0))
 
-	# Listas e árvores: transparentes sobre o papel.
-	var lista := _caixa(Color(PAPEL_CLARO, 0.35), Color(TINTA_SUAVE, 0.35), 1, 2, 6, 6)
-	var selecionado := _caixa(Color(OURO, 0.45), Color(0, 0, 0, 0), 0, 2, 4, 2)
+	# Listas: direto no papel; o item escolhido ganha uma fita de tinta à esquerda.
+	var lista := _caixa(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 2, 4)
+	var selecionado := _caixa(Color(OURO, 0.22), Color(0, 0, 0, 0), 0, 0, 6, 2)
+	selecionado.border_width_left = 3
+	selecionado.border_color = VERMELHO
+	var sobre := _caixa(Color(OURO_CLARO, 0.14), Color(0, 0, 0, 0), 0, 0, 6, 2)
 	for tipo in ["ItemList", "Tree"]:
 		t.set_stylebox("panel", tipo, lista)
 		t.set_stylebox("focus", tipo, _caixa(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 0, 0))
 		t.set_stylebox("selected", tipo, selecionado)
 		t.set_stylebox("selected_focus", tipo, selecionado)
-		t.set_stylebox("hovered", tipo, _caixa(Color(OURO_CLARO, 0.2), Color(0, 0, 0, 0), 0, 2, 4, 2))
+		t.set_stylebox("hovered", tipo, sobre)
 		t.set_color("font_selected_color", tipo, TINTA)
 		t.set_color("font_hovered_color", tipo, TINTA)
-		t.set_color("guide_color", tipo, Color(0, 0, 0, 0))
+		t.set_color("guide_color", tipo, Color(TINTA_SUAVE, 0.12))
+		t.set_constant("v_separation", tipo, 6)
 	t.set_stylebox("cursor", "Tree", selecionado)
 	t.set_stylebox("cursor_unfocused", "Tree", selecionado)
 	t.set_color("children_hl_line_color", "Tree", Color(0, 0, 0, 0))
 	t.set_color("relationship_line_color", "Tree", Color(TINTA_SUAVE, 0.3))
 
 	# Janelas e menus: pergaminho.
-	var pergaminho := _caixa(PAPEL, PAPEL_BORDA, 2, 4, 18, 14)
+	var pergaminho := _caixa(PAPEL, PAPEL_BORDA, 1, 3, 20, 16)
 	pergaminho.shadow_color = Color(0, 0, 0, 0.5)
-	pergaminho.shadow_size = 12
-	t.set_stylebox("panel", "AcceptDialog", pergaminho)
-	t.set_stylebox("embedded_border", "Window", pergaminho)
-	t.set_stylebox("embedded_unfocused_border", "Window", pergaminho)
+	pergaminho.shadow_size = 14
+	t.set_stylebox("panel", "AcceptDialog", _caixa(PAPEL, Color(0, 0, 0, 0), 0, 0, 20, 14))
+	var moldura := _caixa(PAPEL, PAPEL_BORDA, 1, 3, 0, 0)
+	moldura.shadow_color = Color(0, 0, 0, 0.5)
+	moldura.shadow_size = 14
+	moldura.expand_margin_top = 38
+	moldura.expand_margin_left = 12
+	moldura.expand_margin_right = 12
+	moldura.expand_margin_bottom = 12
+	t.set_stylebox("embedded_border", "Window", moldura)
+	t.set_stylebox("embedded_unfocused_border", "Window", moldura)
+	t.set_constant("title_height", "Window", 34)
+	t.set_font_size("title_font_size", "Window", px(18))
+	t.set_color("close_color", "Window", TINTA_SUAVE)
 	t.set_color("title_color", "Window", TINTA)
 	t.set_font("title_font", "Window", F_VERSALETE)
 	t.set_stylebox("panel", "PopupMenu", pergaminho)
-	t.set_stylebox("hover", "PopupMenu", selecionado)
-	t.set_color("font_hover_color", "PopupMenu", TINTA)
+	t.set_stylebox("hover", "PopupMenu", sobre)
+	t.set_color("font_hover_color", "PopupMenu", VERMELHO)
+	t.set_font("font", "PopupMenu", F_FELL)
+	t.set_font_size("font_size", "PopupMenu", px(18))
 	t.set_stylebox("panel", "PanelContainer", _caixa(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 0, 0))
 	t.set_stylebox("panel", "TooltipPanel", pergaminho)
 	t.set_color("font_color", "TooltipLabel", TINTA)
+
+	# Barras de rolagem: um fio fino de tinta.
+	for tipo in ["VScrollBar", "HScrollBar"]:
+		t.set_stylebox("scroll", tipo, _caixa(Color(TINTA_SUAVE, 0.06), Color(0, 0, 0, 0), 0, 3, 3, 3))
+		t.set_stylebox("grabber", tipo, _caixa(Color(TINTA_SUAVE, 0.35), Color(0, 0, 0, 0), 0, 3, 3, 3))
+		t.set_stylebox("grabber_highlight", tipo, _caixa(Color(TINTA_SUAVE, 0.55), Color(0, 0, 0, 0), 0, 3, 3, 3))
+		t.set_stylebox("grabber_pressed", tipo, _caixa(Color(VERMELHO, 0.6), Color(0, 0, 0, 0), 0, 3, 3, 3))
+
+	# Controles deslizantes (o tamanho da letra).
+	t.set_stylebox("slider", "HSlider", _caixa(Color(TINTA_SUAVE, 0.35), Color(0, 0, 0, 0), 0, 2, 0, 2))
+	t.set_stylebox("grabber_area", "HSlider", _caixa(Color(VERMELHO, 0.7), Color(0, 0, 0, 0), 0, 2, 0, 2))
+	t.set_stylebox("grabber_area_highlight", "HSlider", _caixa(VERMELHO, Color(0, 0, 0, 0), 0, 2, 0, 2))
 
 	var sem_caixa := _caixa(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 0, 4, 2)
 	for estado in ["normal", "hover", "pressed", "focus", "hover_pressed", "disabled"]:
 		t.set_stylebox(estado, "CheckBox", sem_caixa)
 	t.set_constant("separation", "VBoxContainer", 8)
-	t.set_constant("separation", "HBoxContainer", 8)
+	t.set_constant("separation", "HBoxContainer", 14)
 	t.set_color("font_color", "CheckBox", TINTA)
-	t.set_color("font_hover_color", "CheckBox", TINTA)
+	t.set_color("font_hover_color", "CheckBox", Color("#6A3410"))
 	t.set_color("font_pressed_color", "CheckBox", TINTA)
 	t.set_color("font_focus_color", "CheckBox", TINTA)
 	t.set_color("font_hover_pressed_color", "CheckBox", TINTA)
+	t.set_font("font", "CheckBox", F_FELL)
 	_tema = t
 	return t
 
@@ -135,6 +287,21 @@ static func _caixa(fundo: Color, borda: Color, largura: int, raio: int, mx: int,
 	s.content_margin_right = mx
 	s.content_margin_top = my
 	s.content_margin_bottom = my
+	return s
+
+
+## Só um traço embaixo (botões e campos), com um fundo quase invisível.
+static func _traco(fundo: Color, linha: Color, largura: int, mx: int = 6, my: int = 3) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = fundo
+	s.border_color = linha
+	s.border_width_bottom = largura
+	s.corner_radius_top_left = 2
+	s.corner_radius_top_right = 2
+	s.content_margin_left = mx
+	s.content_margin_right = mx
+	s.content_margin_top = my
+	s.content_margin_bottom = my + (2 - largura if largura < 2 else 0)
 	return s
 
 
@@ -216,7 +383,7 @@ static func estilo_capa() -> StyleBoxFlat:
 static func rotulo(texto: String, tamanho: int = 19, fonte: Font = null, cor: Color = TINTA) -> Label:
 	var l := Label.new()
 	l.text = texto
-	l.add_theme_font_size_override("font_size", tamanho)
+	l.add_theme_font_size_override("font_size", px_texto(tamanho) if (fonte == null or fonte == italico()) else px(tamanho))
 	if fonte != null:
 		l.add_theme_font_override("font", fonte)
 	l.add_theme_color_override("font_color", cor)
@@ -244,9 +411,9 @@ static func botao(texto: String, dica: String = "") -> Button:
 ## Botão dourado com brilho, como o "Continuar" do menu.
 static func botao_principal(texto: String) -> Button:
 	var b := botao(texto)
-	var s := _caixa(OURO, OURO_CLARO, 1, 2, 16, 6)
-	s.shadow_color = Color(OURO_CLARO, 0.45)
-	s.shadow_size = 6
+	var s := _caixa(Color(OURO, 0.9), OURO_CLARO, 1, 3, 18, 6)
+	s.shadow_color = Color(OURO_CLARO, 0.35)
+	s.shadow_size = 5
 	b.add_theme_stylebox_override("normal", s)
 	var h := s.duplicate()
 	h.bg_color = OURO_CLARO
@@ -256,17 +423,26 @@ static func botao_principal(texto: String) -> Button:
 	return b
 
 
-## Botão para usar sobre a mesa escura.
-static func botao_mesa(texto: String) -> Button:
-	var b := botao(texto)
-	b.add_theme_stylebox_override("normal", _caixa(Color(OURO, 0.08), Color("#8A6430"), 1, 3, 14, 5))
-	b.add_theme_stylebox_override("hover", _caixa(Color(OURO, 0.25), OURO, 1, 3, 14, 5))
-	b.add_theme_stylebox_override("pressed", _caixa(Color(OURO, 0.4), OURO_CLARO, 1, 3, 14, 5))
-	b.add_theme_color_override("font_color", TEXTO_CLARO)
-	b.add_theme_color_override("font_hover_color", Color.WHITE)
-	b.add_theme_color_override("font_pressed_color", Color.WHITE)
-	b.add_theme_color_override("font_focus_color", TEXTO_CLARO)
+## Botão para usar sobre a mesa escura: palavra clara com um fio dourado embaixo.
+static func botao_mesa(texto: String, dica: String = "") -> Button:
+	var b := botao(texto, dica)
+	estilo_mesa(b)
 	return b
+
+
+static func estilo_mesa(b: Control) -> void:
+	b.add_theme_stylebox_override("normal", _traco(Color(0, 0, 0, 0), Color(OURO, 0.35), 1, 8, 4))
+	b.add_theme_stylebox_override("hover", _traco(Color(OURO, 0.08), OURO_CLARO, 1, 8, 4))
+	b.add_theme_stylebox_override("pressed", _traco(Color(OURO, 0.14), OURO_CLARO, 2, 8, 4))
+	b.add_theme_stylebox_override("hover_pressed", _traco(Color(OURO, 0.14), OURO_CLARO, 2, 8, 4))
+	b.add_theme_stylebox_override("focus", _traco(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0, 8, 4))
+	b.add_theme_color_override("font_color", TEXTO_CLARO)
+	b.add_theme_color_override("font_hover_color", OURO_CLARO)
+	b.add_theme_color_override("font_pressed_color", OURO_CLARO)
+	b.add_theme_color_override("font_hover_pressed_color", OURO_CLARO)
+	b.add_theme_color_override("font_focus_color", TEXTO_CLARO)
+	b.add_theme_font_override("font", F_FELL)
+	b.add_theme_font_size_override("font_size", px(19))
 
 
 static func ornamento() -> Label:

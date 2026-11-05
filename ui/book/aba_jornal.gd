@@ -24,7 +24,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, _dado: String) -> void:
 	lista_m.add_theme_constant_override("separation", 14)
 	esq.add_child(rolagem(lista_m))
 	if manchetes.is_empty():
-		var vazio := Tema.rotulo("Nenhuma grande notícia. Avance o tempo do mundo (no alto da tela) ou escreva: o mundo responde.", 18, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+		var vazio := Tema.rotulo("Nenhuma grande notícia. Avance o tempo do mundo (no alto da tela) ou escreva: o mundo responde.", 18, Tema.italico(), Tema.TINTA_SUAVE)
 		vazio.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		lista_m.add_child(vazio)
 	for f in manchetes.slice(0, 30):
@@ -52,7 +52,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, _dado: String) -> void:
 	lista_b.add_theme_constant_override("separation", 10)
 	dir.add_child(rolagem(lista_b))
 	if bilhetes.is_empty():
-		lista_b.add_child(Tema.rotulo("Nenhum bilhete.", 17, Tema.F_ITALICO, Tema.TINTA_SUAVE))
+		lista_b.add_child(Tema.rotulo("Nenhum bilhete.", 17, Tema.italico(), Tema.TINTA_SUAVE))
 	for f in bilhetes.slice(0, 60):
 		lista_b.add_child(_noticia(f, false))
 

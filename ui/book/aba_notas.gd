@@ -9,7 +9,7 @@ var _atual := ""
 func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	_dir = dir
 	esq.add_child(Tema.secao("Notas do autor"))
-	var aviso := Tema.rotulo("Só você lê. O mundo nunca toca nestas páginas.", 15, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+	var aviso := Tema.rotulo("Só você lê. O mundo nunca toca nestas páginas.", 15, Tema.italico(), Tema.TINTA_SUAVE)
 	aviso.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	esq.add_child(aviso)
 	_lista = ItemList.new()
@@ -54,18 +54,20 @@ func _abrir(nid: String) -> void:
 	if n.is_empty():
 		_dir.add_child(Tema.titulo("Notas"))
 		_dir.add_child(Tema.ornamento())
-		var dica := Tema.rotulo("Ideias soltas, segredos, planos para o futuro.\nCrie uma nota ao lado.", 19, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+		var dica := Tema.rotulo("Ideias soltas, segredos, planos para o futuro.\nCrie uma nota ao lado.", 19, Tema.italico(), Tema.TINTA_SUAVE)
 		dica.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_dir.add_child(dica)
 		return
 	var titulo := campo("Título", n["titulo"])
 	titulo.add_theme_font_override("font", Tema.F_FELL)
-	titulo.add_theme_font_size_override("font_size", 26)
+	titulo.add_theme_font_size_override("font_size", Tema.px(26))
 	var texto := TextEdit.new()
 	texto.text = n["texto"]
 	texto.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	texto.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	texto.placeholder_text = "Escreva…"
+	texto.add_theme_font_override("font", Tema.escrita())
+	texto.add_theme_font_size_override("font_size", Tema.px_escrita(21))
 	var salvar := func():
 		u.atualizar_nota(_atual, titulo.text, texto.text)
 		for i in _lista.item_count:

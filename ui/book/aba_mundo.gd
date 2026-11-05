@@ -41,7 +41,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 			ritmo.select(i)
 	ritmo.item_selected.connect(func(i: int): livro.definir_ritmo(ritmos[i][1]))
 	esq.add_child(ritmo)
-	var explica := Tema.rotulo("Com o mundo vivo, o tempo corre enquanto o livro está aberto. O lugar do capítulo que você está escrevendo fica parado (em foco).", 15, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+	var explica := Tema.rotulo("Com o mundo vivo, o tempo corre enquanto o livro está aberto. O lugar do capítulo que você está escrevendo fica parado (em foco).", 15, Tema.italico(), Tema.TINTA_SUAVE)
 	explica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	esq.add_child(explica)
 
@@ -136,7 +136,7 @@ func _linha_do_tempo() -> void:
 		var ano: int = int(f["data"]["ano"])
 		if ano != ano_atual:
 			ano_atual = ano
-			s += "\n[font=%s][font_size=22]Ano %d[/font_size][/font]\n" % [Paginas.GOTICA, ano]
+			s += "\n[font=%s][font_size=%d]Ano %d[/font_size][/font]\n" % [Paginas.GOTICA, Tema.px(22), ano]
 		var origem := ""
 		match f["origem"].get("tipo", ""):
 			BancoDeFatos.ORIGEM_CAPITULO:

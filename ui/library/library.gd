@@ -62,11 +62,11 @@ func _ready() -> void:
 	_nome = LineEdit.new()
 	_nome.placeholder_text = "Como se chama este universo?"
 	_nome.add_theme_font_override("font", Tema.F_FELL)
-	_nome.add_theme_font_size_override("font_size", 24)
+	_nome.add_theme_font_size_override("font_size", Tema.px(24))
 	dir.add_child(_nome)
 	dir.add_child(Tema.secao("Descreva o universo"))
 	var dica := Tema.rotulo("Tema, tom, época, inspirações, regras, o que existe e o que não existe. " +
-		"Escreva do seu jeito, sem lista nem campo fixo.", 16, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+		"Escreva do seu jeito, sem lista nem campo fixo.", 16, Tema.italico(), Tema.TINTA_SUAVE)
 	dica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	dir.add_child(dica)
 	_descricao = TextEdit.new()
@@ -78,7 +78,7 @@ func _ready() -> void:
 	var criar := Tema.botao_principal("Criar e abrir")
 	criar.pressed.connect(_criar)
 	linha.add_child(criar)
-	_status = Tema.rotulo("", 16, Tema.F_ITALICO, Tema.VERMELHO)
+	_status = Tema.rotulo("", 16, Tema.italico(), Tema.VERMELHO)
 	linha.add_child(_status)
 	dir.add_child(linha)
 
@@ -103,7 +103,7 @@ func _preencher() -> void:
 	Tema.limpar(_lista)
 	var universos := Cronica.biblioteca.listar()
 	if universos.is_empty():
-		var vazio := Tema.rotulo("A estante está vazia.\nCrie o seu primeiro universo na página ao lado.", 19, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+		var vazio := Tema.rotulo("A estante está vazia.\nCrie o seu primeiro universo na página ao lado.", 19, Tema.italico(), Tema.TINTA_SUAVE)
 		vazio.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vazio.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_lista.add_child(vazio)
@@ -113,7 +113,7 @@ func _preencher() -> void:
 		cartao.add_theme_constant_override("separation", 2)
 		cartao.add_child(Tema.rotulo(info["nome"], 28, Tema.F_GOTICA))
 		if info["descricao"] != "":
-			var d := Tema.rotulo(TextUtil.trecho(info["descricao"], 0, 160), 16, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+			var d := Tema.rotulo(TextUtil.trecho(info["descricao"], 0, 160), 16, Tema.italico(), Tema.TINTA_SUAVE)
 			d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			cartao.add_child(d)
 		var quando := Tema.rotulo("atualizado em " + str(info["atualizado_em"]).replace("T", " às ").substr(0, 22), 14, Tema.F_FELL_IT, Tema.TINTA_SUAVE)

@@ -79,6 +79,10 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - **Linha do tempo** e **Observatório** (o que aconteceu com alguém, quem o influenciou)
 - Mesma semente = mesmo mundo (a simulação é reproduzível)
 
+## Ajustes de leitura
+
+No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.
+
 O programa completo e polido fica para o fim da Parte 13. Até lá, cada parte termina com testes e uma tela de depuração.
 
 ## Plano
@@ -87,4 +91,4 @@ O programa completo e polido fica para o fim da Parte 13. Até lá, cada parte t
 
 ## Licenças
 
-Fontes (SIL Open Font License, em `assets/fonts/`): EB Garamond, IM FELL English, UnifrakturMaguntia. A arte do menu é do autor do projeto.
+Fontes (SIL Open Font License, em `assets/fonts/`): EB Garamond, IM FELL English, UnifrakturMaguntia, Caveat, Kalam, Dancing Script, Petit Formal Script. A arte do menu é do autor do projeto.

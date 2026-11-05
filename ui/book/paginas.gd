@@ -12,7 +12,7 @@ static func _e(t: String) -> String:
 
 
 static func cabecalho(titulo: String, subtitulo: String = "") -> String:
-	var s := "[center][font=%s][font_size=40]%s[/font_size][/font][/center]\n" % [GOTICA, _e(titulo)]
+	var s := "[center][font=%s][font_size=%d]%s[/font_size][/font][/center]\n" % [GOTICA, Tema.px(40), _e(titulo)]
 	if subtitulo != "":
 		s += "[center][i]%s[/i][/center]\n" % subtitulo
 	s += "[center][color=#5A3A1A]—— ◆ ——[/color][/center]\n"
@@ -20,7 +20,7 @@ static func cabecalho(titulo: String, subtitulo: String = "") -> String:
 
 
 static func secao(texto: String) -> String:
-	return "\n[font=%s][font_size=17][color=#5A3A1A]%s[/color][/font_size][/font]\n" % [VERSALETE, _e(texto)]
+	return "\n[font=%s][font_size=%d][color=#5A3A1A]%s[/color][/font_size][/font]\n" % [VERSALETE, Tema.px(17), _e(texto)]
 
 
 static func link(meta: String, texto: String) -> String:
@@ -193,7 +193,7 @@ static func capitulo(u: Universo, cid: String) -> String:
 	if texto.strip_edges() == "":
 		s += "\n[i]Página em branco.[/i]"
 	else:
-		s += "\n" + lig.para_bbcode(texto)
+		s += "\n[font=%s][font_size=%d]%s[/font_size][/font]" % [Tema.caminho_escrita(), Tema.px_escrita(21), lig.para_bbcode(texto)]
 	return s
 
 

@@ -157,3 +157,34 @@ func _apagar_pasta(caminho: String) -> void:
 	for arq in DirAccess.get_files_at(caminho):
 		DirAccess.remove_absolute(caminho + "/" + arq)
 	DirAccess.remove_absolute(caminho)
+
+
+func test_ajustes_de_leitura() -> void:
+	var antes := Tema.prefs.duplicate()
+	Tema.salvar_preferencias({"texto": "kalam", "escrita": "petit", "tamanho": 1.2})
+	Tema.carregar_preferencias()
+	igual(Tema.prefs["texto"], "kalam", "fonte do texto guardada")
+	igual(Tema.prefs["escrita"], "petit", "fonte da escrita guardada")
+	igual(Tema.px(20), 24, "tamanho com escala")
+	verdadeiro(Tema.escrita() != null and Tema.italico() != null, "fontes carregam")
+	verdadeiro(Tema.construir().default_font == Tema.corpo(), "tema usa a fonte escolhida")
+	Tema.salvar_preferencias({"texto": "inexistente", "tamanho": 9.0})
+	Tema.carregar_preferencias()
+	igual(Tema.prefs["texto"], "garamond", "fonte desconhecida volta ao padrão")
+	igual(Tema.prefs["tamanho"], 1.6, "tamanho limitado")
+	# A janela monta e o livro se remonta depois de aplicar.
+	var c := _cronica()
+	_universo_exemplo(c)
+	var livro := _abrir("res://ui/book/book.tscn")
+	livro.ir_para_aba("escrever")
+	var d := AjustesLeitura.abrir(livro, func(): pass)
+	verdadeiro(d != null, "janela de ajustes abre")
+	d.hide()
+	Tema.salvar_preferencias(antes if not antes.is_empty() else Tema.PREFS_PADRAO)
+	livro.abrir_ajustes_de_leitura()
+	for w in livro.get_children():
+		if w is ConfirmationDialog and w.title == "Ajustes de leitura":
+			w.confirmed.emit()
+	verdadeiro(livro.aba_atual == "escrever", "continua na aba")
+	var timers := livro.get_children().filter(func(n): return n is Timer).size()
+	igual(timers, 1, "remontar não duplica o relógio do mundo vivo")

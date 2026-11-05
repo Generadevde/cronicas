@@ -95,7 +95,7 @@ func _acao(id: String) -> void:
 		"biblioteca":
 			Cronica.ir_para("biblioteca")
 		"configuracoes":
-			_aviso("Configurações", "As configurações (ritmo do mundo, aparência, idioma, IA local) chegam nas próximas partes.")
+			AjustesLeitura.abrir(self, func(): theme = Tema.construir())
 		"ajuda":
 			_aviso("Ajuda", "Bem-vindo, Autor.\n\n" +
 				"• Biblioteca: seus universos. Crie um novo descrevendo-o com suas palavras.\n" +

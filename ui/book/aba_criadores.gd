@@ -75,7 +75,7 @@ func _editar(eid: String) -> void:
 	form.add_child(mente)
 
 	form.add_child(Tema.secao("Ficha"))
-	var explica := Tema.rotulo("Cada linha é um campo livre: dê o nome que quiser e escreva à vontade.", 16, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+	var explica := Tema.rotulo("Cada linha é um campo livre: dê o nome que quiser e escreva à vontade.", 16, Tema.italico(), Tema.TINTA_SUAVE)
 	explica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	form.add_child(explica)
 	_campos_box = VBoxContainer.new()
@@ -111,7 +111,7 @@ func _editar(eid: String) -> void:
 					_preencher()
 					_editar("")))
 			botoes.append(b_ret)
-	_status = Tema.rotulo("", 16, Tema.F_ITALICO, Tema.TINTA_SUAVE)
+	_status = Tema.rotulo("", 16, Tema.italico(), Tema.TINTA_SUAVE)
 	botoes.append(_status)
 	_dir.add_child(linha(botoes))
 	if e.is_empty():
