@@ -32,6 +32,10 @@ static func de(u: Universo, eid: String) -> Array:
 			for m in lig.encontrar(c["valor"]):
 				if eh_poder(u, m["entidade"]) and not lista.has(m["entidade"]):
 					lista.append(m["entidade"])
+	# Técnicas que a pessoa aprendeu (ou inventou).
+	for t in u.estado(eid).get("tecnicas", []):
+		if u.entidades.has(t) and eh_poder(u, t) and not lista.has(t):
+			lista.append(t)
 	var nome := TextUtil.chave(u.entidade(eid).get("nome", ""))
 	for p in u.entidades_ativas():
 		if not eh_poder(u, p["id"]) or lista.has(p["id"]):
@@ -70,7 +74,7 @@ static func bonus(u: Universo, pid: String) -> float:
 	if v == "":
 		v = u.valor_campo(pid, "potência")
 	var n := Combate.ler_numero(v) if v != "" else -1.0
-	var b := 1.0 + (0.3 if n < 0 else clampf(n / 10.0, 0.05, 3.0))
+	var b := 1.0 + (0.3 if n < 0 else clampf(n / 10.0, 0.05, 3.0)) + 0.1 * float(u.estado(pid).get("nivel", 0.0))
 	if categoria(u, pid) == "magia":
 		b = 1.0 + (b - 1.0) * clampf(float(Cosmos.leis(u)["magia"]) * 2.0, 0.0, 2.0)
 	return b

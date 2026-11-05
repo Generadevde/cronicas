@@ -24,7 +24,8 @@ const CAMPOS_LIDOS := ["personalid", "jeito", "gost", "valor", "hobby", "paix", 
 	"fraquez", "fraco", "vantage", "desvantage", "suprimento", "soldados", "efetivo", "aliad", "inimig", "rival", "exercito", "tropas",
 	"lados", "motivo", "titulo", "ferida", "ponto fraco",
 	"o que oferece", "oferece", "concede", "promete", "o que cobra", "cobra", "preco", "seguidores", "vontade", "como age", "pacto",
-	"onde age", "morada", "santuario", "templo"]
+	"onde age", "morada", "santuario", "templo",
+	"criador", "fundador", "ensina", "profeta", "lugar sagrado", "nasceu de", "fundada por", "fica em", "secreta", "inventor"]
 ## Campos que são descrição (valem como texto do mundo: wiki, pesquisa, a voz dos personagens).
 const DESCRITIVOS := ["descric", "aparenc", "historia", "feito", "epoca", "nota", "apelido", "resumo", "biografia"]
 ## Campos que as próximas partes vão usar (não contam como pendência).

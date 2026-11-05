@@ -61,7 +61,10 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 				continue
 			deste_passo.append_array(Decisao.decidir(u, eid, rng, indice))
 		for sistema in u.sistemas_de_simulacao():
-			deste_passo.append_array(sistema.passo(u, passo, rng))
+			# Cada sistema tem a sua sorte (um sistema novo não muda o que os outros sorteiam).
+			var rs := RandomNumberGenerator.new()
+			rs.seed = hash(str(u.semente()) + ":" + str(DataMundo.ordem(u.relogio)) + ":" + str(sistema.get_global_name()))
+			deste_passo.append_array(sistema.passo(u, passo, rs))
 		novos.append_array(deste_passo)
 		if opcoes.get("parar_em_importante", false) and deste_passo.any(func(f): return importancia(u, f) >= 0.6 or _favorito_envolvido(u, f)):
 			break
@@ -116,6 +119,8 @@ static func registrar(u: Universo, fato: Dictionary) -> String:
 		fato["data"] = DataMundo.copiar(u.relogio)
 	if not fato.has("origem"):
 		fato["origem"] = {"tipo": BancoDeFatos.ORIGEM_SIMULACAO, "ref": ""}
+	# Causas vazias ou que não existem são descartadas (e a causa de presença entra no lugar).
+	fato["causas"] = Array(fato.get("causas", [])).filter(func(c): return str(c) != "" and u.fatos.existe(str(c)))
 	if fato["origem"].get("tipo", "") == BancoDeFatos.ORIGEM_SIMULACAO and Array(fato.get("causas", [])).is_empty():
 		var s: Array = fato.get("sujeitos", [])
 		if not s.is_empty():
@@ -145,7 +150,8 @@ static func causa_de_presenca(u: Universo, eid: String) -> String:
 		var f := u.fatos.obter(ids[i])
 		if f["canon"] and (local == "" or f["lugar"] == local):
 			return f["id"]
-	return u.entidade(eid).get("fato_criacao", u.fatos.todos()[0]["id"])
+	var fc := str(u.entidade(eid).get("fato_criacao", ""))
+	return fc if u.fatos.existe(fc) else u.fatos.todos()[0]["id"]
 
 
 static func importancia(u: Universo, fid: String) -> float:
@@ -159,8 +165,20 @@ static func _favorito_envolvido(u: Universo, fid: String) -> bool:
 	return false
 
 
-## Mentes vivas do universo.
+static var _cache_mentes := {"chave": "", "lista": []}
+
+
+## Mentes vivas do universo (guardadas até algo mudar: entidades, fatos ou a data).
 static func _mentes(u: Universo) -> Array:
+	var chave := "%s|%d|%d|%d" % [u.id, u.versao, DataMundo.ordem(u.relogio), u.fatos.quantidade()]
+	if _cache_mentes["chave"] == chave:
+		return Array(_cache_mentes["lista"]).duplicate()
+	var lista := _mentes_calc(u)
+	_cache_mentes = {"chave": chave, "lista": lista}
+	return lista.duplicate()
+
+
+static func _mentes_calc(u: Universo) -> Array:
 	var lista: Array = []
 	for e in u.entidades_ativas():
 		if Estado.tem_mente(u, e["id"]) and Estado.vivo(u, e["id"]) and not Motor.dormindo(u, e["id"]):

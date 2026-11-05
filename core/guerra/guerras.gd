@@ -303,6 +303,8 @@ static func criar_guerra(u: Universo, a: String, b: String, motivo: String, caus
 
 
 static func _aliados(u: Universo, sid: String, outro: String) -> bool:
+	if u.estado(sid).get("aliados", []).has(outro):
+		return true
 	var txt := TextUtil.chave(Sociedades._campo(u, sid, ["aliad", "aliança", "alianca", "amigos"]))
 	if txt != "" and txt.contains(TextUtil.chave(_n(u, outro))):
 		return true
@@ -343,6 +345,18 @@ static func _fato_guerra(u: Universo, g: String, tipo: String, texto: String, im
 		"lugar": lugar, "causas": cs, "dados": dd})
 
 
+## O que soma ao lado além das forças: lendas (heróis invocados), espiões infiltrados
+## no inimigo e, para quem defende, as muralhas da cidade.
+static func _extra(u: Universo, g: String, lado: String, lugar: String) -> float:
+	var d := dados(u, g)
+	var outro := "b" if lado == "a" else "a"
+	var x := Lendas.inspiracao(u, d[lado], d[outro])
+	x *= 1.0 + 0.05 * mini(3, Intriga.espioes_em(u, str(d[lado][0]), str(d[outro][0])))
+	if lado == "b" and lugar != "" and Cidades.muralha(u, lugar):
+		x *= 1.35
+	return x
+
+
 # ---------------------------------------------------------------- previsão
 
 ## Quem deve vencer e por quê. {favorito, chance (do lado a), semanas, texto, razoes, r}
@@ -357,8 +371,8 @@ static func previsao(u: Universo, g: String) -> Dictionary:
 	var rs: Array = []
 	for noite in [false, true]:
 		var cond := Forcas.condicoes(u, fr, noite) if fr != "" else ["noite" if noite else "dia"]
-		var pa := Forcas.poder_do_lado(u, A, B, cond, Lendas.inspiracao(u, d["a"], d["b"]))
-		var pb := Forcas.poder_do_lado(u, B, A, cond, Lendas.inspiracao(u, d["b"], d["a"]))
+		var pa := Forcas.poder_do_lado(u, A, B, cond, _extra(u, g, "a", fr))
+		var pb := Forcas.poder_do_lado(u, B, A, cond, _extra(u, g, "b", fr))
 		var tot := float(pa["dano"]) + float(pb["dano"])
 		rs.append(0.5 if tot <= 0 else float(pa["dano"]) / tot)
 		for x in pa["razoes"] + pb["razoes"]:
@@ -528,8 +542,10 @@ static func batalha(u: Universo, g: String, rng: RandomNumberGenerator) -> Strin
 	var lugar := frente(u, g)
 	var noite := rng.randf() < _chance_de_noite(u, A, B)
 	var cond := Forcas.condicoes(u, lugar, noite) if lugar != "" else ["noite" if noite else "dia"]
-	var pa := Forcas.poder_do_lado(u, A, B, cond, Lendas.inspiracao(u, d["a"], d["b"]))
-	var pb := Forcas.poder_do_lado(u, B, A, cond, Lendas.inspiracao(u, d["b"], d["a"]))
+	var pa := Forcas.poder_do_lado(u, A, B, cond, _extra(u, g, "a", lugar))
+	var pb := Forcas.poder_do_lado(u, B, A, cond, _extra(u, g, "b", lugar))
+	if Cidades.muralha(u, lugar):
+		pb["razoes"].append("as muralhas de %s" % _n(u, lugar))
 	var tot := float(pa["dano"]) + float(pb["dano"])
 	var r := 0.5 if tot <= 0 else float(pa["dano"]) / tot
 	var rr := clampf(r + rng.randfn(0.0, 0.07), 0.01, 0.99)
@@ -725,6 +741,9 @@ static func terminar(u: Universo, g: String, vencedor: String, causa: String, pe
 	var fid := Simulador.registrar(u, fato)
 	novos.append(fid)
 	novos.append_array(Lendas.titulos_da_guerra(u, g, fid))
+	var rng_t := RandomNumberGenerator.new()
+	rng_t.seed = hash(fid)
+	novos.append(Intriga.tratado_mal_traduzido(u, fid, rng_t))
 	var dur := DataMundo.ordem(u.relogio) - int(d["inicio"])
 	if dur >= 2 * DataMundo.DIAS_POR_ANO:
 		u.estado(g)["nome_lendario"] = "A Guerra dos %s Anos" % Lendas.extenso(int(roundf(dur / float(DataMundo.DIAS_POR_ANO))))

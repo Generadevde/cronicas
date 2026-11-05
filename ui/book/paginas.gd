@@ -62,6 +62,7 @@ static func entidade(u: Universo, eid: String) -> String:
 	if Forcas.eh_forca(u, eid):
 		s += forca(u, eid)
 	s += pactos(u, eid)
+	s += criacoes(u, eid)
 	if u.estado(eid).get("apagado", false):
 		s += "\n[color=#7A2418][b]Apagado da existência.[/b] Quase ninguém lembra que existiu.[/color]\n"
 	if u.estado(eid).has("adormecido"):
@@ -401,6 +402,102 @@ static func pactos(u: Universo, eid: String) -> String:
 			return secao("Pactos") + "[i]Oferece: %s · cobra: %s. Ainda não fez nenhum pacto.[/i]\n" % [_e(Pactos.oferta(u, eid)), _e(Pactos.preco_escrito(u, eid) if Pactos.preco_escrito(u, eid) != "" else "não disse")]
 		return ""
 	return secao("Pactos") + "\n".join(linhas) + "\n"
+
+
+## Técnica, escola, religião, cidade (porte, muralhas, ruínas) e o que a pessoa sabe fazer.
+static func criacoes(u: Universo, eid: String) -> String:
+	var s := ""
+	var st := u.estado(eid)
+	var nomes := func(lista: Array) -> String:
+		return ", ".join(lista.map(func(x): return link("ent:" + x, u.entidade(x)["nome"]))) if not lista.is_empty() else "[i]ninguém[/i]"
+	if Tecnicas.eh_tecnica(u, eid):
+		var l: Array = []
+		var cria := str(st["tecnica"].get("criador", ""))
+		if cria != "":
+			l.append("[b]Criada por:[/b] %s" % link("ent:" + cria, u.entidade(cria)["nome"]))
+		if Tecnicas.perdida(u, eid):
+			l.append("[color=#7A2418][b]Perdida[/b][/color] desde %s%s" % [DataMundo.texto(_data_de_ordem(int(st.get("perdida_em", 0)))),
+				(" · ficaram vestígios em " + link("ent:" + str(st["vestigio"]), u.entidade(str(st["vestigio"]))["nome"])) if str(st.get("vestigio", "")) != "" else ""])
+		else:
+			l.append("[b]Quem sabe:[/b] %s" % nomes.call(Tecnicas.conhecem(u, eid)))
+		if float(st.get("nivel", 0.0)) > 0:
+			l.append("[b]Aperfeiçoada:[/b] %d vez%s" % [int(st["nivel"]), "" if int(st["nivel"]) == 1 else "es"])
+		var linhagem: Array = []
+		for f in u.fatos.sobre(eid):
+			if f["canon"] and f["tipo"] in ["invenção", "ensino de técnica", "aluno", "técnica roubada", "técnica perdida", "redescoberta"]:
+				linhagem.append("  • [color=#5A3A1A]%s[/color] — %s" % [DataMundo.texto(f["data"]), link("fato:" + f["id"], f["descricao"])])
+		if not linhagem.is_empty():
+			l.append("[b]Linhagem:[/b]\n" + "\n".join(linhagem.slice(-12)))
+		s += secao("Técnica") + "\n".join(l) + "\n"
+	if st.has("escola"):
+		var e: Dictionary = st["escola"]
+		var t := str(e.get("tecnica", ""))
+		s += secao("Escola") + "[b]Ensina:[/b] %s · [b]sede:[/b] %s%s\n[b]Mestres e alunos:[/b] %s\n" % [link("ent:" + t, u.entidade(t)["nome"]),
+			link("ent:" + str(e["sede"]), u.entidade(str(e["sede"]))["nome"]),
+			" · [color=#7A2418]proibida[/color]" if e.get("proibida", false) else (" · [color=#7A2418]fechada[/color]" if e.get("fechada", false) else ""),
+			nomes.call(Tecnicas.conhecem(u, t).filter(func(q): return str(u.estado(q)["local"]) == str(e["sede"])))]
+	if st.has("religiao"):
+		var fs := Religioes.fieis(u, eid)
+		s += secao("Religião") + ("[color=#7A2418][b]Extinta.[/b][/color] Não restou quem acreditasse.\n" if st.get("extinta", false) else
+			"[b]Fiéis:[/b] %d (%s)%s\n" % [fs.size(), nomes.call(fs.slice(0, 8)), (" · dividida pela heresia " + link("ent:" + str(st["heresia"]), u.entidade(str(st["heresia"]))["nome"])) if st.has("heresia") else ""])
+	if Mapa.e_lugar(u, eid):
+		var extras: Array = []
+		if Cidades.porte(u, eid) != "":
+			extras.append("[b]Porte:[/b] %s" % Cidades.porte(u, eid))
+		if Cidades.muralha(u, eid):
+			extras.append("[b]Muralhas[/b] (ajudam quem defende)")
+		if Cidades.em_ruinas(u, eid):
+			extras.append("[color=#7A2418][b]Em ruínas[/b][/color] — lugar de aventura e de vestígios")
+		var g := Intriga.guilda_em(u, eid)
+		if g != "":
+			extras.append("[b]Submundo:[/b] %s" % link("ent:" + g, u.entidade(g)["nome"]))
+		if not extras.is_empty():
+			s += secao("Construções") + "\n".join(extras) + "\n"
+	var ts := Tecnicas.de(u, eid)
+	if not ts.is_empty():
+		s += secao("Sabe fazer") + nomes.call(ts) + "\n"
+	return s
+
+
+## Página "O que muda": técnicas, escolas, religiões, cidades, submundo, ideias.
+static func transformacoes(u: Universo) -> String:
+	var s := cabecalho("O que muda no mundo", "criações, crenças, cidades e ideias")
+	var vivas: Array = []
+	var perdidas: Array = []
+	for t in Tecnicas.todas(u):
+		if Tecnicas.perdida(u, t):
+			perdidas.append("%s (perdida desde %s)" % [link("ent:" + t, u.entidade(t)["nome"]), DataMundo.texto(_data_de_ordem(int(u.estado(t).get("perdida_em", 0))))])
+		else:
+			var nq := Tecnicas.conhecem(u, t).size()
+			vivas.append("%s (%d %s)" % [link("ent:" + t, u.entidade(t)["nome"]), nq, "sabe" if nq == 1 else "sabem"])
+	s += secao("Técnicas e invenções") + ("[b]Vivas:[/b] " + ", ".join(vivas) + "\n" if not vivas.is_empty() else "[i]Ninguém inventou nada ainda.[/i]\n")
+	if not perdidas.is_empty():
+		s += "[b]Perdidas:[/b] " + ", ".join(perdidas) + "\n"
+	var esc: Array = Escolas.todas(u).map(func(e): return link("ent:" + e, u.entidade(e)["nome"]) + (" [color=#7A2418](proibida)[/color]" if u.estado(e)["escola"].get("proibida", false) else ""))
+	if not esc.is_empty():
+		s += secao("Escolas") + ", ".join(esc) + "\n"
+	var rel: Array = Religioes.todas(u).map(func(r): return "%s (%s)" % [link("ent:" + r, u.entidade(r)["nome"]), "extinta" if u.estado(r).get("extinta", false) else "%d fiéis" % Religioes.fieis(u, r).size()])
+	if not rel.is_empty():
+		s += secao("Religiões") + ", ".join(rel) + "\n"
+	var cid: Array = []
+	var sub: Array = []
+	for e in u.entidades_ativas():
+		if Cidades.porte(u, e["id"]) != "":
+			cid.append("%s: %s%s" % [link("ent:" + e["id"], e["nome"]), Cidades.porte(u, e["id"]), " (muralhas)" if Cidades.muralha(u, e["id"]) else ""])
+		if str(e.get("sim", {}).get("submundo", "")) != "":
+			sub.append(link("ent:" + e["id"], e["nome"]))
+	if not cid.is_empty():
+		s += secao("Cidades") + " · ".join(cid) + "\n"
+	if not sub.is_empty():
+		s += secao("Submundo") + ", ".join(sub) + "\n"
+	var ideias := {}
+	for e in u.entidades_ativas():
+		var i := Povos.ideia_de(u, e["id"])
+		if i != "" and Estado.vivo(u, e["id"]):
+			ideias[i] = int(ideias.get(i, 0)) + 1
+	if not ideias.is_empty():
+		s += secao("Ideias que circulam") + "\n".join(ideias.keys().map(func(k): return "• “%s” — %d pessoa%s" % [_e(k), ideias[k], "" if ideias[k] == 1 else "s"])) + "\n"
+	return s
 
 
 static func _palavra_moral(m: float) -> String:

@@ -293,11 +293,11 @@ func test_guerra_nasce_da_simulacao() -> void:
 	var mot := Guerras.motivo(u, m["sok"], m["ber"])
 	verdadeiro(float(mot["forca"]) > 0.7, "motivo forte: %.2f (%s)" % [mot["forca"], mot["texto"]])
 	var dias := 0
-	while Guerras.ativas(u).is_empty() and dias < 6 * 360:
+	while Guerras.todas(u).is_empty() and dias < 6 * 360:
 		Simulador.avancar(u, 28)
 		dias += 28
-	verdadeiro(not Guerras.ativas(u).is_empty(), "a simulação declarou a guerra")
-	var g: String = Guerras.ativas(u)[0]
+	verdadeiro(not Guerras.todas(u).is_empty(), "a simulação declarou a guerra")
+	var g: String = Guerras.todas(u)[0]
 	var decl := u.fatos.obter(Guerras.dados(u, g)["declaracao"])
 	igual(decl["origem"]["tipo"], BancoDeFatos.ORIGEM_SIMULACAO, "declarada pela simulação")
 	verdadeiro(not decl["causas"].is_empty(), "com causa: " + str(decl["causas"]))

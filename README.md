@@ -138,6 +138,21 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - No mapa: ◉ onde há pacto ainda não cobrado, ☾ onde há sono eterno.
 - Teste do plano: um pacto cujo preço chega anos depois.
 
+## Parte 9 — Mundo em transformação
+
+- **Criações dos personagens**: gente curiosa e com um objetivo inventa técnicas de luta, feitiços e invenções (viram entidades com nome e criador). Elas são **ensinadas** a discípulos, filhos e amigos, **aperfeiçoadas**, **roubadas**, **esquecidas** quando morre o último que sabia (ficam vestígios onde ele vivia) e **redescobertas** anos ou séculos depois — de preferência por alguém curioso nos vestígios ou nas ruínas. Técnicas de luta e feitiços contam nas lutas; invenções melhoram as lavouras de onde são usadas.
+- **Mestres, linhagens e escolas**: com três mestres no mesmo lugar nasce uma escola, que ensina alunos todo ano, disputa jovens com as outras e pode ser proibida (uma escola de magia onde a magia é proibida) ou fechar sem mestres.
+- **Religiões que nascem e morrem**: um profeta com seguidores funda uma religião (com a crença que pregava); ela se espalha onde a fé é forte, pode se dividir numa heresia e, sem fiéis, desaparece — o templo vira ruína.
+- **Construções e ruínas**: aldeias viram vilas, cidades e metrópoles (ou minguam); muralhas sobem quando a guerra ameaça e ajudam quem defende; lugares desertos viram ruínas.
+- **Espiões**: rivais e inimigos plantam espiões, que roubam segredos (até pactos secretos) e dão vantagem na guerra; podem ser presos ou virar agentes duplos.
+- **Submundo**: onde há raiva, preço alto e gente fria nasce uma guilda de ladrões, que rouba, contrabandeia (o governo perde impostos) e é perseguida.
+- **Propaganda e línguas**: depois de uma derrota, o governo espalha a sua versão e o humor do povo acompanha; tratados entre povos de línguas diferentes podem sair mal traduzidos.
+- **Ecologia de monstros e torneios**: caçar demais de um lado faz as feras fugirem para o vizinho (e nascem caçadores de monstros); torneios anuais fazem campeões, rivais e, com três títulos, "o Invicto".
+- **Migrações, revoluções e família**: fome, guerra e peste levam povos inteiros a migrar (as línguas se misturam); ideias novas ("ninguém deve ter rei") se espalham e, com o povo irritado, viram revolução; casamentos entre casas governantes viram alianças; ciúmes e brigas dividem famílias.
+- **Contato entre mundos e colonização**: com técnica ou magia bastante, povos de planetas diferentes se encontram (e às vezes guerreiam); colônias são fundadas em planetas vazios e, um dia, declaram independência.
+- Aba Mundo → **O que muda**: técnicas vivas e perdidas, escolas, religiões, cidades, submundo e ideias que circulam.
+- Teste do plano: uma técnica inventada, ensinada, esquecida e redescoberta.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.

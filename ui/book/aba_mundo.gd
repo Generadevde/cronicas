@@ -64,7 +64,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	esq.add_child(linha([ano, dia, aplicar]))
 
 	var abas := HBoxContainer.new()
-	for m in [["linha", "Linha do tempo"], ["observatorio", "Observatório"]]:
+	for m in [["linha", "Linha do tempo"], ["observatorio", "Observatório"], ["transformacoes", "O que muda"]]:
 		var b := Tema.botao(m[1])
 		b.toggle_mode = true
 		b.button_pressed = m[0] == _modo
@@ -83,9 +83,14 @@ func _montar_direita() -> void:
 		c.queue_free()
 	for i in _dir.get_child(0).get_child_count():
 		var b: Button = _dir.get_child(0).get_child(i)
-		b.button_pressed = (i == 0 and _modo == "linha") or (i == 1 and _modo == "observatorio")
+		b.button_pressed = (i == 0 and _modo == "linha") or (i == 1 and _modo == "observatorio") or (i == 2 and _modo == "transformacoes")
 	if _modo == "linha":
 		_linha_do_tempo()
+	elif _modo == "transformacoes":
+		var t := Tema.texto_rico()
+		t.meta_clicked.connect(livro.navegar)
+		t.text = Paginas.transformacoes(u)
+		_dir.add_child(t)
 	else:
 		_observatorio()
 
