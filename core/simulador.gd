@@ -24,7 +24,8 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 	var novos: Array = []
 	if opcoes.get("aceitar_ecos", true):
 		for p in u.propostas.duplicate():
-			if p["status"] == "eco":
+			# O que nasce de uma conversa espera você decidir.
+			if p["status"] == "eco" and not p.has("conversa"):
 				var fid := u.aceitar_proposta(p["id"])
 				if fid != "":
 					novos.append(fid)

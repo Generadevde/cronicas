@@ -12,6 +12,7 @@ const ABAS := [
 	{"id": "guerras", "nome": "Guerras", "cor": "#5E1A3A", "script": preload("res://ui/book/aba_guerras.gd")},
 	{"id": "cosmos", "nome": "Cosmos", "cor": "#2A2F5E", "script": preload("res://ui/book/aba_cosmos.gd")},
 	{"id": "leis", "nome": "Leis", "cor": "#7A5A1A", "script": preload("res://ui/book/aba_leis.gd")},
+	{"id": "viver", "nome": "Viver", "cor": "#3E5E3A", "script": preload("res://ui/book/aba_viver.gd")},
 	{"id": "wiki", "nome": "Wiki", "cor": "#5B6B2A", "script": preload("res://ui/book/aba_wiki.gd")},
 	{"id": "criadores", "nome": "Criadores", "cor": "#5A3A7A", "script": preload("res://ui/book/aba_criadores.gd")},
 	{"id": "pesquisa", "nome": "Pesquisa", "cor": "#8A4E22", "script": preload("res://ui/book/aba_pesquisa.gd")},

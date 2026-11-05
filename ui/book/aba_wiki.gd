@@ -28,7 +28,7 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	b_editar.pressed.connect(func():
 		if _atual != "":
 			livro.ir_para_aba("criadores", _atual))
-	_b_acompanhar = Tema.botao("Acompanhar", "Avançar o tempo para quando algo acontecer com quem você acompanha")
+	_b_acompanhar = Tema.botao("Favorito", "Avançar o tempo para quando algo acontecer com quem você marcou")
 	_b_acompanhar.pressed.connect(func():
 		if _atual == "":
 			return
@@ -40,7 +40,11 @@ func montar(esq: VBoxContainer, dir: VBoxContainer, dado: String) -> void:
 	b_obs.pressed.connect(func():
 		if _atual != "":
 			livro.ir_para_aba("mundo", _atual))
-	dir.add_child(linha([b_editar, _b_acompanhar, b_obs]))
+	var b_viver := Tema.botao("Conversar", "Falar com o personagem, acompanhá-lo, ver o mundo pelos olhos dele")
+	b_viver.pressed.connect(func():
+		if _atual != "":
+			livro.ir_para_aba("viver", _atual))
+	dir.add_child(linha([b_editar, _b_acompanhar, b_obs, b_viver]))
 
 	_atual = dado if u.entidades.has(dado) else ""
 	_preencher()
@@ -71,4 +75,4 @@ func _abrir(eid: String) -> void:
 	_pagina.text = Paginas.entidade(u, eid)
 	_pagina.scroll_to_line(0)
 	if _b_acompanhar != null:
-		_b_acompanhar.text = "Deixar de acompanhar" if u.estado(eid).get("favorito", false) else "Acompanhar"
+		_b_acompanhar.text = "Tirar dos favoritos" if u.estado(eid).get("favorito", false) else "Favorito"

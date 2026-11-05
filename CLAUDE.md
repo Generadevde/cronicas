@@ -21,6 +21,7 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 - `core/guerra/` — forças militares (`forcas.gd`), guerras, batalhas, intervenção e pós-guerra (`guerras.gd`), lutas em aberto (`lutas.gd`), lendas, títulos e nomes (`lendas.gd`) (Parte 7).
 - `core/cosmico/` — pactos e preços (`pactos.gd`), o Autor e o arauto (`autor.gd`), poderes que mudam o motor: pausa, sono, apagar, ver o futuro, galhos (`motor.gd`) (Parte 8).
 - `core/transformacao/` — técnicas e invenções (`tecnicas.gd`), escolas, religiões, cidades e ruínas, intriga (espiões, submundo, propaganda), aventura (monstros, torneios), povos (migrações, revoluções, alianças, colônias) (Parte 9).
+- `core/vida/` — conversar com personagens (`conversa.gd`), acompanhar e ponto de vista (`acompanhar.gd`), IA local opcional que só dá voz (`ia_local.gd`) (Parte 10).
 - `ui/` — telas montadas em código: `tema.gd` (visual de livro), `menu/`, `library/`, `book/` (livro com abas `aba_*.gd`, `paginas.gd` monta BBCode).
 - `tests/` — `run_tests.gd` roda todos os `test_*.gd`.
 - `assets/` — fontes (OFL) e a arte do menu (feita pelo autor).

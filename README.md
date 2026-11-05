@@ -153,6 +153,17 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - Aba Mundo → **O que muda**: técnicas vivas e perdidas, escolas, religiões, cidades, submundo e ideias que circulam.
 - Teste do plano: uma técnica inventada, ensinada, esquecida e redescoberta.
 
+## Parte 10 — Viver o mundo por dentro
+
+- **Aba Viver** (ou "Conversar" na página de qualquer personagem):
+  - **Conversar**: pergunte o que quiser — por que ele odeia, ama ou teme alguém; o que quer; o que sabe sobre um lugar ou pessoa; o que acha de alguém; peça uma promessa; acuse; plante uma dúvida. Ele responde com o que **realmente sabe** (os fatos que conhece), com o jeito dele, e pode esconder, mentir, se irritar ou se abrir. Fale **como deus**, **como um desconhecido** ou **como outro personagem** (e aí conta o que ele sente por esse personagem).
+  - Exemplo: a Daren, "por que você odeia o Kai?". Como deus: "Kai sabe o que fez." (e, se você insiste, "Já disse que isso não é da sua conta."). Como Mira, em quem ele confia: conta o que viu; insistindo, confessa a vergonha que sentiu do pai.
+  - Promessas, confissões e dúvidas plantadas viram **propostas** (você aceita ou risca; avançar o tempo não aceita sozinho). A conversa pode virar **cena** (capítulo em rascunho).
+  - **Acompanhar**: siga alguém por um dia, uma semana ou um mês (cena a cena, resumo do dia ou só o importante) — o que faz, o que acontece em volta, o que ouve dizer e o que pensa e sente. Salve como rascunho de capítulo.
+  - **Ponto de vista**: o mundo pelos olhos dele — o que viveu, o que ouviu dizer, o que sente, o que quer e quantas coisas importantes ainda não chegaram até ele.
+- **IA local** (opcional, botão "IA local…"): um programa no seu computador (ex.: llama.cpp) só é chamado quando você conversa, e só reescreve a fala no jeito do personagem — recebe apenas o que ele sabe. Sem ela, as respostas são montadas a partir dos fatos.
+- Teste do plano: perguntar a Daren por que ele odeia Kai.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.
