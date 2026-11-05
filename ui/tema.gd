@@ -79,8 +79,33 @@ static func _garantir_prefs() -> void:
 
 static func _fonte(arquivo: String) -> Font:
 	if not _cache_fontes.has(arquivo):
-		_cache_fontes[arquivo] = load(PASTA_FONTES + arquivo)
+		var f: Font = load(PASTA_FONTES + arquivo)
+		if f != null and f.fallbacks.is_empty():
+			f.fallbacks = simbolos()
+		_cache_fontes[arquivo] = f
 	return _cache_fontes[arquivo]
+
+
+## Fontes de símbolos (♣ ▲ ☠ ⚔ ✦ …) usadas quando a fonte principal não tem o desenho.
+static func simbolos() -> Array[Font]:
+	if not _cache_fontes.has("@simbolos"):
+		var lista: Array[Font] = []
+		for a in ["NotoSansSymbols2-Regular.ttf", "NotoSansSymbols.ttf", "NotoSansMath-Regular.ttf"]:
+			var f: Font = load(PASTA_FONTES + a)
+			if f != null:
+				lista.append(f)
+		_cache_fontes["@simbolos"] = lista
+	return _cache_fontes["@simbolos"]
+
+
+## Fonte do mapa: Garamond com os símbolos de reserva.
+static func fonte_mapa() -> Font:
+	if not _cache_fontes.has("@mapa"):
+		var v := FontVariation.new()
+		v.base_font = F_CORPO
+		v.fallbacks = simbolos()
+		_cache_fontes["@mapa"] = v
+	return _cache_fontes["@mapa"]
 
 
 static func _fonte_de(id: String, italica: bool) -> Font:

@@ -235,8 +235,8 @@ static func _executar(u: Universo, eid: String, op: Dictionary, ctx: Dictionary,
 				 {"op": "relacao", "de": m, "para": eid, "deltas": {"afeto": 0.2}}])
 		"viajar_atras":
 			var lugar: String = op["lugar"]
-			return _fato(u, "viagem", "%s partiu para %s atrás de %s." % [nome, _n(u, lugar), _n(u, op["alvo"])], [eid, op["alvo"]], causas, 0.45,
-				[{"op": "mover", "quem": eid, "lugar": lugar}], lugar)
+			return _fato(u, "viagem", "%s partiu para %s atrás de %s%s." % [nome, _n(u, lugar), _n(u, op["alvo"]), Viagens.duracao(u, ctx["local"], lugar)], [eid, op["alvo"]], causas, 0.45,
+				Viagens.ops_de_ida(u, eid, ctx["local"], lugar), lugar)
 		"procurar":
 			return _fato(u, "busca", "%s procura notícias de onde está %s." % [nome, _n(u, op["alvo"])], [eid, op["alvo"]], causas, 0.15,
 				[{"op": "objetivo_estado", "quem": eid, "tipo": o["tipo"], "alvo": o["alvo"], "progresso": 0.02}])
@@ -288,8 +288,8 @@ static func _executar(u: Universo, eid: String, op: Dictionary, ctx: Dictionary,
 			var destino := _outro_lugar(u, ctx["local"], rng)
 			if destino == "":
 				return []
-			return _fato(u, "fuga", "%s fugiu para %s com medo de %s." % [nome, _n(u, destino), _n(u, op["alvo"])], [eid, op["alvo"]], [Simulador.causa_de_presenca(u, eid)], 0.4,
-				[{"op": "mover", "quem": eid, "lugar": destino}], destino)
+			return _fato(u, "fuga", "%s fugiu para %s com medo de %s%s." % [nome, _n(u, destino), _n(u, op["alvo"]), Viagens.duracao(u, ctx["local"], destino)], [eid, op["alvo"]], [Simulador.causa_de_presenca(u, eid)], 0.4,
+				Viagens.ops_de_ida(u, eid, ctx["local"], destino), destino)
 		"luto":
 			return _fato(u, "luto", "%s está recolhido, de luto por %s." % [nome, _n(u, op["alvo"])], [eid, op["alvo"]], [_fato_da_emocao(u, eid, "luto", op["alvo"])], 0.2,
 				[], "", {"rotina": "luto"})
@@ -369,6 +369,10 @@ static func _fato_da_emocao(u: Universo, eid: String, emocao: String, alvo: Stri
 
 static func _outro_lugar(u: Universo, atual: String, rng: RandomNumberGenerator) -> String:
 	var lugares := Simulador.lugares(u).filter(func(l): return l != atual)
+	# Foge para onde dá para morar (não para um planeta ou uma região inteira).
+	var habitaveis := lugares.filter(func(l): return not Mapa.especie(u, l) in ["planeta", "cosmico", "regiao"])
+	if not habitaveis.is_empty():
+		lugares = habitaveis
 	if lugares.is_empty():
 		return ""
 	return lugares[rng.randi() % lugares.size()]

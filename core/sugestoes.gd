@@ -12,7 +12,9 @@ const _GRUPOS := [
 	},
 	{
 		"palavras": ["lugar", "cidade", "vila", "reino", "planeta", "continente", "regiao",
-			"floresta", "montanha", "ruina", "castelo", "templo", "ilha", "mundo", "bairro"],
+			"floresta", "montanha", "ruina", "castelo", "templo", "ilha", "mundo", "bairro",
+			"aldeia", "porto", "torre", "fortaleza", "capital", "povoado", "lago", "caverna", "deserto",
+			"pantano", "estalagem", "taverna", "provincia", "condado", "galaxia", "estrela"],
 		"campos": ["descrição", "clima", "população", "quem governa", "recursos", "perigos",
 			"lendas", "história"],
 	},

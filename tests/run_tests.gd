@@ -10,6 +10,7 @@ const ARQUIVOS := [
 	"res://tests/test_telas.gd",
 	"res://tests/test_parte2.gd",
 	"res://tests/test_parte3.gd",
+	"res://tests/test_parte4.gd",
 ]
 
 

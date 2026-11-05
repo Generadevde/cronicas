@@ -105,6 +105,7 @@ static func mover(u: Universo, eid: String, lugar: String, fato: Dictionary) -> 
 	if eid == "" or lugar == "" or not u.entidades.has(eid) or eid == lugar:
 		return
 	var s := u.estado(eid)
+	s.erase("viagem")
 	s["local"] = lugar
 	s["local_desde"] = DataMundo.copiar(fato.get("data", u.relogio))
 

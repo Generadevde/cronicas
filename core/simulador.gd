@@ -11,7 +11,7 @@ const IMPORTANCIA := {
 	"morte_por": 1.0, "morte": 0.9, "vitoria": 0.6, "derrota": 0.6, "casamento": 0.7, "traicao": 0.75,
 	"ferimento": 0.45, "luta": 0.5, "nascimento": 0.5, "amor": 0.35, "odio": 0.35, "amizade": 0.3,
 	"ensino": 0.45, "aprendizado": 0.45, "chegada": 0.2, "filiacao": 0.3, "paternidade": 0.3,
-	"testemunho": 0.1, "medo": 0.3,
+	"testemunho": 0.1, "medo": 0.3, "chegada_viagem": 0.25,
 }
 
 
@@ -43,7 +43,7 @@ static func avancar(u: Universo, dias: int, opcoes: Dictionary = {}) -> Array:
 		deste_passo.append_array(Informacao.espalhar(u, rng))
 		var indice := _indice_de_lugares(u)
 		for eid in _mentes(u):
-			if foco.has(u.estado(eid)["local"]):
+			if foco.has(u.estado(eid)["local"]) or Viagens.viajando(u, eid):
 				continue
 			if not _deve_pensar(u, eid, int(ctrl["passos"])):
 				continue
@@ -181,7 +181,7 @@ static func _indice_de_lugares(u: Universo) -> Dictionary:
 static func lugares(u: Universo) -> Array:
 	var lista: Array = []
 	for e in u.entidades_ativas():
-		if Sugestoes.categoria(e["tipo"]) == "lugar":
+		if Sugestoes.categoria(e["tipo"]) == "lugar" or Mapa.e_lugar(u, e["id"]):
 			lista.append(e["id"])
 	for e in u.entidades_ativas():
 		var l: String = u.estado(e["id"])["local"]

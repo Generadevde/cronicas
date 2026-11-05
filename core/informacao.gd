@@ -95,7 +95,7 @@ static func _atraso(u: Universo, de: String, para: String) -> int:
 		return DIAS_MESMO_LUGAR
 	var d := u.dias_de_viagem(de, para)
 	if d >= 0:
-		return d * 2 + DIAS_MESMO_LUGAR
+		return d + DIAS_MESMO_LUGAR
 	return DIAS_OUTRO_LUGAR
 
 

@@ -79,6 +79,18 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - **Linha do tempo** e **Observatório** (o que aconteceu com alguém, quem o influenciou)
 - Mesma semente = mesmo mundo (a simulação é reproduzível)
 
+## Parte 4 — Universo e natureza
+
+- **Mapa** (aba Mapa): só de texto, no estilo dos mapas antigos. O terreno aparece em aguadas leves, as costas em tinta e os rios em fio; serras, mares, lagos, florestas, desertos e rios têm **nome escrito** (gerado na língua do lugar e guardado). Os nomes se arrumam para não ficar letra sobre letra.
+- **Zoom**: Cosmos › planeta › região › cidade › casa. Clique para escolher, clique duas vezes para entrar, "↑ Subir" para voltar.
+- **Escrever aqui**: clique num ponto e escreva "uma casa na montanha", "uma torre em ruínas perto do rio chamada Vigia Negra" ou "uma vila de pescadores na costa". O lugar aparece no mapa e ganha página, e o programa propõe quem mora ali. Para dar nome à natureza, escreva "montanha do sul" ou "rio da pedra azul" (se não houver rio ali, nasce um).
+- **Pintar** o terreno e **Colocar** no mapa o que já existe. Tudo vira fato.
+- **Viagens levam tempo**, pelas distâncias do mapa (escala na ficha: "largura: 800 km"). Quem viaja fica "a caminho", e a chegada é um fato causado pela partida. As notícias também demoram a viagem.
+- **Natureza por lugar**, em números: espécies do terreno (ou criadas por você, com "habitat"), lavouras, rebanhos, população e comida, com estações e clima.
+- **Intervir aqui**: texto livre ("uma seca terrível por um ano") ou atalhos (seca, praga, peste, inverno rigoroso, enchente, fartura, incêndio, feras, terremoto). A seca seca as lavouras, a fome chega, gente sofre, migra ou adoece. Tudo vira fato com a causa, e dá para desfazer.
+- **Gerar planeta** (clima, luas, regiões, terreno) e **Povoar** (povoados, famílias com mente própria, uma facção, figuras históricas que viram lenda), com **Desfazer povoamento**.
+- **Aba Universo**: leis (magia e tecnologia, o que é possível ou proibido), **eras**, acontecimentos antigos (lendas), **línguas** que aprendem com seus exemplos, povos e espécies, planetas.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.
@@ -91,4 +103,4 @@ O programa completo e polido fica para o fim da Parte 13. Até lá, cada parte t
 
 ## Licenças
 
-Fontes (SIL Open Font License, em `assets/fonts/`): EB Garamond, IM FELL English, UnifrakturMaguntia, Caveat, Kalam, Dancing Script, Petit Formal Script. A arte do menu é do autor do projeto.
+Fontes (SIL Open Font License, em `assets/fonts/`): EB Garamond, IM FELL English, UnifrakturMaguntia, Caveat, Kalam, Dancing Script, Petit Formal Script, Noto Sans Symbols/Symbols 2/Math (símbolos de reserva). A arte do menu é do autor do projeto.

@@ -176,18 +176,18 @@ func definir_relogio(data: Dictionary) -> void:
 
 ## Sistemas das próximas partes que sabem aplicar operações próprias.
 func sistemas_de_mudanca() -> Array:
-	return []
+	return [Viagens, Natureza]
 
 
 ## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).
 ## Cada um tem: static func passo(u, dias, rng) -> Array de ids de fatos.
 func sistemas_de_simulacao() -> Array:
-	return []
+	return [Viagens, Natureza]
 
 
-## Dias de viagem entre dois lugares (-1 = não sabe; o mapa da Parte 4 responde).
-func dias_de_viagem(_de: String, _para: String) -> int:
-	return -1
+## Dias de viagem entre dois lugares, pelo mapa (-1 = não dá para saber).
+func dias_de_viagem(de: String, para: String) -> int:
+	return Mapa.dias_de_viagem(self, de, para)
 
 
 ## Semente do universo: a mesma semente e os mesmos fatos dão o mesmo mundo.

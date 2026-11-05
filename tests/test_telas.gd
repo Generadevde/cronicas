@@ -188,3 +188,59 @@ func test_ajustes_de_leitura() -> void:
 	verdadeiro(livro.aba_atual == "escrever", "continua na aba")
 	var timers := livro.get_children().filter(func(n): return n is Timer).size()
 	igual(timers, 1, "remontar não duplica o relógio do mundo vivo")
+
+
+func test_mapa_pela_tela() -> void:
+	var c := _cronica()
+	var u := _universo_exemplo(c)
+	var planeta := Povoador.gerar_planeta(u)
+	var livro := _abrir("res://ui/book/book.tscn")
+	await arvore.process_frame
+	livro.ir_para_aba("mapa", planeta)
+	await arvore.process_frame
+	igual(livro.get_meta("mapa_sel"), planeta, "o planeta ficou escolhido no cosmos")
+	# Entrar no planeta: dois cliques seguidos.
+	var aba = livro._aba_obj
+	var pos := Mapa.posicao(u, planeta)
+	aba._clicou(int(pos["x"]), int(pos["y"]), planeta)
+	livro._aba_obj._clicou(int(pos["x"]), int(pos["y"]), planeta)
+	await arvore.process_frame
+	igual(livro.get_meta("mapa_lugar"), planeta, "entrou no planeta")
+	verdadeiro(livro._aba_obj._mapa.lugar == planeta, "o mapa mostra o planeta")
+	# Escrever no mapa.
+	livro.set_meta("mapa_modo", "escrever")
+	livro.ir_para_aba("mapa")
+	var livres := Mapa.celulas_livres(u, planeta, ["campo", "planicie", "floresta", "colina", "montanha", "deserto"])
+	var cel: Vector2i = livres[0]
+	livro._aba_obj._clicou(cel.x, cel.y, "")
+	var dialogo: ConfirmationDialog = null
+	for n in livro.get_children():
+		if n is ConfirmationDialog and n.visible:
+			dialogo = n
+	verdadeiro(dialogo != null, "pediu o texto")
+	if dialogo != null:
+		var campo: LineEdit = dialogo.get_children().filter(func(x): return x is LineEdit)[0]
+		campo.text = "uma casa na montanha"
+		dialogo.confirmed.emit()
+		dialogo.hide()
+	await arvore.process_frame
+	var casa := Mapa.em(u, planeta, cel.x, cel.y)
+	verdadeiro(casa != "" and u.entidade(casa)["tipo"] == "casa", "a casa apareceu no mapa")
+	# Pintar arrastando vira um fato só.
+	livro.set_meta("mapa_modo", "pintar")
+	livro.ir_para_aba("mapa")
+	var antes := u.fatos.quantidade()
+	livro._aba_obj._clicou(1, 1, "")
+	livro._aba_obj._arrastou(2, 1)
+	livro._aba_obj._arrastou(3, 1)
+	livro._aba_obj._soltou()
+	igual(u.fatos.quantidade(), antes + 1, "uma sessão de pintura, um fato")
+	# Intervir aqui, pela página do lugar.
+	livro.set_meta("mapa_modo", "ver")
+	livro.set_meta("mapa_sel", casa)
+	livro.ir_para_aba("mapa")
+	await arvore.process_frame
+	verdadeiro(MapaTexto.descricao_curta(u, casa).begins_with(u.entidade(casa)["nome"]), "passar o mouse mostra o lugar")
+	livro.ir_para_aba("universo")
+	await arvore.process_frame
+	verdadeiro(livro._esq.get_child_count() > 0, "aba Universo montou")

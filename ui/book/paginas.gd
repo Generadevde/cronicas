@@ -49,6 +49,10 @@ static func entidade(u: Universo, eid: String) -> String:
 			s += "[b]%s:[/b] %s\n" % [_e(c["chave"]), lig.para_bbcode(valor)]
 
 	s += estado(u, eid)
+	if Mapa.e_lugar(u, eid):
+		var l := lugar(u, eid)
+		if l != "":
+			s += secao("O lugar agora") + l
 
 	var caps: Array = u.indice().get(eid, [])
 	s += secao("Aparece em")
@@ -98,6 +102,9 @@ static func estado(u: Universo, eid: String) -> String:
 		linhas.append("[b]Nasceu:[/b] %s" % DataMundo.texto(st["nascimento"]))
 	if st["local"] != "" and u.entidades.has(st["local"]):
 		linhas.append("[b]Onde está:[/b] %s" % link("ent:" + st["local"], u.entidade(st["local"])["nome"]))
+	var viagem: Dictionary = st.get("viagem", {})
+	if not viagem.is_empty() and u.entidades.has(viagem["para"]):
+		linhas.append("[b]Onde está:[/b] a caminho de %s (chega por volta de %s)" % [link("ent:" + viagem["para"], u.entidade(viagem["para"])["nome"]), DataMundo.texto(_data_de_ordem(int(viagem["chega"])))])
 	if mente and st["vivo"] and float(st["saude"]) < 0.99:
 		var ferimentos: Array = st["ferimentos"].map(func(f): return _e(f["descricao"]))
 		linhas.append("[b]Saúde:[/b] %d%%%s" % [roundi(float(st["saude"]) * 100), (" · " + ", ".join(ferimentos)) if not ferimentos.is_empty() else ""])
@@ -149,12 +156,64 @@ static func estado(u: Universo, eid: String) -> String:
 	return secao("No mundo agora") + "\n".join(linhas) + "\n"
 
 
+## Resumo de um lugar: onde fica, gente, comida, natureza, acontecimentos, quem está ali.
+static func lugar(u: Universo, eid: String) -> String:
+	var linhas: Array = []
+	var cadeia := Mapa.ancestrais(u, eid)
+	if not cadeia.is_empty():
+		var partes: Array = []
+		for i in range(cadeia.size() - 1, -1, -1):
+			partes.append(link("ent:" + cadeia[i], u.entidade(cadeia[i]).get("nome", "?")))
+		linhas.append("[b]Fica em:[/b] %s" % " › ".join(partes))
+	elif not Mapa.no_mapa(u, eid):
+		linhas.append("[color=#5A3A1A][i]Ainda fora do mapa.[/i][/color]")
+	var t := Mapa.terreno_do_lugar(u, eid)
+	if t != "":
+		linhas.append("[b]Terreno:[/b] %s" % Mapa.TERRENOS[t]["nome"])
+	if Natureza.tem_natureza(u, eid):
+		var reg := Natureza.de(u, eid)
+		if float(reg["pop"]) > 0:
+			linhas.append("[b]Habitantes:[/b] cerca de %s · %s" % [_numero(float(reg["pop"])), Natureza.palavra_comida(float(reg["comida"]))])
+		linhas.append("[b]Estação:[/b] %s · clima %s" % [Natureza.estacao(u.relogio), _e(str(reg.get("clima", "")))])
+		var esp: Array = []
+		var nomes: Array = reg["especies"].keys()
+		nomes.sort()
+		for n in nomes:
+			var e: Dictionary = reg["especies"][n]
+			var nome_e := link("ent:" + e["entidade"], n) if e.get("entidade", "") != "" else _e(n)
+			esp.append("%s (%s)" % [nome_e, Natureza.palavra_nivel(float(e["n"]))])
+		if not esp.is_empty():
+			linhas.append("[b]Natureza:[/b] %s" % ", ".join(esp))
+	for ev in Natureza.eventos_ativos(u, eid):
+		var info: Dictionary = Natureza.EVENTOS.get(ev["tipo"], {})
+		var onde := "" if ev["lugar"] == eid else " (em toda %s)" % u.entidade(ev["lugar"]).get("nome", "?")
+		linhas.append("[color=#7A2418]%s [b]%s[/b]%s até %s[/color] %s" % [info.get("simbolo", "•"), info.get("nome", ev["tipo"]), onde,
+			DataMundo.texto(_data_de_ordem(int(ev["ate"]))), link("fato:" + ev["fato"], "(por quê?)")])
+	var gente := Natureza._mentes_em(u, eid)
+	if not gente.is_empty():
+		linhas.append("[b]Quem está aqui:[/b] %s" % ", ".join(gente.map(func(g): return link("ent:" + g, u.entidade(g)["nome"]))))
+	var dentro := Mapa.filhos(u, eid)
+	if not dentro.is_empty():
+		linhas.append("[b]Lugares dentro:[/b] %s" % ", ".join(dentro.map(func(g): return link("ent:" + g, u.entidade(g)["nome"]))))
+	if linhas.is_empty():
+		return ""
+	return "\n".join(linhas) + "\n"
+
+
+static func _data_de_ordem(ordem: int) -> Dictionary:
+	var ano := int(floor(float(ordem - 1) / DataMundo.DIAS_POR_ANO))
+	return DataMundo.criar(ano, ordem - ano * DataMundo.DIAS_POR_ANO)
+
+
 static func _numero(v: float) -> String:
 	if v >= 1000000.0:
 		return "%.1f milhões" % (v / 1000000.0)
 	if v >= 10000.0:
 		return "%d mil" % roundi(v / 1000.0)
-	if v >= 100.0:
+	if v >= 1000.0:
+		var r := roundi(v / 100.0) * 100
+		return "%d.%03d" % [r / 1000, r % 1000]
+	if v >= 10.0:
 		return str(roundi(v))
 	return "%.1f" % v
 
