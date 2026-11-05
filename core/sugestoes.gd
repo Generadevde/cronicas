@@ -47,6 +47,24 @@ const _GRUPOS := [
 ]
 
 
+const _NOMES := ["pessoa", "lugar", "poder", "objeto", "faccao", "criatura", "entidade"]
+
+
+## Categoria aproximada de um tipo livre, só para as heurísticas internas
+## (ex.: saber que "cidade flutuante" é um lugar). Nunca é mostrada como campo fixo.
+## Devolve "" quando não reconhece.
+static func categoria(tipo: String) -> String:
+	var palavras := TextUtil.palavras(TextUtil.normalizar(tipo))
+	# Primeiro, casamento exato; depois, aproximado.
+	for exato in [true, false]:
+		for p in palavras:
+			for i in _GRUPOS.size():
+				for chave in _GRUPOS[i]["palavras"]:
+					if p == chave or (not exato and ((p.length() > 3 and p.begins_with(chave)) or TextUtil.distancia(p, chave) <= TextUtil.tolerancia(chave.length()))):
+						return _NOMES[i]
+	return ""
+
+
 ## Sugere campos para um tipo escrito livremente. Pode combinar grupos
 ## ("mago dragão" sugere campos de pessoa e de criatura).
 static func campos_para(tipo: String) -> Array:

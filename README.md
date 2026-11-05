@@ -54,6 +54,18 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - Banco de fatos com causas e consequências; cada criação e alteração vira fato
 - Auditor: causas inexistentes, ciclos, causa depois do efeito, fatos da simulação sem origem, entidades inexistentes
 
+## Parte 2 — Texto vira fatos
+
+- Ao escrever, a **margem** propõe o que aconteceu: vitória, morte, ferimento, família, casamento, amor, ódio, traição, mestre e discípulo, chegada a um lugar, nascimento…
+- Junta a luta e o resultado mesmo em frases diferentes ("Kai enfrentou Lucas… e Lucas perdeu" → Kai venceu Lucas)
+- Entende "não matou" (negação) e "Ele/Ela" no começo da frase
+- Você **aceita, ajusta ou risca**; frases com nomes que não entendeu viram **dúvida**, e você **ensina** a palavra (vale no universo todo)
+- Aceitar aplica as consequências (vivo/morto, onde está, família, relações) e propõe **ecos** (humilhação, ódio, luto, vingança), sempre ligados à causa
+- **Desfazer**: o fato fica guardado, mas deixa de valer, e o mundo é recalculado relendo o banco de fatos
+- **Continuidade**: avisa quando alguém aparece depois de morrer, antes de nascer ou em dois lugares no mesmo dia
+- **Versões** de cada capítulo para restaurar
+- A wiki mostra "No mundo agora": vivo/morto, onde está, família, o que sente, o que quer, relações
+
 O programa completo e polido fica para o fim da Parte 13. Até lá, cada parte termina com testes e uma tela de depuração.
 
 ## Plano

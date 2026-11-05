@@ -64,6 +64,16 @@ func _editar(eid: String) -> void:
 	_apelidos = campo("Apelidos e outros nomes, separados por vírgula", ", ".join(e.get("apelidos", [])))
 	form.add_child(_apelidos)
 
+	var mente := CheckBox.new()
+	mente.text = "Tem mente própria (sente, lembra, quer coisas)"
+	mente.tooltip_text = "Pessoas costumam ter. Desmarque para objetos e lugares; marque para criaturas pensantes."
+	mente.button_pressed = Estado.tem_mente(u, eid) if not e.is_empty() else true
+	mente.disabled = e.is_empty()
+	mente.toggled.connect(func(v: bool):
+		if _atual != "":
+			u.definir_tem_mente(_atual, v))
+	form.add_child(mente)
+
 	form.add_child(Tema.secao("Ficha"))
 	var explica := Tema.rotulo("Cada linha é um campo livre: dê o nome que quiser e escreva à vontade.", 16, Tema.F_ITALICO, Tema.TINTA_SUAVE)
 	explica.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -48,6 +48,8 @@ static func entidade(u: Universo, eid: String) -> String:
 			var valor: String = c["valor"] if c["valor"] != "" else "—"
 			s += "[b]%s:[/b] %s\n" % [_e(c["chave"]), lig.para_bbcode(valor)]
 
+	s += estado(u, eid)
+
 	var caps: Array = u.indice().get(eid, [])
 	s += secao("Aparece em")
 	if caps.is_empty():
@@ -75,6 +77,90 @@ static func entidade(u: Universo, eid: String) -> String:
 		s += "[color=#5A3A1A]%s[/color] — %s %s\n" % [
 			DataMundo.texto(f["data"]), _e(f["descricao"]), link("fato:" + f["id"], "(fato)")]
 	return s
+
+
+const NOMES_EMOCAO := {"odio": "ódio", "raiva": "raiva", "humilhacao": "humilhação", "luto": "luto",
+	"rancor": "rancor", "medo": "medo", "amor": "amor", "rivalidade": "rivalidade", "alegria": "alegria",
+	"esperanca": "esperança", "culpa": "culpa", "inveja": "inveja", "orgulho": "orgulho", "desespero": "desespero",
+	"solidao": "solidão", "gratidao": "gratidão", "ambicao": "ambição", "tristeza": "tristeza", "paz": "paz"}
+
+
+## O que o mundo sabe sobre a entidade agora (vivo/morto, onde, família, relações, mente).
+static func estado(u: Universo, eid: String) -> String:
+	var st := u.estado(eid)
+	var linhas: Array = []
+	var mente := Estado.tem_mente(u, eid)
+	if not st["vivo"]:
+		var m: Dictionary = st["morte"]
+		linhas.append("[color=#7A2418][b]Morto[/b][/color]%s" % ((" em " + DataMundo.texto(m["data"])) if m.has("data") else ""))
+	elif not st["nascimento"].is_empty():
+		linhas.append("[b]Nasceu:[/b] %s" % DataMundo.texto(st["nascimento"]))
+	if st["local"] != "" and u.entidades.has(st["local"]):
+		linhas.append("[b]Onde está:[/b] %s" % link("ent:" + st["local"], u.entidade(st["local"])["nome"]))
+	if mente and st["vivo"] and float(st["saude"]) < 0.99:
+		var ferimentos: Array = st["ferimentos"].map(func(f): return _e(f["descricao"]))
+		linhas.append("[b]Saúde:[/b] %d%%%s" % [roundi(float(st["saude"]) * 100), (" · " + ", ".join(ferimentos)) if not ferimentos.is_empty() else ""])
+	var fam: Dictionary = st["familia"]
+	var rotulos := {"pais": "Pais", "filhos": "Filhos", "conjuges": "Cônjuge", "mestres": "Mestres", "discipulos": "Discípulos"}
+	for k in rotulos:
+		if not fam[k].is_empty():
+			linhas.append("[b]%s:[/b] %s" % [rotulos[k], ", ".join(fam[k].map(func(x): return link("ent:" + x, u.entidade(x).get("nome", "?"))))])
+	if float(st["reputacao"]) != 0.0:
+		linhas.append("[b]Fama:[/b] %s" % ("conhecido" if float(st["reputacao"]) > 0 else "mal falado"))
+	if mente:
+		var emocoes: Array = st["emocoes"].duplicate()
+		emocoes.sort_custom(func(a, b): return float(a["forca"]) > float(b["forca"]))
+		var txt: Array = []
+		for e in emocoes.slice(0, 5):
+			var alvo := ""
+			if e["alvo"] != "" and u.entidades.has(e["alvo"]):
+				alvo = " por " + link("ent:" + e["alvo"], u.entidade(e["alvo"])["nome"])
+			txt.append("%s%s" % [NOMES_EMOCAO.get(e["emocao"], e["emocao"]), alvo])
+		if not txt.is_empty():
+			linhas.append("[b]Sente:[/b] %s" % ", ".join(txt))
+		var objs: Array = []
+		for o in Estado.objetivos_ativos(u, eid):
+			var alvo := ""
+			if o["alvo"] != "" and u.entidades.has(o["alvo"]):
+				alvo = " (" + link("ent:" + o["alvo"], u.entidade(o["alvo"])["nome"]) + ")"
+			objs.append(_e(o["tipo"]) + alvo)
+		if not objs.is_empty():
+			linhas.append("[b]Quer:[/b] %s" % ", ".join(objs))
+		var rels: Array = []
+		for outro in st["relacoes"]:
+			if not u.entidades.has(outro):
+				continue
+			var r: Dictionary = st["relacoes"][outro]
+			var palavra := _palavra_relacao(r)
+			if palavra != "":
+				rels.append("%s: %s" % [link("ent:" + outro, u.entidade(outro)["nome"]), palavra])
+		if not rels.is_empty():
+			linhas.append("[b]Relações:[/b] %s" % " · ".join(rels))
+		linhas.append("[color=#5A3A1A]Sabe de %d fatos · lembra de %d[/color]" % [st["conhece"].size(), st["memorias"].size()])
+	if linhas.is_empty():
+		return ""
+	return secao("No mundo agora") + "\n".join(linhas) + "\n"
+
+
+static func _palavra_relacao(r: Dictionary) -> String:
+	var partes: Array = []
+	if float(r.get("raiva", 0)) >= 0.6:
+		partes.append("ódio")
+	elif float(r.get("raiva", 0)) >= 0.3:
+		partes.append("raiva")
+	if float(r.get("afeto", 0)) >= 0.5:
+		partes.append("amor")
+	elif float(r.get("afeto", 0)) >= 0.25:
+		partes.append("afeto")
+	if float(r.get("medo", 0)) >= 0.4:
+		partes.append("medo")
+	if float(r.get("respeito", 0)) >= 0.4:
+		partes.append("respeito")
+	if float(r.get("confianca", 0)) <= -0.4:
+		partes.append("desconfiança")
+	elif float(r.get("confianca", 0)) >= 0.4:
+		partes.append("confiança")
+	return ", ".join(partes)
 
 
 ## Capítulo para leitura, com nomes virando links.

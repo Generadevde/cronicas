@@ -76,6 +76,30 @@ func test_criadores_salva_entidade_pelo_formulario() -> void:
 	verdadeiro(gorm[0]["campos"].size() > 0, "campos sugeridos foram guardados")
 
 
+func test_margem_mostra_e_aceita_propostas() -> void:
+	var c := _cronica()
+	var u := _universo_exemplo(c)
+	var cid: String = u.capitulos.keys()[0]
+	var livro := _abrir("res://ui/book/book.tscn")
+	await arvore.process_frame
+	livro.ir_para_aba("escrever", cid)
+	await arvore.process_frame
+	var aba = livro._aba_obj
+	aba._trocar_modo("margem")
+	var pendentes: Array = u.propostas_do_capitulo(cid).filter(func(p): return p["status"] == "pendente")
+	verdadeiro(pendentes.size() > 0, "abrir o capítulo já analisou o texto")
+	if pendentes.is_empty():
+		return
+	var antes := u.fatos.quantidade()
+	aba._cartao_fato(pendentes[0])  # monta sem erro
+	u.aceitar_proposta(pendentes[0]["id"])
+	aba._trocar_modo("margem")
+	verdadeiro(u.fatos.quantidade() > antes, "aceitar gerou fato")
+	aba._trocar_modo("versoes")
+	aba._trocar_modo("estante")
+	verdadeiro(aba._arvore != null, "estante montada")
+
+
 func test_menu_posiciona_botoes_sobre_a_arte() -> void:
 	_cronica()
 	var menu := _abrir("res://ui/menu/menu.tscn")

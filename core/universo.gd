@@ -19,6 +19,9 @@ var entidades: Dictionary = {}   ## id -> entidade
 var livros: Array = []           ## [{id, titulo, capitulos: [ids]}], na ordem da estante
 var capitulos: Dictionary = {}   ## id -> capítulo
 var notas: Array = []            ## notas privadas do autor (a simulação nunca lê)
+var propostas: Array = []        ## fatos e ecos propostos, esperando o autor
+var dicionario: Dictionary = {}  ## palavra ensinada pelo autor -> ação ("esmurrou" -> "vitoria")
+var extras: Dictionary = {}      ## dados dos sistemas das próximas partes (mapa, regras, guerras...)
 
 var _indice_cache: Dictionary = {}
 var _indice_sujo := true
@@ -44,6 +47,147 @@ func _avisar() -> void:
 	atualizado_em = Time.get_datetime_string_from_system()
 	_indice_sujo = true
 	mudou.emit()
+
+
+## Para os sistemas avisarem que mudaram algo (salvar e refazer o índice).
+func marcar_mudanca() -> void:
+	_avisar()
+
+
+## Estado de simulação de uma entidade (cria os valores padrão se faltarem).
+func estado(eid: String) -> Dictionary:
+	if not entidades.has(eid):
+		return Estado.PADRAO.duplicate(true)
+	return Estado.garantir(entidades[eid])
+
+
+## Dados de um sistema (cria vazio se não existir): extra("mapa"), extra("regras")...
+func extra(nome: String, padrao = null) -> Variant:
+	if not extras.has(nome):
+		extras[nome] = padrao if padrao != null else {}
+	return extras[nome]
+
+
+# ---------------------------------------------------------------- propostas (texto vira fatos)
+
+func proposta(pid: String) -> Dictionary:
+	for p in propostas:
+		if p["id"] == pid:
+			return p
+	return {}
+
+
+func propostas_do_capitulo(cid: String, incluir_resolvidas: bool = false) -> Array:
+	return propostas.filter(func(p):
+		return p["capitulo"] == cid and (incluir_resolvidas or p["status"] in ["pendente", "duvida", "eco"]))
+
+
+## Aceita uma proposta: vira fato no banco (com origem e causa) e o mundo se atualiza.
+## 'ajustes' pode trocar: descricao, acao, sujeitos, lugar.
+func aceitar_proposta(pid: String, ajustes: Dictionary = {}) -> String:
+	var p := proposta(pid)
+	if p.is_empty() or not p["status"] in ["pendente", "eco"]:
+		return ""
+	for k in ajustes:
+		p[k] = ajustes[k]
+	var eco: bool = p["status"] == "eco"
+	var cap := capitulo(p["capitulo"])
+	var dados := {"acao": p["acao"], "frase": p.get("frase", "")}
+	if eco:
+		dados["efeito"] = p.get("efeito", {})
+	var causa_eco: String = p.get("causa", "")
+	if eco and not fatos.obter(causa_eco).get("canon", false):
+		p["status"] = "riscada"
+		return ""
+	var fid := fatos.registrar({
+		"tipo": Extrator.ACOES.get(p["acao"], {}).get("nome", "reação" if eco else "acontecimento"),
+		"descricao": p["descricao"],
+		"sujeitos": p["sujeitos"],
+		"lugar": p.get("lugar", ""),
+		"data": cap.get("data", relogio) if not eco else fatos.obter(causa_eco).get("data", relogio),
+		"causas": [causa_eco] if eco and fatos.existe(causa_eco) else [],
+		"origem": {"tipo": BancoDeFatos.ORIGEM_SIMULACAO if eco else BancoDeFatos.ORIGEM_CAPITULO, "ref": p["capitulo"]},
+		"canon": true,
+		"dados": dados,
+	})
+	if fid == "":
+		return ""
+	p["status"] = "aceita"
+	p["fato"] = fid
+	AutoAtualizador.aplicar(self, fid)
+	_avisar()
+	return fid
+
+
+## Desfaz um fato aceito: ele continua guardado (nada se perde), mas deixa de ser
+## canon, e o estado do mundo é reconstruído sem ele. Ecos pendentes dele são riscados.
+func desfazer_proposta(pid: String) -> void:
+	var p := proposta(pid)
+	if p.is_empty() or p["status"] != "aceita":
+		return
+	var f := fatos.obter(p.get("fato", ""))
+	if not f.is_empty():
+		f["canon"] = false
+		for eco in propostas:
+			if eco.get("causa", "") == f["id"] and eco["status"] == "eco":
+				eco["status"] = "riscada"
+	p["status"] = "desfeita"
+	AutoAtualizador.reconstruir(self)
+	_avisar()
+
+
+## Sistemas das próximas partes que sabem aplicar operações próprias.
+func sistemas_de_mudanca() -> Array:
+	return []
+
+
+func riscar_proposta(pid: String) -> void:
+	var p := proposta(pid)
+	if p.is_empty():
+		return
+	p["status"] = "riscada"
+	_avisar()
+
+
+## O autor ensina o que uma palavra significa. A dúvida vira proposta de verdade.
+func ensinar(palavra: String, acao: String, pid: String = "") -> void:
+	var chave := TextUtil.chave(palavra)
+	if chave == "" or not Extrator.ACOES.has(acao):
+		return
+	dicionario[chave] = acao
+	var p := proposta(pid)
+	if not p.is_empty():
+		p["status"] = "ensinada"
+		Extrator.analisar(self, p["capitulo"])
+	_avisar()
+
+
+# ---------------------------------------------------------------- versões dos capítulos
+
+const MAX_VERSOES := 30
+
+## Guarda uma versão do texto do capítulo (se mudou desde a última).
+func guardar_versao(cid: String) -> void:
+	var cap := capitulo(cid)
+	if cap.is_empty() or cap["texto"].strip_edges() == "":
+		return
+	if not cap.has("versoes"):
+		cap["versoes"] = []
+	var versoes: Array = cap["versoes"]
+	if not versoes.is_empty() and versoes.back()["texto"] == cap["texto"]:
+		return
+	versoes.append({"quando": Time.get_datetime_string_from_system(), "texto": cap["texto"]})
+	while versoes.size() > MAX_VERSOES:
+		versoes.pop_front()
+
+
+func restaurar_versao(cid: String, indice: int) -> void:
+	var cap := capitulo(cid)
+	var versoes: Array = cap.get("versoes", [])
+	if indice < 0 or indice >= versoes.size():
+		return
+	guardar_versao(cid)
+	atualizar_capitulo(cid, {"texto": versoes[indice]["texto"]})
 
 
 # ---------------------------------------------------------------- entidades
@@ -142,6 +286,13 @@ func restaurar_entidade(eid: String) -> void:
 		"origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": ""},
 	})
 	_avisar()
+
+
+## O autor decide se uma entidade tem mente própria (sobrepõe o palpite pelo tipo).
+func definir_tem_mente(eid: String, valor: bool) -> void:
+	if entidades.has(eid):
+		estado(eid)["tem_mente"] = valor
+		_avisar()
 
 
 func entidade(eid: String) -> Dictionary:
@@ -413,6 +564,9 @@ func para_dicionario() -> Dictionary:
 		"livros": livros,
 		"capitulos": capitulos,
 		"notas": notas,
+		"propostas": propostas,
+		"dicionario": dicionario,
+		"extras": extras,
 		"fatos": fatos.para_dicionario(),
 	}
 
@@ -437,5 +591,9 @@ static func de_dicionario(d: Dictionary) -> Universo:
 		c["canon"] = bool(c.get("canon", true))
 		c["marcado"] = bool(c.get("marcado", false))
 	u.notas = d.get("notas", [])
+	u.propostas = d.get("propostas", [])
+	u.dicionario = d.get("dicionario", {})
+	u.extras = d.get("extras", {})
 	u.fatos.carregar_dicionario(d.get("fatos", {}))
+	Persistencia.normalizar_numeros(u)
 	return u

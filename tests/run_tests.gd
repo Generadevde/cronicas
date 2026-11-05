@@ -8,6 +8,7 @@ const ARQUIVOS := [
 	"res://tests/test_ligacao_pesquisa.gd",
 	"res://tests/test_biblioteca.gd",
 	"res://tests/test_telas.gd",
+	"res://tests/test_parte2.gd",
 ]
 
 
@@ -16,8 +17,8 @@ func _initialize() -> void:
 	var falhas: Array = []
 	for caminho in ARQUIVOS:
 		var script: GDScript = load(caminho)
-		if script == null:
-			falhas.append("%s: não carregou" % caminho)
+		if script == null or not script.can_instantiate():
+			falhas.append("%s: não compilou (veja os erros acima)" % caminho)
 			continue
 		for m in script.get_script_method_list():
 			var nome: String = m["name"]
