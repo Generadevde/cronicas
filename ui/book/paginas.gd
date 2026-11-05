@@ -49,6 +49,8 @@ static func entidade(u: Universo, eid: String) -> String:
 			s += "[b]%s:[/b] %s\n" % [_e(c["chave"]), lig.para_bbcode(valor)]
 
 	s += estado(u, eid)
+	if Sociedades.eh_sociedade(u, eid):
+		s += sociedade(u, eid)
 	if Mapa.e_lugar(u, eid):
 		var l := lugar(u, eid)
 		if l != "":
@@ -113,8 +115,6 @@ static func estado(u: Universo, eid: String) -> String:
 	for k in rotulos:
 		if not fam[k].is_empty():
 			linhas.append("[b]%s:[/b] %s" % [rotulos[k], ", ".join(fam[k].map(func(x): return link("ent:" + x, u.entidade(x).get("nome", "?"))))])
-	if float(st["reputacao"]) != 0.0:
-		linhas.append("[b]Fama:[/b] %s" % ("conhecido" if float(st["reputacao"]) > 0 else "mal falado"))
 	if mente:
 		linhas.append("[b]Jeito de ser:[/b] %s" % Personalidade.resumo(Personalidade.tracos(u, eid)))
 		var idade := Estado.idade(u, eid)
@@ -129,6 +129,9 @@ static func estado(u: Universo, eid: String) -> String:
 		var marcas := Pecas.marcas(u, eid)
 		if not marcas.is_empty():
 			linhas.append("[b]Marcas:[/b] %s" % ", ".join(marcas.map(func(x): return _e(x))))
+		var reps := Reputacao.por_grupo(u, eid)
+		if not reps.is_empty():
+			linhas.append("[b]Fama:[/b] %s" % " · ".join(reps.slice(0, 4).map(func(r): return "%s para %s" % [r["palavra"], link("ent:" + r["grupo"], u.entidade(r["grupo"])["nome"])])))
 		var cic := Corpo.cicatrizes(u, eid)
 		if not cic.is_empty():
 			linhas.append("[b]Cicatrizes:[/b] %s" % ", ".join(cic.map(func(x): return _e(x))))
@@ -200,6 +203,14 @@ static func lugar(u: Universo, eid: String) -> String:
 		var onde := "" if ev["lugar"] == eid else " (em toda %s)" % u.entidade(ev["lugar"]).get("nome", "?")
 		linhas.append("[color=#7A2418]%s [b]%s[/b]%s até %s[/color] %s" % [info.get("simbolo", "•"), info.get("nome", ev["tipo"]), onde,
 			DataMundo.texto(_data_de_ordem(int(ev["ate"]))), link("fato:" + ev["fato"], "(por quê?)")])
+	if Mapa.especie(u, eid) == "povoado" and Natureza.tem_natureza(u, eid) and float(Natureza.de(u, eid)["pop"]) > 0:
+		var h := Humor.de(u, eid)
+		linhas.append("[b]Humor do povo:[/b] %s [color=#5A3A1A](raiva %d%% · medo %d%% · alegria %d%% · fé %d%%)[/color]" % [Humor.palavra(h),
+			roundi(float(h["raiva"]) * 100), roundi(float(h["medo"]) * 100), roundi(float(h["alegria"]) * 100), roundi(float(h["fe"]) * 100)])
+		linhas.append("[b]Pão:[/b] %s" % Economia.palavra_preco(Economia.preco(u, eid)))
+	var soc := Sociedades.de_lugar(u, eid)
+	if soc != "" and soc != eid:
+		linhas.append("[b]Quem manda:[/b] %s" % link("ent:" + soc, u.entidade(soc)["nome"]))
 	var gente := Natureza._mentes_em(u, eid)
 	if not gente.is_empty():
 		linhas.append("[b]Quem está aqui:[/b] %s" % ", ".join(gente.map(func(g): return link("ent:" + g, u.entidade(g)["nome"]))))
@@ -209,6 +220,65 @@ static func lugar(u: Universo, eid: String) -> String:
 	if linhas.is_empty():
 		return ""
 	return "\n".join(linhas) + "\n"
+
+
+## A página de uma sociedade: governo, governante e dinastia, conselho, território,
+## riqueza, humor de cada povoado, leis, religião e cultura, e como vê as pessoas.
+static func sociedade(u: Universo, sid: String) -> String:
+	var linhas: Array = []
+	var t := Sociedades.tipo(u, sid)
+	linhas.append("[b]Governo:[/b] %s · sucessão por %s" % [Sociedades.NOMES_TIPO.get(t, t),
+		{"heranca": "herança", "eleicao": "eleição", "fe": "escolha dos sacerdotes", "forca": "força", "colmeia": "a mente central",
+		 "calculo": "cálculo", "riqueza": "riqueza", "nenhuma": "ninguém"}.get(Sociedades.SUCESSAO.get(t, "forca"), "?")])
+	var l := Sociedades.lider(u, sid)
+	if l != "" and u.entidades.has(l):
+		var vivo := Estado.vivo(u, l)
+		linhas.append("[b]Governante:[/b] %s%s%s" % [link("ent:" + l, u.entidade(l)["nome"]), (" · casa " + _e(Sociedades.casa(u, l))) if Sociedades.casa(u, l) != "" else "", "" if vivo else " [color=#7A2418](morto)[/color]"])
+	else:
+		linhas.append("[b]Governante:[/b] [i]ninguém[/i]")
+	var hist := Sociedades.historia_do_governo(u, sid)
+	if hist.size() > 1:
+		var nomes: Array = []
+		for h in hist:
+			nomes.append("%s%s" % [link("ent:" + h["quem"], u.entidade(h["quem"]).get("nome", "?")), (" (desde " + DataMundo.texto(h["desde"]) + ")") if not h["desde"].is_empty() else ""])
+		linhas.append("[b]Governantes:[/b] %s" % " → ".join(nomes))
+	var cons := Sociedades.conselho(u, sid)
+	if not cons.is_empty():
+		linhas.append("[b]Conselho:[/b] %s" % ", ".join(cons.map(func(c):
+			var v := Sociedades.lealdade(u, c, l)
+			return "%s (%s)" % [link("ent:" + c, u.entidade(c)["nome"]), "leal" if v >= 0.6 else ("dividido" if v >= 0.3 else "desleal")])))
+	var terr := Sociedades.territorio_base(u, sid)
+	if not terr.is_empty():
+		linhas.append("[b]Território:[/b] %s" % ", ".join(terr.map(func(x): return link("ent:" + x, u.entidade(x)["nome"]))))
+	linhas.append("[b]Riqueza:[/b] %s · impostos %s" % [_numero(Economia.riqueza(u, sid)), {0.0: "nenhum", 0.03: "baixos", 0.07: "comuns", 0.15: "altos"}.get(Sociedades.imposto(u, sid), "comuns")])
+	var povo: Array = []
+	for p in Sociedades.territorio(u, sid):
+		if Mapa.especie(u, p) == "povoado" and Natureza.tem_natureza(u, p) and float(Natureza.de(u, p)["pop"]) > 0:
+			povo.append("%s: %s" % [link("ent:" + p, u.entidade(p)["nome"]), Humor.palavra(Humor.de(u, p))])
+	if not povo.is_empty():
+		linhas.append("[b]O povo:[/b] %s" % " · ".join(povo))
+	var leis: Dictionary = u.estado(sid).get("leis_feitas", {})
+	if not leis.is_empty():
+		linhas.append("[b]Leis:[/b] %s" % " · ".join(leis.keys().map(func(x): return _e(x))))
+	var fe := Sociedades._campo(u, sid, ["religi", "fe", "crenc", "deus"])
+	if fe != "":
+		linhas.append("[b]Fé:[/b] %s" % _e(fe))
+	var adm := Sociedades._campo(u, sid, ["admir", "honram"])
+	var desp := Sociedades._campo(u, sid, ["desprez", "tabu", "odeiam", "condenam"])
+	if adm != "" or desp != "":
+		linhas.append("[b]Cultura:[/b] %s%s" % [("admira " + _e(adm)) if adm != "" else "", ("; despreza " + _e(desp)) if desp != "" else ""])
+	var vistos: Array = []
+	for e in u.entidades_ativas():
+		if Sugestoes.categoria(e["tipo"]) != "pessoa":
+			continue
+		var r := Reputacao.detalhe(u, sid, e["id"])
+		if int(r["conhecidos"]) > 0 and absf(float(r["valor"])) >= 0.2:
+			vistos.append([e["id"], r])
+	vistos.sort_custom(func(a, b): return absf(a[1]["valor"]) > absf(b[1]["valor"]))
+	if not vistos.is_empty():
+		linhas.append("[b]Como vê as pessoas:[/b] %s" % ", ".join(vistos.slice(0, 6).map(func(v): return "%s (%s)" % [link("ent:" + v[0], u.entidade(v[0])["nome"]), Reputacao.palavra(v[1])])))
+	linhas.append("[color=#5A3A1A]%d membros com mente própria[/color]" % Sociedades.membros(u, sid).size())
+	return secao("Sociedade") + "\n".join(linhas) + "\n"
 
 
 static func _data_de_ordem(ordem: int) -> Dictionary:

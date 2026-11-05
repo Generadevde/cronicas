@@ -27,6 +27,7 @@ var _indice_cache: Dictionary = {}
 var _ativas_cache: Array = []
 var _ativas_tam := -1
 var _ativas_sujo := true
+var versao := 0  ## sobe quando entidades, fichas ou o mapa mudam (para caches)
 var _indice_sujo := true
 
 
@@ -50,6 +51,7 @@ func _avisar() -> void:
 	atualizado_em = Time.get_datetime_string_from_system()
 	_indice_sujo = true
 	_ativas_sujo = true
+	versao += 1
 	mudou.emit()
 
 
@@ -200,7 +202,7 @@ func sistemas_de_mudanca() -> Array:
 ## Sistemas que rodam a cada passo do relógio (natureza, sociedades...).
 ## Cada um tem: static func passo(u, dias, rng) -> Array de ids de fatos.
 func sistemas_de_simulacao() -> Array:
-	return [Viagens, Natureza, Regras, Corpo]
+	return [Viagens, Natureza, Economia, Humor, Sociedades, Familia, Regras, Corpo]
 
 
 ## Dias de viagem entre dois lugares, pelo mapa (-1 = não dá para saber).
@@ -268,7 +270,8 @@ func restaurar_versao(cid: String, indice: int) -> void:
 
 ## Cria uma entidade. 'tipo' é texto livre ("pessoa", "dragão de gelo", "cidade flutuante"...).
 ## 'campos' é uma lista ordenada de {chave, valor}, também livres.
-func criar_entidade(p_nome: String, tipo: String, apelidos: Array = [], campos: Array = []) -> String:
+## 'causas' (opcional): quando o mundo cria a entidade (um filho que nasce), a criação vem da simulação.
+func criar_entidade(p_nome: String, tipo: String, apelidos: Array = [], campos: Array = [], causas: Array = []) -> String:
 	var eid := Ids.novo("ent")
 	entidades[eid] = {
 		"id": eid,
@@ -283,8 +286,9 @@ func criar_entidade(p_nome: String, tipo: String, apelidos: Array = [], campos: 
 		"descricao": "%s passou a existir (%s)." % [p_nome.strip_edges(), tipo.strip_edges() if tipo.strip_edges() != "" else "sem tipo"],
 		"sujeitos": [eid],
 		"data": relogio,
-		"origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": ""},
-		"dados": {"campos": entidades[eid]["campos"].duplicate(true)},
+		"causas": causas,
+		"origem": {"tipo": BancoDeFatos.ORIGEM_SIMULACAO if not causas.is_empty() else BancoDeFatos.ORIGEM_AUTOR, "ref": ""},
+		"dados": {"campos": entidades[eid]["campos"].duplicate(true), "importancia": 0.05 if not causas.is_empty() else 0.2},
 	})
 	entidades[eid]["fato_criacao"] = fid
 	_avisar()

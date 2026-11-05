@@ -104,6 +104,17 @@ Cada universo tem uma cópia de segurança da versão anterior (`universo.json.b
 - **Fauna e flora** de cada terreno editáveis na aba Universo.
 - Simulação mais rápida (um planeta povoado com uns 150 personagens leva cerca de 30 segundos para avançar 10 anos).
 
+## Parte 6 — Sociedades
+
+- **Qualquer coisa com governo na ficha é uma sociedade** (aba Sociedades): reino, república, tribo, teocracia, império, guilda, ordem, colmeia… Campos livres: "forma de governo", "líder", "território", "conselho", "leis", "impostos", "religião", "admiram", "desprezam".
+- **Governo e sucessão**: o governante, a casa (sobrenome) e a história dos governantes. Quando o governante morre, o sucessor vem pela forma de governo (herança, eleição, escolha da fé, força). Conselheiros pouco leais podem dar **golpe**.
+- **Humor do povo** em cada povoado (raiva, medo, alegria, fé): sobe com fome, pestes, impostos e com o que o povo acha do governante. Raiva alta vira inquietação e, depois de semanas, **revolta**, que pode derrubar o governo (e até mudar a forma de governo) ou ser esmagada. Alegria vira festa; medo e fé fazem surgir profetas (e, numa teocracia, hereges).
+- **Economia**: caravanas levam comida de onde sobra para onde falta; preço do pão; riqueza vinda dos impostos.
+- **Reputação relativa**: a mesma pessoa pode ser herói para um povo e carniceiro para outro, conforme o que cada cultura admira ou despreza e o que chegou até ela.
+- **Gerações**: casais têm filhos que herdam o sobrenome, um pouco do jeito dos pais e as inimizades da família.
+- Leis da sociedade valem só no território dela ("a magia é proibida" faz quem usa magia ali virar fugitivo).
+- Teste do plano: uma seca vira fome, a fome vira revolta e a revolta derruba o governo, com a cadeia de causas inteira.
+
 ## Ajustes de leitura
 
 No livro, o botão **Aa** (ou Configurações, no menu) escolhe a fonte do texto, a fonte da escrita (capítulos e notas; por padrão uma letra manuscrita) e o tamanho da letra, com prévia. Fica guardado para as próximas vezes.

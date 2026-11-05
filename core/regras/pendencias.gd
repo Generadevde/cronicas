@@ -15,15 +15,17 @@ const CAMPOS_LIDOS := ["personalid", "jeito", "gost", "valor", "hobby", "paix", 
 	"lingua", "idioma", "terreno", "largura", "tamanho", "extens", "area", "estado", "magia", "habilid", "dom", "dons",
 	"feitic", "tecnic", "artes", "custo", "limite", "efeito", "quem pode usar", "usuario", "dono", "portador", "mestre",
 	"expectativ", "longevid", "vive", "povo", "raca", "especie", "linhagem", "origem", "nacao", "reino", "terra natal",
-	"naturalid", "tipo de poder", "natureza"]
+	"naturalid", "tipo de poder", "natureza",
+	"forma de governo", "governo", "quem governa", "governante", "lider", "rei", "rainha", "imperador", "chefe", "soberano",
+	"regente", "conselho", "nobres", "generais", "territorio", "terras", "dominio", "sede", "capital", "leis", "lei",
+	"religi", "fe", "crenc", "deus", "admir", "desprez", "tabu", "costum", "impost", "tribut", "sucess", "ofic", "profiss",
+	"cargo", "honram", "odeiam", "condenam"]
 ## Campos que são descrição (valem como texto do mundo: wiki, pesquisa, a voz dos personagens).
 const DESCRITIVOS := ["descric", "aparenc", "historia", "feito", "epoca", "nota", "apelido", "resumo", "biografia"]
 ## Campos que as próximas partes vão usar (não contam como pendência).
 const PLANEJADOS := {
-	"recurso": 6, "quem governa": 6, "governa": 6, "lider": 6, "forma de governo": 6, "governo": 6, "sede": 6,
-	"aliad": 6, "inimig": 6, "riqueza": 6, "leis": 6, "oficio": 6, "profiss": 6, "cargo": 6, "moeda": 6,
-	"religi": 6, "crenc": 6, "fe": 6, "exercito": 7, "tropas": 7, "o que oferece": 8, "o que cobra": 8,
-	"seguidores": 8, "vontade": 8, "como age": 8, "pacto": 8,
+	"recurso": 9, "riqueza": 9, "moeda": 9, "aliad": 7, "inimig": 7, "exercito": 7, "tropas": 7,
+	"o que oferece": 8, "o que cobra": 8, "seguidores": 8, "vontade": 8, "como age": 8, "pacto": 8,
 }
 
 

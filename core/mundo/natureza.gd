@@ -468,7 +468,9 @@ static func _dinamica(reg: Dictionary, evs: Array, est: String, dt: float, rng: 
 		var rebanho := maxf(0.0, _media(reg, ["rebanho"]))
 		var caca_pesca := clampf(presas * 1.2, 0.0, 1.0)
 		var comida := 0.62 * cultivo + 0.23 * rebanho + 0.15 * caca_pesca
-		reg["comida"] = clampf(comida / 0.85, 0.0, 1.3)
+		# O que chega pelas caravanas (Economia) ajuda; o que sai pesa um pouco.
+		var troca := float(reg.get("importado", 0.0)) - float(reg.get("exportado", 0.0)) * 0.3
+		reg["comida"] = clampf(comida / 0.85 + troca, 0.0, 1.3)
 		var taxa := float(ef["pop"])
 		if reg["comida"] >= 0.9:
 			taxa += 0.0004

@@ -135,6 +135,7 @@ static func colocar(u: Universo, eid: String, de: String, x: int, y: int, regist
 	y = clampi(y, 0, LINHAS - 1)
 	var antes := posicao(u, eid)
 	dados(u)["pos"][eid] = {"pai": de, "x": x, "y": y}
+	u.versao += 1
 	if registrar_fato:
 		var onde: String = ("em " + u.entidade(de)["nome"]) if de != "" else "no cosmos"
 		var verbo := "foi colocado" if antes.is_empty() else "foi movido"
@@ -152,6 +153,7 @@ static func colocar(u: Universo, eid: String, de: String, x: int, y: int, regist
 
 static func tirar(u: Universo, eid: String) -> void:
 	if dados(u)["pos"].erase(eid):
+		u.versao += 1
 		u.marcar_mudanca()
 
 

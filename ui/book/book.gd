@@ -8,6 +8,7 @@ const ABAS := [
 	{"id": "mundo", "nome": "Mundo", "cor": "#2F4F8A", "script": preload("res://ui/book/aba_mundo.gd")},
 	{"id": "mapa", "nome": "Mapa", "cor": "#3F6A3A", "script": preload("res://ui/book/aba_mapa.gd")},
 	{"id": "universo", "nome": "Universo", "cor": "#6A2F4F", "script": preload("res://ui/book/aba_universo.gd")},
+	{"id": "sociedades", "nome": "Sociedades", "cor": "#2E5E5A", "script": preload("res://ui/book/aba_sociedades.gd")},
 	{"id": "leis", "nome": "Leis", "cor": "#7A5A1A", "script": preload("res://ui/book/aba_leis.gd")},
 	{"id": "wiki", "nome": "Wiki", "cor": "#5B6B2A", "script": preload("res://ui/book/aba_wiki.gd")},
 	{"id": "criadores", "nome": "Criadores", "cor": "#5A3A7A", "script": preload("res://ui/book/aba_criadores.gd")},
@@ -18,7 +19,7 @@ const ABAS := [
 ]
 
 ## Abas que se redesenham sozinhas quando o tempo do mundo anda.
-const ABAS_VIVAS := ["jornal", "mundo", "mapa", "leis", "wiki", "fatos", "indice"]
+const ABAS_VIVAS := ["jornal", "mundo", "mapa", "sociedades", "leis", "wiki", "fatos", "indice"]
 
 var universo: Universo
 var aba_atual := ""
@@ -124,9 +125,9 @@ func _construir() -> void:
 	_dir = _criar_pagina(paginas, "esquerda", 1.18)
 
 	var fitas := VBoxContainer.new()
-	fitas.add_theme_constant_override("separation", 5)
+	fitas.add_theme_constant_override("separation", 3)
 	var topo_fitas := Control.new()
-	topo_fitas.custom_minimum_size = Vector2(0, 40)
+	topo_fitas.custom_minimum_size = Vector2(0, 22)
 	fitas.add_child(topo_fitas)
 	for a in ABAS:
 		var f := Button.new()
@@ -134,7 +135,7 @@ func _construir() -> void:
 		f.focus_mode = Control.FOCUS_NONE
 		f.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		f.add_theme_font_override("font", Tema.F_FELL)
-		f.add_theme_font_size_override("font_size", Tema.px(17))
+		f.add_theme_font_size_override("font_size", Tema.px(16))
 		var claro: bool = a["id"] == "fatos"
 		var cor_texto := Color("#1E1006") if claro else Color("#F5E6C4")
 		for estado in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
@@ -176,8 +177,8 @@ func _estilizar_fitas() -> void:
 			s.bg_color = cor.lightened(0.12) if estado == "hover" else cor
 			s.content_margin_left = 14
 			s.content_margin_right = 26 if ativa else 16
-			s.content_margin_top = 8
-			s.content_margin_bottom = 8
+			s.content_margin_top = 4
+			s.content_margin_bottom = 4
 			s.corner_radius_top_right = 3
 			s.corner_radius_bottom_right = 3
 			if ativa:
