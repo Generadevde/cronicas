@@ -158,3 +158,61 @@ func test_uma_lei_e_uma_personagem() -> void:
 	Escrita.usar_sugestao(u, cid, "Naquela noite, o mar ficou calmo. Mira dormiu com a espada.")
 	igual(Escrita.processar(u, cid).size(), 0, "o texto do mundo não é relido")
 	igual(Escrita.cartoes(u, cid).size(), antes, "nada novo na margem")
+
+
+func _pos(u: Universo, nome: String) -> Vector2i:
+	var p := Mapa.posicao(u, _achar(u, nome))
+	return Vector2i(int(p.get("x", -1)), int(p.get("y", -1)))
+
+
+func test_o_mapa_acompanha_onde_a_frase_diz() -> void:
+	var m := _novo("Onde", 11)
+	var u: Universo = m["u"]
+	var cid: String = m["cap"]
+	_escrever(u, cid, "Existe uma cidade chamada Brasa.")
+	var brasa := _pos(u, "Brasa")
+	_escrever(u, cid, "Ao norte de Brasa existe uma torre chamada Vigia.")
+	verdadeiro(_pos(u, "Vigia").y < brasa.y, "a torre ficou ao norte (%s, Brasa %s)" % [_pos(u, "Vigia"), brasa])
+	igual(Mapa.pai(u, _achar(u, "Vigia")), Mapa.pai(u, _achar(u, "Brasa")), "no mesmo mapa")
+	_escrever(u, cid, "Longe de Brasa, a leste, existe uma vila chamada Orla.")
+	verdadeiro(_pos(u, "Orla").x - brasa.x >= 8, "a vila ficou longe, a leste (%s)" % _pos(u, "Orla"))
+	_escrever(u, cid, "Perto de Brasa existe uma aldeia chamada Cinza.")
+	verdadeiro(Vector2(_pos(u, "Cinza") - brasa).length() <= 5.0, "a aldeia ficou perto (%s)" % _pos(u, "Cinza"))
+	_escrever(u, cid, "Existe uma torre em Brasa chamada Sino.")
+	igual(Mapa.pai(u, _achar(u, "Sino")), _achar(u, "Brasa"), "a torre ficou dentro da cidade (no mapa dela)")
+	var mundo := Mapa.pai(u, _achar(u, "Brasa"))
+	if not Mapa.celulas_livres(u, mundo, ["montanha"]).is_empty():
+		_escrever(u, cid, "Nas montanhas existe uma mina chamada Funda.")
+		var p := _pos(u, "Funda")
+		igual(Mapa.terreno_em(u, mundo, p.x, p.y), "montanha", "a mina ficou nas montanhas")
+
+
+func test_a_vila_na_costa_da_ilha() -> void:
+	var m := _novo("Costa", 12)
+	var u: Universo = m["u"]
+	var cid: String = m["cap"]
+	_escrever(u, cid, "Existe apenas uma ilha, chamada Aru, com 10 pessoas.")
+	_escrever(u, cid, "Na costa norte da ilha existe uma vila chamada Porto.")
+	var mundo := Mapa.pai(u, _achar(u, "Aru"))
+	var p := _pos(u, "Porto")
+	verdadeiro(p.y <= _pos(u, "Aru").y, "a vila ficou ao norte da ilha (%s, Aru %s)" % [p, _pos(u, "Aru")])
+	falso(Mapa.terreno_em(u, mundo, p.x, p.y) == "agua", "em terra")
+	var junto_do_mar := false
+	for v in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var q: Vector2i = p + v
+		if Mapa.terreno_em(u, mundo, q.x, q.y) == "agua":
+			junto_do_mar = true
+	verdadeiro(junto_do_mar, "encostada no mar")
+
+
+func test_criaturas_vao_onde_esta_a_gente() -> void:
+	var m := _novo("Gente", 13)
+	var u: Universo = m["u"]
+	var cid: String = m["cap"]
+	_escrever(u, cid, "Existe apenas uma ilha, chamada Aru, com 20 pessoas.")
+	_escrever(u, cid, "Ao sul de Aru, nas colinas, existe uma caverna chamada Boca Funda.")
+	var c := _escrever(u, cid, "Essas pessoas precisam sobreviver. À noite, slimes começam a aparecer e atacam as pessoas.")
+	var slime := _achar(u, "Slime")
+	igual(str(Ameacas.dados(u, slime).get("lugar", "")), _achar(u, "Aru"), "os slimes atacam Aru, onde a gente está (não a caverna vazia)")
+	verdadeiro(Recursos.de(u, _achar(u, "Aru")).has("comida"), "a comida é contada em Aru")
+	falso(u.propostas.any(func(p): return p["capitulo"] == cid and p["status"] == "duvida"), "nenhuma dúvida sobre frases que o leitor entendeu")

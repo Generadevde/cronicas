@@ -103,6 +103,7 @@ static func processar_frase(u: Universo, cid: String, frase: String) -> Dictiona
 	if str(lido["foco"]) != "":
 		cap["foco"] = lido["foco"]
 	var itens: Array = lido["itens"]
+	var leitor_entendeu := not itens.is_empty()
 	# Ações de quem já existe (o Extrator lê o capítulo; as propostas desta frase valem).
 	cap["data"] = DataMundo.copiar(u.relogio)
 	Extrator.analisar(u, cid)
@@ -115,6 +116,11 @@ static func processar_frase(u: Universo, cid: String, frase: String) -> Dictiona
 		if fid != "":
 			acoes += 1
 			itens.append({"tipo": "acao", "texto": u.fatos.obter(fid)["descricao"], "id": fid, "proposta": p["id"]})
+	# O que o Leitor já entendeu não vira dúvida ("nas colinas" não é uma ação).
+	if leitor_entendeu:
+		for p in u.propostas.duplicate():
+			if p["capitulo"] == cid and p["status"] == "duvida" and chave(str(p.get("frase", ""))) == k:
+				u.riscar_proposta(p["id"])
 	var duvidas: Array = u.propostas.filter(func(p): return p["capitulo"] == cid and p["status"] == "duvida" and chave(str(p.get("frase", ""))) == k).map(func(p): return p["id"])
 	# O tempo: o que a frase disser; se ela conta algo (não só descreve o mundo), um dia.
 	var dias := int(lido["dias"])

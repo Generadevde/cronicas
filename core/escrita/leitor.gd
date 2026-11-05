@@ -266,7 +266,18 @@ static func _ler_lugar(u: Universo, original: String, n: String, raiz: String, f
 	_anotar(u, raiz, "criados", eid)
 	# No mapa do mundo, com o terreno que a frase pede.
 	var sozinha := n.contains(" apenas ") or n.contains(" so existe ") or n.contains(" uma unica ") or n.contains(" no meio do oceano") or n.contains(" no meio do mar")
-	var pos := _posicao_livre(u, mundo, rng)
+	# Onde: a frase pode dizer ("ao norte de Aru", "perto de Brasa", "na costa", "nas montanhas").
+	var onde := onde_fica(u, original, n, mundo, nome, foco, rng)
+	var pos: Vector2i = onde["pos"]
+	if str(onde["pai"]) != mundo:
+		Mapa.colocar(u, eid, str(onde["pai"]), pos.x, pos.y, false)
+		if Mapa.PALAVRAS_TERRENO.has(palavra):
+			Mapa.pintar(u, str(onde["pai"]), pos.x, pos.y, Mapa.PALAVRAS_TERRENO[palavra])
+		var f0 := u.fatos.obter(raiz)
+		if not f0.is_empty():
+			f0["sujeitos"].append(eid)
+			f0["lugar"] = eid
+		return eid
 	if palavra in ["ilha", "ilhota", "arquipelago"]:
 		if sozinha:
 			for y in Mapa.LINHAS:
@@ -294,10 +305,20 @@ static func _ler_lugar(u: Universo, original: String, n: String, raiz: String, f
 				elif d <= borda + 1.2 and not sozinha:
 					Mapa.pintar(u, mundo, pos.x + dx, pos.y + dy, "agua")
 	elif Mapa.PALAVRAS_TERRENO.has(palavra):
-		Mapa.pintar(u, mundo, pos.x, pos.y, Mapa.PALAVRAS_TERRENO[palavra])
+		# Uma floresta, uma montanha, um deserto: uma mancha do terreno, não um ponto só.
+		var ter: String = Mapa.PALAVRAS_TERRENO[palavra]
+		var rui := FastNoiseLite.new()
+		rui.seed = hash(original)
+		rui.frequency = 0.3
+		for dy in range(-2, 3):
+			for dx in range(-3, 4):
+				if Vector2(dx * 0.7, dy).length() <= 1.8 + rui.get_noise_2d(pos.x + dx, pos.y + dy) and Mapa.terreno_em(u, mundo, clampi(pos.x + dx, 0, Mapa.COLS - 1), clampi(pos.y + dy, 0, Mapa.LINHAS - 1)) != "agua":
+					Mapa.pintar(u, mundo, pos.x + dx, pos.y + dy, ter)
+		Mapa.pintar(u, mundo, pos.x, pos.y, ter)
 	else:
+		# O chão de uma vila, de uma torre: só terreno de terra ("costa" e "rio" dizem onde, não pintam água).
 		for w in TextUtil.palavras(n):
-			if Mapa.PALAVRAS_TERRENO.has(w):
+			if Mapa.PALAVRAS_TERRENO.has(w) and Mapa.PALAVRAS_TERRENO[w] != "agua":
 				Mapa.pintar(u, mundo, pos.x, pos.y, Mapa.PALAVRAS_TERRENO[w])
 				break
 	Mapa.colocar(u, eid, mundo, pos.x, pos.y, false)
@@ -322,6 +343,131 @@ static func _mundo(u: Universo, raiz: String, n: String) -> String:
 			for x in Mapa.COLS:
 				Mapa.pintar(u, eid, x, y, "vazio")
 	return eid
+
+
+const DIRECOES := {"nordeste": Vector2i(1, -1), "noroeste": Vector2i(-1, -1), "sudeste": Vector2i(1, 1), "sudoeste": Vector2i(-1, 1),
+	"norte": Vector2i(0, -1), "sul": Vector2i(0, 1), "leste": Vector2i(1, 0), "oeste": Vector2i(-1, 0), "oriente": Vector2i(1, 0), "ocidente": Vector2i(-1, 0)}
+
+
+## Onde fica o que a frase cria: {pai, pos}.
+##   "ao norte de Aru", "a leste de Brasa" → do lado de lá, a uns 4 quadros;
+##   "perto de", "ao lado de", "junto a" → colado; "longe de" → bem longe;
+##   "na costa", "na praia", "no litoral" → terra encostada no mar;
+##   "nas montanhas", "na floresta", "no deserto" → num quadro desse terreno;
+##   "em Brasa", "dentro de Brasa" (uma cidade) → dentro dela, no mapa dela.
+static func onde_fica(u: Universo, original: String, n: String, mundo: String, nome_novo: String, foco: String, rng: RandomNumberGenerator) -> Dictionary:
+	var ref := ""
+	for m in Ligador.new(u).encontrar(original):
+		var x: String = m["entidade"]
+		if TextUtil.chave(u.entidade(x)["nome"]) == TextUtil.chave(nome_novo) or not Mapa.no_mapa(u, x) or Mapa.especie(u, x) in ["planeta", "cosmico"]:
+			continue
+		ref = x
+		break
+	# "na ilha", "da vila" sem nome: o lugar da cena.
+	if ref == "" and foco != "" and Mapa.no_mapa(u, foco):
+		for w in [" da ilha", " na ilha", " da vila", " na vila", " da cidade", " na cidade", " do vale", " no vale", " da aldeia", " na aldeia", " do reino", " no reino"]:
+			if n.contains(w):
+				ref = foco
+	var dir := Vector2i.ZERO
+	for d in DIRECOES:
+		if n.contains(" " + d):
+			dir = DIRECOES[d]
+			break
+	var dist := 4
+	if n.contains(" longe"):
+		dist = 9
+	elif n.contains(" perto") or n.contains(" ao lado") or n.contains(" junto") or n.contains(" vizinh") or n.contains(" encostad"):
+		dist = 2
+	var costa := n.contains(" costa") or n.contains(" praia") or n.contains(" litoral") or n.contains(" beira mar") or n.contains(" beira do mar") or n.contains(" orla")
+	var terreno := ""
+	for w in TextUtil.palavras(n):
+		if Mapa.PALAVRAS_TERRENO.has(w) and not w in ["mar", "costa", "praia", "baia", "rio", "lago", "lagoa"]:
+			terreno = Mapa.PALAVRAS_TERRENO[w]
+	var pai := mundo
+	var base := Vector2i(-1, -1)
+	if ref != "":
+		var dentro := Mapa.especie(u, ref) in ["povoado", "construcao"] and (n.contains(" em " + TextUtil.normalizar(u.entidade(ref)["nome"])) or n.contains(" dentro d"))
+		if dentro and dir == Vector2i.ZERO:
+			return {"pai": ref, "pos": _livre_perto(u, ref, Vector2i(Mapa.COLS / 2, Mapa.LINHAS / 2) + Vector2i(rng.randi() % 9 - 4, rng.randi() % 5 - 2))}
+		if dentro:
+			return {"pai": ref, "pos": _livre_perto(u, ref, Vector2i(Mapa.COLS / 2, Mapa.LINHAS / 2) + Vector2i(dir.x * 10, dir.y * 5))}
+		pai = Mapa.pai(u, ref)
+		var p := Mapa.posicao(u, ref)
+		base = Vector2i(int(p["x"]), int(p["y"]))
+		# Uma ilha (ou outro lugar grande desenhado no mapa): "em Aru" fica dentro da terra dela.
+		var grande := Mapa.especie(u, ref) in ["natural", "regiao"]
+		if dir == Vector2i.ZERO and not costa and terreno == "":
+			var off := Vector2i(rng.randi() % 5 - 2, rng.randi() % 3 - 1) if grande else Vector2i(dist * (1 if rng.randf() < 0.5 else -1), rng.randi() % 3 - 1)
+			return {"pai": pai, "pos": _livre_perto(u, pai, base + off, true)}
+		if dir != Vector2i.ZERO and not costa:
+			var d := dist
+			return {"pai": pai, "pos": _livre_perto(u, pai, base + Vector2i(dir.x * d * 2, dir.y * d), true)}
+	else:
+		var fp := Mapa.posicao(u, foco) if foco != "" else {}
+		if not fp.is_empty() and Mapa.pai(u, foco) == mundo:
+			base = Vector2i(int(fp["x"]), int(fp["y"]))
+	if costa:
+		var c := _costa(u, pai, base, dir)
+		if c.x >= 0:
+			return {"pai": pai, "pos": _livre_perto(u, pai, c)}
+	if terreno != "":
+		var cel := Mapa.celulas_livres(u, pai, [terreno])
+		if not cel.is_empty():
+			var alvo := base if base.x >= 0 else Vector2i(Mapa.COLS / 2, Mapa.LINHAS / 2)
+			if dir != Vector2i.ZERO:
+				alvo += Vector2i(dir.x * 12, dir.y * 6)
+			cel.sort_custom(func(a, b): return Vector2(a - alvo).length() < Vector2(b - alvo).length())
+			return {"pai": pai, "pos": cel[0]}
+	if base.x >= 0 and dir != Vector2i.ZERO:
+		return {"pai": pai, "pos": _livre_perto(u, pai, base + Vector2i(dir.x * dist * 2, dir.y * dist), true)}
+	return {"pai": pai, "pos": _posicao_livre(u, pai, rng)}
+
+
+## Terra encostada no mar, perto de 'base' e do lado de 'dir'.
+static func _costa(u: Universo, de: String, base: Vector2i, dir: Vector2i) -> Vector2i:
+	var g := Mapa.terreno(u, de)
+	var melhor := Vector2i(-1, -1)
+	var melhor_v := INF
+	var alvo := base if base.x >= 0 else Vector2i(Mapa.COLS / 2, Mapa.LINHAS / 2)
+	alvo += Vector2i(dir.x * 20, dir.y * 10)
+	for y in Mapa.LINHAS:
+		for x in Mapa.COLS:
+			if g[y][x] in ["agua", "vazio"]:
+				continue
+			var junto := false
+			for v in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var q: Variant = Vector2i(x, y) + v
+				if q.x >= 0 and q.y >= 0 and q.x < Mapa.COLS and q.y < Mapa.LINHAS and g[q.y][q.x] == "agua":
+					junto = true
+			if not junto:
+				continue
+			var d := Vector2(Vector2i(x, y) - alvo).length() + (0.0 if base.x < 0 else Vector2(Vector2i(x, y) - base).length() * 0.6)
+			if d < melhor_v:
+				melhor_v = d
+				melhor = Vector2i(x, y)
+	return melhor
+
+
+## O quadro livre mais perto de 'c' (sem ninguém em cima; em terra, se pedido).
+static func _livre_perto(u: Universo, de: String, c: Vector2i, terra: bool = false) -> Vector2i:
+	var ocupados := {}
+	for x in Mapa.filhos(u, de):
+		var p := Mapa.posicao(u, x)
+		ocupados[Vector2i(int(p.get("x", 0)), int(p.get("y", 0)))] = true
+	var g := Mapa.terreno(u, de)
+	var alvo := Vector2i(clampi(c.x, 1, Mapa.COLS - 2), clampi(c.y, 1, Mapa.LINHAS - 2))
+	for r in range(0, 12):
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) != r:
+					continue
+				var q := alvo + Vector2i(dx, dy)
+				if q.x < 0 or q.y < 0 or q.x >= Mapa.COLS or q.y >= Mapa.LINHAS or ocupados.has(q):
+					continue
+				if terra and g[q.y][q.x] in ["agua", "vazio"]:
+					continue
+				return q
+	return alvo
 
 
 static func _posicao_livre(u: Universo, mundo: String, rng: RandomNumberGenerator) -> Vector2i:
@@ -418,6 +564,29 @@ static func _povoar(u: Universo, lugar: String, qtd: int, grupo: String, extra: 
 	return {"lugar": lugar, "texto": texto, "criados": criados}
 
 
+## Onde está a gente de quem a frase fala: o lugar da cena, se mora alguém ali; senão,
+## o lugar mais habitado por perto (a caverna recém-escrita não tem gente; a ilha tem).
+static func lugar_da_gente(u: Universo, foco: String) -> String:
+	if foco == "" or not Ameacas._pessoas(u, foco).is_empty():
+		return foco
+	# Primeiro os vizinhos no mesmo mapa (o mais habitado); depois quem está acima, se não for o mundo todo.
+	var cand: Array = []
+	var mapa := Mapa.pai(u, foco)
+	for x in Mapa.filhos(u, mapa):
+		var n := Ameacas._pessoas(u, x).size()
+		if n > 0 and x != foco:
+			cand.append([x, n])
+	if not cand.is_empty():
+		cand.sort_custom(func(a, b): return int(a[1]) > int(b[1]))
+		return cand[0][0]
+	for a in Mapa.ancestrais(u, foco):
+		if Mapa.especie(u, a) in ["planeta", "cosmico"]:
+			break
+		if not Ameacas._pessoas(u, a).is_empty():
+			return a
+	return foco
+
+
 # ---------------------------------------------------------------- criaturas
 
 static func _ler_criatura(u: Universo, original: String, n: String, raiz: String, foco: String) -> Dictionary:
@@ -492,7 +661,9 @@ static func _ler_criatura(u: Universo, original: String, n: String, raiz: String
 			alvo = par[1]
 	if n.contains(" muitos ") or n.contains(" hordas ") or n.contains(" centenas ") or n.contains(" enxames "):
 		base = maxf(base, 15.0)
-	var lugar := foco if foco != "" else _lugar_citado(u, original)
+	var lugar := _lugar_citado(u, original)
+	if lugar == "" or Ameacas._pessoas(u, lugar).is_empty():
+		lugar = lugar_da_gente(u, foco if lugar == "" else lugar)
 	if lugar == "":
 		for e in u.entidades_ativas():
 			if Mapa.e_lugar(u, e["id"]) and not Ameacas._pessoas(u, e["id"]).is_empty():
@@ -531,7 +702,7 @@ static func _singular(p: String) -> String:
 # ---------------------------------------------------------------- necessidades
 
 static func _ler_necessidade(u: Universo, n: String, raiz: String, foco: String) -> Array:
-	var lugar := foco
+	var lugar := lugar_da_gente(u, foco)
 	if lugar == "":
 		return []
 	var pedidos: Array = []  # [nome, reserva, fonte]

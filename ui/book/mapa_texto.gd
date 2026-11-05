@@ -169,6 +169,8 @@ func _draw() -> void:
 	_rotulos.append(Rect2(centro_rosa - Vector2(r + 6, r + 14), Vector2(r * 2 + 12, r * 2 + 20)))
 	_rotulos.append(Rect2(Vector2(10, size.y - 30), Vector2(c.x * 8 + 170, 26)))
 	_lugares(c, cosmos)
+	if mostrar_eventos and not cosmos:
+		_alertas(c)
 	if voce.x >= 0:
 		var pv := Vector2((voce.x + 0.5) * c.x, (voce.y + 0.5) * c.y)
 		draw_arc(pv, c.y * 0.9, 0, TAU, 28, Color("#7A2418"), 2.2)
@@ -196,6 +198,41 @@ func _draw() -> void:
 			k2 += 1
 	_rosa_dos_ventos(centro_rosa, r, tinta)
 	_escala(c, tinta)
+
+
+## O que está acontecendo em cada lugar, escrito embaixo do nome: criaturas que
+## atacam, fome, falta de ar. O mapa acompanha a história sozinho.
+func _alertas(c: Vector2) -> void:
+	var por_lugar := {}
+	for esp in Ameacas.todas(u):
+		var a := Ameacas.dados(u, esp)
+		if a.get("ativa", false):
+			var l := str(a.get("lugar", ""))
+			if not por_lugar.has(l):
+				por_lugar[l] = []
+			por_lugar[l].append("⚔ " + str(a.get("plural", u.entidade(esp)["nome"])))
+	for l in Recursos.lugares(u):
+		for nome in Recursos.de(u, l):
+			var al := str(Recursos.de(u, l)[nome].get("alerta", ""))
+			if al != "":
+				if not por_lugar.has(l):
+					por_lugar[l] = []
+				por_lugar[l].append(("sem " if al == "acabou" else "pouca ") + Recursos._palavra(nome).split(" ")[1])
+	for l in por_lugar:
+		if not u.entidades.has(l) or Mapa.pai(u, l) != lugar:
+			continue
+		var pos := Mapa.posicao(u, l)
+		if not nevoa.is_empty() and not nevoa.has(Vector2i(int(pos["x"]), int(pos["y"]))):
+			continue
+		var centro := Vector2((int(pos["x"]) + 0.5) * c.x, (int(pos["y"]) + 0.5) * c.y)
+		var t := " · ".join(por_lugar[l])
+		var fs := 14
+		var w := Tema.F_FELL_IT.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		var r := Rect2(centro + Vector2(-w / 2.0 - 4, c.y * 0.55), Vector2(w + 8, fs + 6))
+		draw_rect(r, Color("#EBD6A8", 0.9))
+		draw_rect(r, Color("#8A2A10", 0.7), false, 1.0)
+		_texto(Tema.F_FELL_IT, r.grow_individual(-4, -2, 0, 0), t, fs, Color("#8A2A10"))
+		_rotulos.append(r)
 
 
 ## O que o personagem não conhece fica coberto, como papel em branco com hachuras.

@@ -19,6 +19,8 @@ A cada frase terminada, o mundo muda:
 - **"Neste mundo, quem mente perde a voz"** → uma lei do universo;
 - **"Três anos depois…"** → o tempo anda (se a frase só conta algo, anda um dia).
 
+O **mapa acompanha a escrita**: cada lugar vai para onde a frase diz — "ao norte de Aru", "perto de Brasa", "longe da vila, a leste", "na costa norte da ilha", "nas montanhas", "uma torre em Brasa" (dentro da cidade). Uma floresta ou uma montanha escrita vira uma mancha de terreno; uma ilha sozinha no mar vira o mapa inteiro. Na margem, um mapa pequeno se redesenha a cada frase, e o que está acontecendo aparece embaixo de cada lugar (criaturas atacando, comida acabando).
+
 Na **margem**, cada frase ganha um cartão: o que ela criou (com **Desfazer**), quanto tempo passou e o que o mundo fez enquanto isso. O mundo também **sugere uma continuação** — com ressalva: só entra no texto se você clicar em "Usar no texto". Apagar ou mudar uma frase desfaz o que ela criou. A caixa "O tempo anda" deixa você escrever sem o relógio andar.
 
 As fitas são só quatro: **Escrever** (o centro), **O mundo** (páginas, mapa, lugares, povos, guerras, leis, cosmos, histórias), **Linha do tempo** (jornal e fatos) e **Bastidores** (Modo Viver, conversar, laboratório, criadores, pesquisa, notas).

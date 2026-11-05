@@ -405,8 +405,10 @@ func _montar_margem() -> void:
 		_conteudo_dir.add_child(Tema.rotulo("Abra um capítulo para ver a margem.", 18, Tema.italico(), Tema.TINTA_SUAVE))
 		return
 	var topo := HBoxContainer.new()
-	var titulo := Tema.rotulo("O mundo, enquanto você escreve", 24, Tema.F_FELL_IT)
+	var titulo := Tema.rotulo("O mundo responde", 24, Tema.F_FELL_IT)
 	titulo.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	titulo.clip_text = true
+	titulo.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	topo.add_child(titulo)
 	var tempo := CheckBox.new()
 	tempo.text = "O tempo anda"
@@ -416,7 +418,33 @@ func _montar_margem() -> void:
 		u.extras["escrita_sem_tempo"] = not v
 		u.marcar_mudanca())
 	topo.add_child(tempo)
+	var ver_mapa := CheckBox.new()
+	ver_mapa.text = "Mapa"
+	ver_mapa.tooltip_text = "Mostrar o mapa de onde a história está (ele se redesenha a cada frase)"
+	ver_mapa.button_pressed = not u.extras.get("escrita_sem_mapa", false)
+	ver_mapa.toggled.connect(func(v: bool):
+		u.extras["escrita_sem_mapa"] = not v
+		_trocar_modo("margem"))
+	topo.add_child(ver_mapa)
 	_conteudo_dir.add_child(topo)
+	# O mapa de onde a história está: se redesenha a cada frase.
+	var foco := str(cap.get("foco", ""))
+	if ver_mapa.button_pressed and foco != "" and u.entidades.has(foco) and Mapa.no_mapa(u, foco):
+		var de := Mapa.pai(u, foco)
+		if de == "" or Mapa.especie(u, foco) == "planeta":
+			de = foco
+		var mt := MapaTexto.new()
+		mt.custom_minimum_size = Vector2(0, 210)
+		mt.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		mt.selecionado = foco
+		mt.mostrar(u, de)
+		mt.celula_clicada.connect(func(_x: int, _y: int, eid: String):
+			if eid != "":
+				livro.navegar("ent:" + eid)
+			else:
+				livro.ir_para_aba("mapa", foco))
+		mt.tooltip_text = "Clique num lugar para abrir a página dele; no vazio, para abrir o mapa grande."
+		_conteudo_dir.add_child(mt)
 
 	var lista := VBoxContainer.new()
 	lista.add_theme_constant_override("separation", 14)
