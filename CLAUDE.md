@@ -19,7 +19,7 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 - `core/` — dados e regras, sem interface: `universo.gd`, `fact_db.gd` (BancoDeFatos), `auditor.gd`, `ligador.gd` (nomes → links), `pesquisa.gd`, `biblioteca.gd` (salvar/carregar), `text_util.gd`, `data_mundo.gd`, `cronica.gd` (autoload).
 - `core/mente/` — personalidade, decisões, reações, combate, objetivos (Parte 3).
 - `core/mundo/` — mapa (lugares dentro de lugares, terreno, acidentes com nome, rios), viagens, natureza, povoador, línguas, eras/leis gerais (Parte 4); criaturas que atacam (`ameacas.gd`) e recursos de sobrevivência (`recursos.gd`).
-- `core/regras/` — leis escritas em português (`regras.gd`), peças de efeito (`pecas.gd`), poderes, corpo e vida, "ainda sem efeito" (`pendencias.gd`) (Parte 5).
+- `core/regras/` — leis escritas em português (`regras.gd`), peças de efeito (`pecas.gd`), poderes, corpo e vida, "ainda sem efeito" (`pendencias.gd`) (Parte 5); regras vivas — perigos e dons que o mundo obedece e aos quais o povo se adapta (`vivas.gd`).
 - `core/sociedade/` — governos e sucessão (`sociedades.gd`), humor do povo e revoltas, economia, reputação relativa, família e gerações (Parte 6).
 - `core/guerra/` — forças militares (`forcas.gd`), guerras, batalhas, intervenção e pós-guerra (`guerras.gd`), lutas em aberto (`lutas.gd`), lendas, títulos e nomes (`lendas.gd`) (Parte 7).
 - `core/cosmico/` — pactos e preços (`pactos.gd`), o Autor e o arauto (`autor.gd`), poderes que mudam o motor: pausa, sono, apagar, ver o futuro, galhos (`motor.gd`) (Parte 8).

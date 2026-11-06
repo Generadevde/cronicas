@@ -94,6 +94,17 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 		var citado := _lugar_citado(u, original)
 		if citado != "":
 			foco = citado
+	# 1b. Regras vivas: perigos e dons que o mundo obedece (as pessoas se adaptam).
+	var viva := RegrasVivas.ler(u, original, n, raiz, foco)
+	if not viva.is_empty():
+		r["itens"].append({"tipo": "lei", "texto": viva["texto"], "id": str(viva.get("fato", ""))})
+		for c in viva.get("criados", []):
+			r["itens"].append({"tipo": "lugar", "texto": "%s (%s)" % [u.entidade(c)["nome"], u.entidade(c)["tipo"]], "id": c})
+		r["dias"] = tempo(n)
+		r["entendeu"] = true
+		r["foco"] = foco
+		u.marcar_mudanca()
+		return r
 	# 2. Gente.
 	var gente := _ler_gente(u, original, n, raiz, foco)
 	if not gente.is_empty():
@@ -557,6 +568,8 @@ static func _povoar(u: Universo, lugar: String, qtd: int, grupo: String, extra: 
 	if povo != "":
 		cl.append({"chave": "povo", "valor": povo})
 	u.editar_entidade(lugar, {"campos": cl})
+	# O povo nasce sob as leis do mundo: já adaptado aos perigos, já com os dons do lugar.
+	RegrasVivas.ao_povoar(u, lugar, raiz)
 	var palavra := grupo.replace("criancas", "crianças").replace("anoes", "anões").replace("aldeoes", "aldeões").replace("orfaos", "órfãos").replace("naufragos", "náufragos").replace("artesaos", "artesãos").replace("operarios", "operários").replace("nomades", "nômades")
 	var texto := "%d %s%s em %s" % [qtd, palavra, (" " + extra) if extra != "" and not extra in GENTE else "", u.entidade(lugar)["nome"]]
 	if qtd > individuos:

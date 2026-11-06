@@ -216,3 +216,64 @@ func test_criaturas_vao_onde_esta_a_gente() -> void:
 	igual(str(Ameacas.dados(u, slime).get("lugar", "")), _achar(u, "Aru"), "os slimes atacam Aru, onde a gente está (não a caverna vazia)")
 	verdadeiro(Recursos.de(u, _achar(u, "Aru")).has("comida"), "a comida é contada em Aru")
 	falso(u.propostas.any(func(p): return p["capitulo"] == cid and p["status"] == "duvida"), "nenhuma dúvida sobre frases que o leitor entendeu")
+
+
+func test_regra_do_sol_e_o_povo_se_adapta() -> void:
+	var m := _novo("Noct", 7)
+	var u: Universo = m["u"]
+	var cid: String = m["cap"]
+	_escrever(u, cid, "Existe apenas uma ilha, chamada Noct, com 30 pessoas.")
+	var noct := _achar(u, "Noct")
+	var c := _escrever(u, cid, "Nesta ilha, os humanos não podem pegar a luz do sol.")
+	igual(RegrasVivas.todas(u).size(), 1, "virou regra viva: " + str(c[0]["itens"][0]["texto"]))
+	igual(RegrasVivas.adaptacao(u, noct, "sol"), 0.0, "a regra veio depois do povo: eles ainda não sabem viver com ela")
+	_escrever(u, cid, "Seis meses depois.")
+	verdadeiro(u.fatos.todos().any(func(f): return f["canon"] and f["tipo"] in ["ferimento", "morte"] and str(f["descricao"]).contains("sol")), "o sol feriu ou matou gente")
+	verdadeiro(RegrasVivas.adaptacao(u, noct, "sol") > 0.2, "o povo se adaptou (%.2f): %s" % [RegrasVivas.adaptacao(u, noct, "sol"), str(u.estado(noct).get("adaptacoes", []))])
+	verdadeiro(u.fatos.todos().any(func(f): return f["canon"] and f["tipo"] == "adaptação"), "alguém teve a ideia, e ficou registrado quem")
+	igual(Integridade.total(Integridade.auditar_tudo(u)), 0, "coerente")
+
+
+func test_povo_que_nasce_sob_a_regra_ja_nasce_adaptado() -> void:
+	var m := _novo("Fundo", 8)
+	var u: Universo = m["u"]
+	var cid: String = m["cap"]
+	_escrever(u, cid, "Neste mundo, a luz do sol mata os humanos.")
+	_escrever(u, cid, "Existe uma cidade chamada Fundo com 20 pessoas.")
+	var fundo := _achar(u, "Fundo")
+	verdadeiro(RegrasVivas.adaptacao(u, fundo, "sol") >= 0.6, "já nasceram sabendo viver longe do sol")
+	verdadeiro(str(u.estado(fundo).get("moradia", "")).begins_with("subterr"), "a cidade é subterrânea: " + str(u.estado(fundo).get("moradia", "")))
+	# Desfazer a lei desfaz a cidade subterrânea.
+	var texto := str(u.capitulo(cid)["texto"]).replace("Neste mundo, a luz do sol mata os humanos. ", "")
+	u.atualizar_capitulo(cid, {"texto": texto})
+	Escrita.processar(u, cid)
+	igual(RegrasVivas.todas(u).size(), 0, "a lei saiu")
+
+
+func test_magia_so_no_polo_sul() -> void:
+	var m := _novo("Polo", 7)
+	var u: Universo = m["u"]
+	var cid: String = m["cap"]
+	_escrever(u, cid, "Neste mundo, a magia só acontece em quem mora no Polo Sul.")
+	var polo := _achar(u, "Polo Sul")
+	verdadeiro(polo != "", "o Polo Sul passou a existir")
+	verdadeiro(_pos(u, "Polo Sul").y >= Mapa.LINHAS - 6, "lá embaixo no mapa")
+	igual(Mapa.terreno_em(u, Mapa.pai(u, polo), 3, Mapa.LINHAS - 1), "gelo", "coberto de gelo")
+	var magia := _achar(u, "Magia")
+	verdadeiro(magia != "", "a magia é uma entidade")
+	_escrever(u, cid, "Existe uma cidade chamada Gelo no Polo Sul com 10 pessoas.")
+	_escrever(u, cid, "Existe uma cidade chamada Brasa com 20 pessoas.")
+	var gelo := Ameacas._pessoas(u, _achar(u, "Gelo"))
+	verdadeiro(gelo.all(func(p): return Poderes.de(u, p).has(magia)), "todos em Gelo têm magia")
+	var brasa := Ameacas._pessoas(u, _achar(u, "Brasa"))
+	falso(brasa.any(func(p): return Poderes.de(u, p).has(magia)), "ninguém em Brasa tem")
+	# Mesmo escrevendo na ficha, a lei manda.
+	var b0: String = brasa[0]
+	var campos: Array = u.entidade(b0)["campos"].duplicate(true)
+	campos.append({"chave": "magias", "valor": "Magia"})
+	u.editar_entidade(b0, {"campos": campos})
+	falso(Poderes.de(u, b0).has(magia), "a ficha diz magia, mas Brasa não é o Polo Sul")
+	_escrever(u, cid, "Dez anos depois.")
+	for p in Ameacas._pessoas(u, _achar(u, "Brasa")):
+		falso(Poderes.de(u, p).has(magia), "ninguém tem magia fora do Polo Sul")
+	igual(Integridade.total(Integridade.auditar_tudo(u)), 0, "coerente")

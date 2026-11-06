@@ -36,6 +36,10 @@ static func de(u: Universo, eid: String) -> Array:
 	for t in u.estado(eid).get("tecnicas", []):
 		if u.entidades.has(t) and eh_poder(u, t) and not lista.has(t):
 			lista.append(t)
+	# Dons que vêm das leis do mundo (despertam e somem com elas).
+	for d in u.estado(eid).get("dons", []):
+		if u.entidades.has(d) and not lista.has(d):
+			lista.append(d)
 	var nome := TextUtil.chave(u.entidade(eid).get("nome", ""))
 	for p in u.entidades_ativas():
 		if not eh_poder(u, p["id"]) or lista.has(p["id"]):
@@ -45,7 +49,8 @@ static func de(u: Universo, eid: String) -> Array:
 			if v != "" and nome != "" and v.contains(nome):
 				lista.append(p["id"])
 				break
-	return lista
+	# Um poder preso a uma lei ("a magia só acontece no Polo Sul") só vale para quem a cumpre.
+	return lista.filter(func(pid): return RegrasVivas.permite(u, eid, pid))
 
 
 static func categoria(u: Universo, pid: String) -> String:

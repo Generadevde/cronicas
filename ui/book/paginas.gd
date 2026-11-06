@@ -65,6 +65,9 @@ static func entidade(u: Universo, eid: String) -> String:
 		s += secao("Ameaça") + _e(Ameacas.resumo(u, eid)) + "\n"
 	if not Recursos.de(u, eid).is_empty():
 		s += secao("Sobrevivência") + _e(Recursos.resumo(u, eid)) + "\n"
+	var vivas := RegrasVivas.resumo_do_lugar(u, eid)
+	if vivas != "":
+		s += secao("Vivendo com as leis do mundo") + _e(vivas) + "\n"
 	if Ameacas.defesa(u, eid) > 0.0:
 		s += "Defesas do lugar: %d%%\n" % int(Ameacas.defesa(u, eid) * 100)
 	s += pactos(u, eid)

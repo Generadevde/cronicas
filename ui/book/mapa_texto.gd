@@ -218,6 +218,42 @@ func _alertas(c: Vector2) -> void:
 				if not por_lugar.has(l):
 					por_lugar[l] = []
 				por_lugar[l].append(("sem " if al == "acabou" else "pouca ") + Recursos._palavra(nome).split(" ")[1])
+	# Como vivem (casas subterrâneas, palafitas) e os dons do lugar.
+	for x in Mapa.filhos(u, lugar):
+		var mor := str(u.estado(x).get("moradia", ""))
+		if mor != "":
+			if not por_lugar.has(x):
+				por_lugar[x] = []
+			por_lugar[x].append("⌂ " + mor.split(",")[0])
+	for r in RegrasVivas.todas(u):
+		if r["tipo"] == "dom" and u.entidades.has(str(r["onde"])):
+			if not por_lugar.has(r["onde"]):
+				por_lugar[r["onde"]] = []
+			por_lugar[r["onde"]].append("✦ " + str(u.entidade(r["poder"]).get("nome", "")).to_lower())
+	# Gente importante (os heróis do lugar) e o grande acontecimento recente.
+	var hoje := DataMundo.ordem(u.relogio)
+	var ultimo := {}
+	for f in u.fatos.todos():
+		if f["canon"] and float(f["dados"].get("importancia", 0.0)) >= 0.7 and hoje - DataMundo.ordem(f["data"]) <= 60 and not f["tipo"] in ["escrita", "lei do universo", "criação"]:
+			var l0 := str(f["lugar"])
+			if l0 != "":
+				ultimo[l0] = f
+	for x in Mapa.filhos(u, lugar):
+		var melhor := ""
+		var mv := 0.45
+		for p in Ameacas._pessoas(u, x):
+			var rep := float(u.estado(p).get("reputacao", 0.0))
+			if rep > mv:
+				mv = rep
+				melhor = p
+		if melhor != "":
+			if not por_lugar.has(x):
+				por_lugar[x] = []
+			por_lugar[x].append("★ " + str(u.entidade(melhor)["nome"]).split(" ")[0])
+		if ultimo.has(x):
+			if not por_lugar.has(x):
+				por_lugar[x] = []
+			por_lugar[x].append("! " + str(ultimo[x]["tipo"]))
 	for l in por_lugar:
 		if not u.entidades.has(l) or Mapa.pai(u, l) != lugar:
 			continue
@@ -225,10 +261,23 @@ func _alertas(c: Vector2) -> void:
 		if not nevoa.is_empty() and not nevoa.has(Vector2i(int(pos["x"]), int(pos["y"]))):
 			continue
 		var centro := Vector2((int(pos["x"]) + 0.5) * c.x, (int(pos["y"]) + 0.5) * c.y)
-		var t := " · ".join(por_lugar[l])
+		var t := " · ".join(Array(por_lugar[l]).slice(0, 3))
 		var fs := 14
 		var w := Tema.F_FELL_IT.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
-		var r := Rect2(centro + Vector2(-w / 2.0 - 4, c.y * 0.55), Vector2(w + 8, fs + 6))
+		var tam := Vector2(w + 8, fs + 6)
+		# Embaixo do lugar; se não couber (outro rótulo, borda do mapa), em cima, à direita, à esquerda.
+		var lugares_r: Array = [centro + Vector2(-tam.x / 2.0, c.y * 0.55), centro + Vector2(-tam.x / 2.0, -c.y * 0.6 - tam.y * 2.0),
+			centro + Vector2(c.x * 0.6, c.y * 0.3), centro + Vector2(-tam.x - c.x * 0.6, c.y * 0.3), centro + Vector2(-tam.x / 2.0, c.y * 0.55 + tam.y + 4)]
+		var r := Rect2(lugares_r[0], tam)
+		for pos_r in lugares_r:
+			var cand := Rect2(pos_r, tam)
+			cand.position.x = clampf(cand.position.x, 2.0, size.x - tam.x - 2.0)
+			cand.position.y = clampf(cand.position.y, 2.0, size.y - tam.y - 2.0)
+			if not _rotulos.any(func(o): return o.intersects(cand)):
+				r = cand
+				break
+		r.position.x = clampf(r.position.x, 2.0, size.x - tam.x - 2.0)
+		r.position.y = clampf(r.position.y, 2.0, size.y - tam.y - 2.0)
 		draw_rect(r, Color("#EBD6A8", 0.9))
 		draw_rect(r, Color("#8A2A10", 0.7), false, 1.0)
 		_texto(Tema.F_FELL_IT, r.grow_individual(-4, -2, 0, 0), t, fs, Color("#8A2A10"))

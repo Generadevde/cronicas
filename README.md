@@ -16,10 +16,12 @@ A cada frase terminada, o mundo muda:
 - **"precisam sobreviver"** → a comida passa a ser contada: quem pode, junta comida; falta vira fome, briga e roubo;
 - **"à noite, slimes aparecem e atacam"** → a criatura nasce e passa a atacar toda noite: gente ferida, gente que revida e vira herói, medo, defesas inventadas (fogueiras, vigia, paliçada), fraquezas descobertas;
 - **"um rei cruel chamado Odo"**, **"o povo odeia o rei"** → a pessoa, o cargo, o jeito, o que todos sentem (e o mundo decide se o povo se revolta);
+- **"Os humanos não podem pegar a luz do sol"** → um perigo que o mundo obedece: quem se expõe se fere ou morre, e o povo se adapta sozinho (trabalhar à noite, casas debaixo da terra, túneis) — a cidade vira **subterrânea** no mapa. Se a regra já existia quando o povo nasceu, ele já nasce adaptado;
+- **"A magia só acontece em quem mora no Polo Sul"** → um dom preso a um lugar: o Polo Sul surge no mapa, quem mora lá desperta a magia, quem sai perde, os ambiciosos viajam para lá — e nem a ficha consegue dar magia a quem não cumpre a lei;
 - **"Neste mundo, quem mente perde a voz"** → uma lei do universo;
 - **"Três anos depois…"** → o tempo anda (se a frase só conta algo, anda um dia).
 
-O **mapa acompanha a escrita**: cada lugar vai para onde a frase diz — "ao norte de Aru", "perto de Brasa", "longe da vila, a leste", "na costa norte da ilha", "nas montanhas", "uma torre em Brasa" (dentro da cidade). Uma floresta ou uma montanha escrita vira uma mancha de terreno; uma ilha sozinha no mar vira o mapa inteiro. Na margem, um mapa pequeno se redesenha a cada frase, e o que está acontecendo aparece embaixo de cada lugar (criaturas atacando, comida acabando).
+O **mapa acompanha a escrita**: cada lugar vai para onde a frase diz — "ao norte de Aru", "perto de Brasa", "longe da vila, a leste", "na costa norte da ilha", "nas montanhas", "uma torre em Brasa" (dentro da cidade). Uma floresta ou uma montanha escrita vira uma mancha de terreno; uma ilha sozinha no mar vira o mapa inteiro. Na margem, um mapa pequeno se redesenha a cada frase, e o que importa aparece embaixo de cada lugar: criaturas atacando, comida acabando, cidades subterrâneas, dons, o herói do lugar (★) e o grande acontecimento recente.
 
 Na **margem**, cada frase ganha um cartão: o que ela criou (com **Desfazer**), quanto tempo passou e o que o mundo fez enquanto isso. O mundo também **sugere uma continuação** — com ressalva: só entra no texto se você clicar em "Usar no texto". Apagar ou mudar uma frase desfaz o que ela criou. A caixa "O tempo anda" deixa você escrever sem o relógio andar.
 
