@@ -465,6 +465,12 @@ func _ler_frases() -> void:
 	var ultimo: Dictionary = novos[novos.size() - 1]
 	if str(ultimo.get("sugestao", "")) != "":
 		_propor(str(ultimo["sugestao"]), ultimo.get("mundo", []).map(func(m): return m["fato"]))
+	else:
+		# O que a sua linha causou de verdade, o mundo conta na página (você aceita, muda ou risca).
+		for it in ultimo.get("itens", []):
+			if str(it["tipo"]) == "consequencia":
+				_propor(str(it["texto"]), [str(it["id"])])
+				break
 	# Linhas que o Livro só conseguiu anotar: a IA local (se houver) tenta ler melhor.
 	if IALocal.disponivel():
 		for c in novos:
