@@ -56,7 +56,7 @@ func _ready() -> void:
 		add_child(botao)
 		_botoes[b["id"]] = {"botao": botao, "ret": b["ret"]}
 
-	var versao := Tema.rotulo("Parte 1 · versão em construção", 14, Tema.F_FELL_IT, Color(Tema.TEXTO_CLARO_SUAVE, 0.8))
+	var versao := Tema.rotulo("versão 1.0", 14, Tema.F_FELL_IT, Color(Tema.TEXTO_CLARO_SUAVE, 0.8))
 	versao.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	versao.position = Vector2(14, -28)
 	versao.grow_vertical = Control.GROW_DIRECTION_BEGIN
