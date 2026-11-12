@@ -88,7 +88,7 @@ static func todos_os_lugares() -> Dictionary:
 ## Devolve {raiz, itens: [{tipo, texto, id}], dias, entendeu, foco}.
 static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 	var original := LeitorMais.milhares(frase.strip_edges())
-	var r := {"raiz": "", "itens": [], "dias": 0, "entendeu": false, "foco": str(ctx.get("foco", ""))}
+	var r := {"raiz": "", "itens": [], "dias": 0, "entendeu": false, "descreve": false, "foco": str(ctx.get("foco", ""))}
 	if original.length() < 3:
 		return r
 	var n := LeitorMais.por_extenso(_limpo(original))
@@ -180,6 +180,11 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 	var vir := LeitorMais.por_vir(u, original, n, raiz, foco)
 	if not vir.is_empty():
 		r["itens"].append({"tipo": "por_vir", "texto": vir["texto"], "id": vir["quem"]})
+	# 5c. Quem acabou de ganhar nome ou título pode já estar doente ou ferido na mesma frase ("O rei de Kreven estava doente").
+	if r["itens"].any(func(i): return str(i["tipo"]) in ["pessoa", "pergunta"]):
+		var mal := Consequencias._pessoa_doente(u, original, n, raiz, foco)
+		if not mal.is_empty():
+			r["itens"].append(mal)
 	# 6. Sentimentos de um grupo ("o povo odeia o rei").
 	var sent := _ler_sentimento(u, original, n, raiz, foco)
 	if sent != "":
@@ -201,7 +206,10 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 			feito = LeitorMais.acontecimento(u, original, n, raiz, foco)
 		if not feito.is_empty():
 			r["itens"].append(feito)
-	# 8. Tempo.
+	# 8. Tempo. Frase que descreve um estado ("estava doente", "vivia", "sabia") não faz o tempo andar.
+	var rd := RegEx.new()
+	rd.compile(" (estava|estavam|era|eram|vivia|viviam|sabia|sabiam|tinha|tinham|havia|existia|existiam|ficava|ficavam|poderia|podia|podiam|parecia|costumava|queria|queriam|temia|temiam|amava|odiava) ")
+	r["descreve"] = rd.search(n) != null and tempo(n) == 0
 	r["dias"] = tempo(n)
 	r["entendeu"] = not r["itens"].is_empty()
 	r["foco"] = foco

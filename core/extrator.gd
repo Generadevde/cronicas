@@ -188,6 +188,11 @@ static func frases(texto: String) -> Array:
 		atual += c
 		if c == "." and i > 0 and i + 1 < texto.length() and texto[i - 1].is_valid_int() and texto[i + 1].is_valid_int():
 			continue
+		# Inicial de nome ("Gregorio R. Tunt") e tratamentos ("Sr.", "Dra.") não terminam a frase.
+		if c == "." and i + 1 < texto.length() and texto[i + 1] == " ":
+			var palavra := atual.substr(0, atual.length() - 1).get_slice(" ", atual.substr(0, atual.length() - 1).get_slice_count(" ") - 1)
+			if (palavra.length() == 1 and palavra == palavra.to_upper() and palavra != palavra.to_lower()) or palavra in ["Sr", "Sra", "Dr", "Dra", "Sto", "Sta", "D"]:
+				continue
 		if c in [".", "!", "?", "\n", ";"]:
 			if atual.strip_edges() != "":
 				lista.append(atual)

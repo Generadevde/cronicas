@@ -25,7 +25,7 @@ const DESTRUIR := ["destruiu", "destruida", "destruido", "destruidas", "destruid
 	"queimado", "incendiou", "arrasou", "arrasada", "arrasado", "demoliu", "demolida", "demolido", "foi abaixo", "em ruinas", "afundou"]
 const TRONO := ["tomou o trono", "assumiu o trono", "subiu ao trono", "foi coroado", "foi coroada", "tornou-se rei", "tornou-se rainha", "tornou-se imperador",
 	"tornou-se imperatriz", "virou rei", "virou rainha", "virou imperador", "tomou o poder", "assumiu o poder", "usurpou"]
-const ADOECER := ["adoeceu", "ficou doente", "caiu doente", "foi ferido", "foi ferida", "ficou ferido", "ficou ferida", "se feriu", "esta doente", "esta ferido", "esta ferida"]
+const ADOECER := ["estava doente", "estava ferido", "estava ferida", "estava morrendo", "esta morrendo", "adoeceu", "ficou doente", "caiu doente", "foi ferido", "foi ferida", "ficou ferido", "ficou ferida", "se feriu", "esta doente", "esta ferido", "esta ferida"]
 const CURAR := ["se recuperou", "recuperou-se", "se curou", "curou-se", "sarou", "foi curado", "foi curada", "melhorou"]
 
 
@@ -60,6 +60,8 @@ static func _quantos(n: int) -> String:
 ## Tenta dar consequência à frase. Devolve o item da margem ({} se a frase não é disso).
 static func ler(u: Universo, original: String, n: String, raiz: String, foco: String) -> Dictionary:
 	var r := _pessoa_doente(u, original, n, raiz, foco)
+	if r.is_empty():
+		r = _humor_do_povo(u, original, n, raiz, foco)
 	if r.is_empty():
 		r = _trono(u, original, n, raiz, foco)
 	if r.is_empty():
@@ -221,3 +223,31 @@ static func _pessoa_doente(u: Universo, original: String, n: String, raiz: Strin
 	var fid2 := _fato(u, "ferimento", original, [p], foco, raiz, 0.6 if grave else 0.45,
 		[{"op": "ferir", "quem": p, "descricao": "doente" if doente else "ferido", "gravidade": 0.75 if grave else 0.3}])
 	return {"tipo": "consequencia", "texto": "%s está %s%s." % [nome, "doente" if doente else "ferido", " e corre perigo" if grave else ""], "id": fid2}
+
+
+## "O povo estava com medo", "os moradores ficaram furiosos": o povo do lugar sente isso de verdade.
+static func _humor_do_povo(u: Universo, original: String, n: String, raiz: String, foco: String) -> Dictionary:
+	if foco == "":
+		return {}
+	var rx := RegEx.new()
+	rx.compile(" (?:o povo|a populacao|os moradores|os habitantes|a cidade|a vila|todos|todo mundo|as pessoas|a gente)(?: [a-z]+){0,4}? (?:e )?(?:estav|fic|tinh|tem|sent|viv)[a-z]* (?:com |em |de )?(medo|pavor|terror|raiva|furios|revoltad|odio|esperanc|alegr|feliz|trist|luto|apavorad|assustad|aterrorizad)")
+	var m := rx.search(n)
+	if m == null:
+		return {}
+	var w := m.get_string(1)
+	var emocao := "medo"
+	var palavra := "com medo"
+	if w in ["raiva", "furios", "revoltad", "odio"]:
+		emocao = "raiva"
+		palavra = "com raiva"
+	elif w in ["esperanc", "alegr", "feliz"]:
+		emocao = "alegria"
+		palavra = "esperançoso"
+	elif w in ["trist", "luto"]:
+		emocao = "tristeza"
+		palavra = "de luto"
+	var ops: Array = []
+	for p in Ameacas._pessoas(u, foco):
+		ops.append({"op": "emocao", "quem": p, "emocao": emocao, "forca": 0.6, "alvo": ""})
+	var fid := _fato(u, "humor do povo", original, [foco], foco, raiz, 0.4, ops)
+	return {"tipo": "consequencia", "texto": "O povo de %s está %s." % [str(u.entidade(foco)["nome"]), palavra], "id": fid}

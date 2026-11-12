@@ -348,3 +348,32 @@ func test_kreven_no_deserto() -> void:
 	igual(u.valor_campo(kreven, "vive de"), "caça e mineração", "Kreven vive de caça e mineração")
 	verdadeiro(Ameacas._pessoas(u, kreven).size() > 0, "e agora tem moradores")
 	falso(_tipos(c[0]).has("acontecimento"), "não fica só anotado")
+
+
+## O começo de "Inverno Desert", como o autor escreveu.
+func test_inverno_desert() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	_escrever(u, m["cap"], "Existia uma cidade chamada Kreven.")
+	_escrever(u, m["cap"], "Kreven estava em um grande deserto.")
+	_escrever(u, m["cap"], "Seus moradores, vivam da caça e de mineração.")
+	var kreven := _achar(u, "Kreven")
+	var c: Array = _escrever(u, m["cap"], "O rei de Kreven estava doente.")
+	var rei := _achar(u, "O Rei")
+	verdadeiro(rei != "", "o rei existe, ainda sem nome")
+	igual(u.valor_campo(rei, "cargo"), "rei de Kreven", "é o rei de Kreven")
+	verdadeiro(Estado.saude_atual(u, rei) < 0.9, "e está doente de verdade")
+	c = _escrever(u, m["cap"], "O povo sabia disso, e estavam com medo.")
+	igual(_tipos(c[0]), ["consequencia"], "o povo com medo: " + str(c[0]["itens"]))
+	c = _escrever(u, m["cap"], "Leptuna a rainha do inverno estava chegando.")
+	var leptuna := _achar(u, "Leptuna")
+	verdadeiro(leptuna != "", "Leptuna existe")
+	igual(u.valor_campo(leptuna, "cargo"), "rainha do inverno", "é a rainha do inverno")
+	igual(_achar(u, "A Rainha"), "", "o Livro não pergunta quem é a rainha")
+	verdadeiro(LeitorMais.pendentes(u).any(func(p): return str(p["quem"]) == leptuna), "a chegada dela está por vir")
+	c = _escrever(u, m["cap"], "E apenas Gregorio R. Tunt poderia salvá-los.")
+	igual(c.size(), 1, "a inicial R. não corta a frase")
+	verdadeiro(_achar(u, "Gregorio R. Tunt") != "", "Gregorio R. Tunt existe")
+	igual(_achar(u, "Tunt"), "", "e não um 'Tunt' solto")
+	igual(DataMundo.ordem(u.relogio), DataMundo.ordem(DataMundo.criar(1, 1)), "só descrição: o tempo não andou")
+	igual(str(u.capitulo(m["cap"]).get("foco", "")), kreven, "a história continua em Kreven")

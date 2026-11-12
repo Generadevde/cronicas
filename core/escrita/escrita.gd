@@ -139,7 +139,7 @@ static func processar_frase(u: Universo, cid: String, frase: String) -> Dictiona
 	# O tempo: o que a frase disser; se ela conta algo (não só descreve o mundo), um dia.
 	var dias := int(lido["dias"])
 	var so_descreve := acoes == 0 and itens.any(func(i): return str(i["tipo"]) in ["lugar", "gente", "criatura", "recurso", "lei", "consulta", "regra", "coisa", "pergunta", "por_vir", "sentimento"])
-	if dias == 0 and not so_descreve:
+	if dias == 0 and not so_descreve and not (lido.get("descreve", false) and acoes == 0):
 		dias = 1
 	if u.extras.get("escrita_sem_tempo", false):
 		dias = 0

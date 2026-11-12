@@ -187,6 +187,34 @@ static func pessoas(u: Universo, original: String, n: String, raiz: String, foco
 			continue
 		var eid := _criar_pessoa(u, nome, papel, original, raiz, foco)
 		itens.append({"tipo": "pessoa", "texto": "%s (%s)" % [nome, Leitor._descricao_curta(u, eid)], "id": eid})
+	# "Leptuna, a rainha do inverno, …" ou "Leptuna a rainha do inverno …": o nome ganha o título.
+	rx.compile("([A-ZÀ-Ý][\\wÀ-ÿ'-]+(?: [A-ZÀ-Ý][\\wÀ-ÿ'-]+)?),? (?:a|o) ([\\wÀ-ÿ]+)((?: d[aeo]s? [\\wÀ-ÿ]+)?)")
+	for ma in rx.search_all(original):
+		var papel_a := TextUtil.normalizar(ma.get_string(2))
+		var nome_a := ma.get_string(1)
+		if not Leitor.PAPEIS.has(papel_a) or str(Leitor.PAPEIS[papel_a][0]) == "" or TextUtil.normalizar(nome_a.get_slice(" ", 0)) in INICIOS:
+			continue
+		var cargo_a := str(Leitor.PAPEIS[papel_a][0]) + ma.get_string(3)
+		var ja := _existe(u, nome_a)
+		if ja == "":
+			ja = _criar_pessoa(u, nome_a, "", original, raiz, "")
+			itens.append({"tipo": "pessoa", "texto": "%s (%s)" % [nome_a, cargo_a], "id": ja})
+		var csa: Array = u.entidade(ja)["campos"].filter(func(c): return c["chave"] != "cargo")
+		csa.append({"chave": "cargo", "valor": cargo_a})
+		u.editar_entidade(ja, {"campos": csa})
+	# Nome composto em qualquer ponto da frase: "apenas Gregorio R. Tunt poderia salvá-los".
+	rx.compile("(?<![\\wÀ-ÿ])([A-ZÀ-Ý][\\wÀ-ÿ'-]+(?: (?:[A-Z]\\. |d[aeo]s? )?[A-ZÀ-Ý][\\wÀ-ÿ'-]+)+)")
+	for mc in rx.search_all(original):
+		var nome_c := mc.get_string(1)
+		var primeiro_c := TextUtil.normalizar(nome_c.get_slice(" ", 0))
+		if primeiro_c in INICIOS or Leitor.todos_os_lugares().has(primeiro_c) or Leitor.PAPEIS.has(primeiro_c) or _existe(u, nome_c) != "":
+			continue
+		var antes_c := TextUtil.normalizar(original.substr(0, mc.get_start()).strip_edges())
+		var ultima_c := antes_c.get_slice(" ", antes_c.get_slice_count(" ") - 1)
+		if ultima_c in ["de", "do", "da", "em", "no", "na", "para", "a", "ate"] or Leitor.todos_os_lugares().has(ultima_c) or Leitor.PAPEIS.has(ultima_c):
+			continue
+		var eid_c := _criar_pessoa(u, nome_c, "", original, raiz, "")
+		itens.append({"tipo": "pessoa", "texto": "%s (pessoa nova)" % nome_c, "id": eid_c})
 	# Nome no começo da frase: "John Black passou…", "Kai soube…".
 	rx.compile("^([A-ZÀ-Ý][\\wÀ-ÿ'-]+)((?: (?:d[aeo]s? )?[A-ZÀ-Ý][\\wÀ-ÿ'-]+){0,2})[ ,]+([\\wÀ-ÿ]+)")
 	var mi := rx.search(original)
@@ -212,9 +240,21 @@ static func pessoas(u: Universo, original: String, n: String, raiz: String, foco
 		var nome3 := "%s %s" % [artigo.to_upper(), titulo2.substr(0, 1).to_upper() + titulo2.substr(1)]
 		if _existe(u, nome3) != "":
 			continue
+		var cargo3 := titulo2
+		var onde3 := Leitor._lugar_citado(u, original)
+		if onde3 == "":
+			onde3 = foco
+		# Só é "o rei de Kreven" (e mora lá) se a frase disser; "a chegada do imperador" não o põe na cidade.
+		if onde3 != "" and not n.contains(" %s de %s " % [cargo, TextUtil.normalizar(str(u.entidade(onde3)["nome"]))]):
+			onde3 = ""
+		if onde3 != "":
+			cargo3 = "%s de %s" % [titulo2, str(u.entidade(onde3)["nome"])]
 		var eid3 := u.criar_entidade(nome3, "pessoa", [titulo2], [{"chave": "idade", "valor": "%d anos" % int(Leitor.PAPEIS[cargo][1])},
-			{"chave": "cargo", "valor": titulo2}, {"chave": "nome", "valor": "ainda sem nome"}, {"chave": "descrição", "valor": original}], [raiz])
+			{"chave": "cargo", "valor": cargo3}, {"chave": "nome", "valor": "ainda sem nome"}, {"chave": "descrição", "valor": original}], [raiz])
 		Leitor._anotar(u, raiz, "criados", eid3)
+		if onde3 != "":
+			Simulador.registrar(u, {"tipo": "presença", "descricao": "%s está em %s." % [nome3, u.entidade(onde3)["nome"]], "sujeitos": [eid3, onde3], "lugar": onde3,
+				"causas": [raiz], "origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": "escrita"}, "dados": {"importancia": 0.1, "povoamento": raiz, "mudancas": [{"op": "mover", "quem": eid3, "lugar": onde3}]}})
 		itens.append({"tipo": "pergunta", "texto": "Quem é %s %s? Ainda não tem nome." % [artigo, titulo2], "id": eid3})
 	return itens
 
@@ -227,6 +267,20 @@ static func por_vir(u: Universo, original: String, n: String, raiz: String, foco
 	rx.compile(" (?:ate|antes d)a? ?(?:a )?(chegada|vinda|volta|retorno) d[eoa]s? ")
 	var m := rx.search(n)
 	if m == null:
+		# "Leptuna estava chegando", "Kai está a caminho", "o exército se aproxima".
+		var vindo := false
+		for w in [" estava chegando", " esta chegando", " estavam chegando", " estava a caminho", " esta a caminho", " se aproxima", " se aproximava", " estava vindo", " esta vindo", " vinha vindo"]:
+			if n.contains(w):
+				vindo = true
+		if not vindo or foco == "":
+			return {}
+		for mm in Ligador.new(u).encontrar(original):
+			var e2: Dictionary = u.entidade(str(mm["entidade"]))
+			if e2.is_empty() or e2["tipo"] != "pessoa" or str(u.estado(e2["id"]).get("local", "")) == foco:
+				continue
+			var t2 := "A chegada de %s a %s ainda está por vir." % [e2["nome"], u.entidade(foco)["nome"]]
+			u.extra("por_vir", []).append({"quem": e2["id"], "lugar": foco, "raiz": raiz, "texto": t2, "feito": false})
+			return {"texto": t2, "quem": e2["id"]}
 		return {}
 	var resto := n.substr(m.get_end()).strip_edges()
 	var quem := ""
