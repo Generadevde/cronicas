@@ -14,6 +14,12 @@ config/name="Crônica"
 config/description="Criador de universos em texto: você escreve, o mundo lembra e reage."
 run/main_scene="res://ui/menu/menu.tscn"
 config/features=PackedStringArray("4.7")
+config/icon="res://assets/ui/icone.svg"
+config/version="1.0"
+boot_splash/bg_color=Color(0.141, 0.071, 0.039, 1)
+boot_splash/image="res://assets/ui/icone.svg"
+boot_splash/fullsize=false
+boot_splash/show_image=true
 
 [autoload]
 
@@ -21,8 +27,9 @@ Cronica="*res://core/cronica.gd"
 
 [display]
 
-window/size/viewport_width=1280
-window/size/viewport_height=720
+window/size/viewport_width=1366
+window/size/viewport_height=768
+window/size/mode=2
 window/size/resizable=true
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"

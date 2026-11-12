@@ -98,16 +98,13 @@ func _acao(id: String) -> void:
 			AjustesLeitura.abrir(self, func(): theme = Tema.construir())
 		"ajuda":
 			_aviso("Ajuda", "Bem-vindo, Autor.\n\n" +
-				"• Biblioteca: seus universos. Crie um novo descrevendo-o com suas palavras.\n" +
-				"• No livro, as fitas à direita trocam de seção:\n" +
-				"   Escrever — livros e capítulos; os nomes viram links sozinhos.\n" +
-				"   Wiki — a página de cada pessoa, lugar, magia ou o que você criar.\n" +
-				"   Criadores — crie qualquer coisa; tipo e campos são livres.\n" +
-				"   Pesquisa — encontre qualquer coisa, mesmo com erro de digitação.\n" +
-				"   Notas — só você lê.\n" +
-				"   Índice — onde cada nome aparece e os capítulos marcados.\n" +
-				"   Fatos — o banco de fatos e o auditor (tela de depuração).\n\n" +
-				"Tudo é salvo sozinho.")
+				"• Escreva por cima, uma coisa por linha. Cada linha terminada vira mundo.\n" +
+				"• O mundo responde em outra tinta: você aceita, muda ou risca.\n" +
+				"• A margem (à direita) mostra o que o Livro entendeu, pergunta e avisa.\n" +
+				"• A estante (à esquerda) abre Universo, Mapa, Tempo, Leis e Laboratório.\n" +
+				"• Opções: tema, letra, tamanho e som de máquina.\n" +
+				"• Foco (ou F11): só a página. Esc volta.\n\n" +
+				"Tudo é salvo sozinho, com cópia de segurança.")
 		"sair":
 			Cronica.salvar_agora()
 			get_tree().quit()

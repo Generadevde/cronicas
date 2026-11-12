@@ -7,7 +7,8 @@ signal universo_aberto(universo: Universo)
 const CENAS := {
 	"menu": "res://ui/menu/menu.tscn",
 	"biblioteca": "res://ui/library/library.tscn",
-	"livro": "res://ui/book/book.tscn",
+	"livro": "res://ui/tela/tela.tscn",
+	"livro_antigo": "res://ui/book/book.tscn",
 }
 const CONFIG := "user://config.cfg"
 

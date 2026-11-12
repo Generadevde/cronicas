@@ -4,19 +4,44 @@ extends RefCounted
 ## tinta escura e detalhes dourados. Tudo construído em código para ficar
 ## fácil de ajustar num lugar só.
 
-const TINTA := Color("#2A1A0E")
-const TINTA_SUAVE := Color("#5A3A1A")
-const PAPEL := Color("#EAD3A2")
-const PAPEL_CLARO := Color("#F3E4C0")
-const PAPEL_BORDA := Color("#B48A52")
-const COURO := Color("#3A1E0C")
-const COURO_ESCURO := Color("#24120A")
-const OURO := Color("#D7A64A")
-const OURO_CLARO := Color("#F2C46A")
-const TEXTO_CLARO := Color("#F0DDB2")
-const TEXTO_CLARO_SUAVE := Color("#C9A46A")
-const VERMELHO := Color("#7A2418")
-const AZUL_LINK := Color("#233B66")
+static var TINTA := Color("#2A1A0E")
+static var TINTA_SUAVE := Color("#5A3A1A")
+static var PAPEL := Color("#EAD3A2")
+static var PAPEL_CLARO := Color("#F3E4C0")
+static var PAPEL_BORDA := Color("#B48A52")
+static var COURO := Color("#3A1E0C")
+static var COURO_ESCURO := Color("#24120A")
+static var OURO := Color("#D7A64A")
+static var OURO_CLARO := Color("#F2C46A")
+static var TEXTO_CLARO := Color("#F0DDB2")
+static var TEXTO_CLARO_SUAVE := Color("#C9A46A")
+static var VERMELHO := Color("#7A2418")
+static var AZUL_LINK := Color("#233B66")
+
+## A tinta do mundo (o que o mundo escreve na página).
+static var TINTA_MUNDO := Color("#2C4A7C")
+
+## Temas do programa (Opções). Cada um troca todas as cores de uma vez.
+const PALETAS := {
+	"antigo": {"nome": "Livro antigo", "TINTA": "#2A1A0E", "TINTA_SUAVE": "#5A3A1A", "PAPEL": "#EAD3A2", "PAPEL_CLARO": "#F3E4C0", "PAPEL_BORDA": "#B48A52",
+		"COURO": "#3A1E0C", "COURO_ESCURO": "#24120A", "OURO": "#D7A64A", "OURO_CLARO": "#F2C46A", "TEXTO_CLARO": "#F0DDB2", "TEXTO_CLARO_SUAVE": "#C9A46A",
+		"VERMELHO": "#7A2418", "AZUL_LINK": "#233B66", "TINTA_MUNDO": "#2C4A7C"},
+	"escuro": {"nome": "Escuro", "TINTA": "#E6DCC6", "TINTA_SUAVE": "#A99C84", "PAPEL": "#26231F", "PAPEL_CLARO": "#322E29", "PAPEL_BORDA": "#4E463A",
+		"COURO": "#171513", "COURO_ESCURO": "#0E0D0B", "OURO": "#D7A64A", "OURO_CLARO": "#F2C46A", "TEXTO_CLARO": "#E6DCC6", "TEXTO_CLARO_SUAVE": "#A99C84",
+		"VERMELHO": "#E08A76", "AZUL_LINK": "#9DBBF0", "TINTA_MUNDO": "#8FB4F2"},
+	"claro": {"nome": "Claro", "TINTA": "#1E1B18", "TINTA_SUAVE": "#5E574E", "PAPEL": "#FAF7F0", "PAPEL_CLARO": "#FFFFFF", "PAPEL_BORDA": "#CFC8B8",
+		"COURO": "#E6E1D6", "COURO_ESCURO": "#D6D0C3", "OURO": "#8A5A12", "OURO_CLARO": "#6A4410", "TEXTO_CLARO": "#2A2620", "TEXTO_CLARO_SUAVE": "#6A6256",
+		"VERMELHO": "#A22A1C", "AZUL_LINK": "#1F4E9E", "TINTA_MUNDO": "#1F4E9E"},
+}
+
+
+static func aplicar_paleta() -> void:
+	var p: Dictionary = PALETAS.get(str(prefs.get("tema", "antigo")), PALETAS["antigo"])
+	TINTA = Color(p["TINTA"]); TINTA_SUAVE = Color(p["TINTA_SUAVE"]); PAPEL = Color(p["PAPEL"]); PAPEL_CLARO = Color(p["PAPEL_CLARO"])
+	PAPEL_BORDA = Color(p["PAPEL_BORDA"]); COURO = Color(p["COURO"]); COURO_ESCURO = Color(p["COURO_ESCURO"]); OURO = Color(p["OURO"])
+	OURO_CLARO = Color(p["OURO_CLARO"]); TEXTO_CLARO = Color(p["TEXTO_CLARO"]); TEXTO_CLARO_SUAVE = Color(p["TEXTO_CLARO_SUAVE"])
+	VERMELHO = Color(p["VERMELHO"]); AZUL_LINK = Color(p["AZUL_LINK"]); TINTA_MUNDO = Color(p["TINTA_MUNDO"])
+
 
 const F_CORPO := preload("res://assets/fonts/EBGaramond.ttf")
 const F_FELL := preload("res://assets/fonts/IMFellEnglish.ttf")
@@ -27,6 +52,8 @@ const F_GOTICA := preload("res://assets/fonts/UnifrakturMaguntia.ttf")
 ## Fontes que o autor pode escolher (Ajustes de leitura). "ajuste" corrige o
 ## tamanho aparente de cada uma (a Caveat, por exemplo, é pequena).
 const FONTES := {
+	"elite": {"nome": "Special Elite — máquina de escrever", "normal": "SpecialElite-Regular.ttf", "italico": "", "ajuste": 0.9},
+	"courier": {"nome": "Courier Prime — máquina limpa", "normal": "CourierPrime-Regular.ttf", "italico": "", "ajuste": 0.92},
 	"garamond": {"nome": "EB Garamond — livro impresso", "normal": "EBGaramond.ttf", "italico": "EBGaramond-Italic.ttf", "ajuste": 1.0},
 	"fell": {"nome": "IM Fell — livro antigo", "normal": "IMFellEnglish.ttf", "italico": "IMFellEnglish-Italic.ttf", "ajuste": 1.0},
 	"kalam": {"nome": "Kalam — manuscrita, bem legível", "normal": "Kalam.ttf", "italico": "", "ajuste": 0.92},
@@ -36,7 +63,7 @@ const FONTES := {
 }
 const PASTA_FONTES := "res://assets/fonts/"
 const CONFIG := "user://config.cfg"
-const PREFS_PADRAO := {"texto": "garamond", "escrita": "caveat", "tamanho": 1.0}
+const PREFS_PADRAO := {"texto": "garamond", "escrita": "elite", "tamanho": 1.0, "tema": "antigo", "som": true}
 
 static var _tema: Theme
 static var prefs: Dictionary = {}
@@ -51,11 +78,17 @@ static func carregar_preferencias() -> void:
 	if cfg.load(CONFIG) == OK:
 		for k in PREFS_PADRAO:
 			prefs[k] = cfg.get_value("leitura", k, PREFS_PADRAO[k])
+		# Quem vem da versão antiga começa com a letra de máquina de escrever.
+		if not cfg.has_section_key("leitura", "tema"):
+			prefs["escrita"] = PREFS_PADRAO["escrita"]
 	if not FONTES.has(prefs["texto"]):
 		prefs["texto"] = PREFS_PADRAO["texto"]
 	if not FONTES.has(prefs["escrita"]):
 		prefs["escrita"] = PREFS_PADRAO["escrita"]
 	prefs["tamanho"] = clampf(float(prefs["tamanho"]), 0.75, 1.6)
+	if not PALETAS.has(str(prefs["tema"])):
+		prefs["tema"] = "antigo"
+	aplicar_paleta()
 
 
 ## Guarda as escolhas e refaz o tema (as telas precisam se remontar depois).
@@ -69,6 +102,7 @@ static func salvar_preferencias(novas: Dictionary) -> void:
 	for k in PREFS_PADRAO:
 		cfg.set_value("leitura", k, prefs[k])
 	cfg.save(CONFIG)
+	aplicar_paleta()
 	_tema = null
 
 
@@ -192,13 +226,13 @@ static func construir() -> Theme:
 	t.set_font("font", "Button", F_FELL)
 	t.set_font_size("font_size", "Button", px(19))
 	t.set_color("font_color", "Button", TINTA)
-	t.set_color("font_hover_color", "Button", Color("#6A3410"))
+	t.set_color("font_hover_color", "Button", TINTA_SUAVE)
 	t.set_color("font_pressed_color", "Button", VERMELHO)
 	t.set_color("font_hover_pressed_color", "Button", VERMELHO)
 	t.set_color("font_focus_color", "Button", TINTA)
 	t.set_color("font_disabled_color", "Button", Color(TINTA, 0.35))
 	t.set_stylebox("normal", "Button", _traco(Color(0, 0, 0, 0), Color(TINTA_SUAVE, 0.35), 1))
-	t.set_stylebox("hover", "Button", _traco(Color(OURO_CLARO, 0.16), Color("#8A5A20"), 1))
+	t.set_stylebox("hover", "Button", _traco(Color(OURO_CLARO, 0.16), PAPEL_BORDA.darkened(0.25), 1))
 	t.set_stylebox("pressed", "Button", _traco(Color(OURO, 0.14), VERMELHO, 2))
 	t.set_stylebox("hover_pressed", "Button", _traco(Color(OURO, 0.2), VERMELHO, 2))
 	t.set_stylebox("focus", "Button", _traco(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 0))
@@ -209,13 +243,13 @@ static func construir() -> Theme:
 		t.set_font("font", tipo, F_FELL)
 		t.set_font_size("font_size", tipo, px(18))
 		t.set_color("font_color", tipo, TINTA)
-		t.set_color("font_hover_color", tipo, Color("#6A3410"))
+		t.set_color("font_hover_color", tipo, TINTA_SUAVE)
 		t.set_color("font_pressed_color", tipo, TINTA)
 		t.set_color("font_focus_color", tipo, TINTA)
 
 	# Campos: sem caixa, só a linha do caderno; com foco, a linha fica dourada.
 	var campo := _traco(Color(PAPEL_CLARO, 0.25), Color(TINTA_SUAVE, 0.45), 1, 4, 4)
-	var campo_foco := _traco(Color(PAPEL_CLARO, 0.45), Color("#9A6A24"), 2, 4, 4)
+	var campo_foco := _traco(Color(PAPEL_CLARO, 0.45), PAPEL_BORDA.darkened(0.2), 2, 4, 4)
 	for tipo in ["LineEdit", "TextEdit"]:
 		t.set_stylebox("normal", tipo, campo)
 		t.set_stylebox("focus", tipo, campo_foco)
@@ -293,7 +327,7 @@ static func construir() -> Theme:
 	t.set_constant("separation", "VBoxContainer", 8)
 	t.set_constant("separation", "HBoxContainer", 14)
 	t.set_color("font_color", "CheckBox", TINTA)
-	t.set_color("font_hover_color", "CheckBox", Color("#6A3410"))
+	t.set_color("font_hover_color", "CheckBox", TINTA_SUAVE)
 	t.set_color("font_pressed_color", "CheckBox", TINTA)
 	t.set_color("font_focus_color", "CheckBox", TINTA)
 	t.set_color("font_hover_pressed_color", "CheckBox", TINTA)
@@ -371,19 +405,19 @@ static func fundo_mesa(pai: Control, vela_x: float = 0.06) -> void:
 static func estilo_pagina(lado_lombada: String) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = PAPEL
-	s.border_color = Color("#8A6638")
+	s.border_color = PAPEL_BORDA
 	s.content_margin_left = 34
 	s.content_margin_right = 34
 	s.content_margin_top = 28
 	s.content_margin_bottom = 24
 	if lado_lombada == "direita":
 		s.border_width_right = 6
-		s.border_color = Color("#B48A52")
+		s.border_color = PAPEL_BORDA
 		s.corner_radius_top_left = 4
 		s.corner_radius_bottom_left = 4
 	else:
 		s.border_width_left = 6
-		s.border_color = Color("#B48A52")
+		s.border_color = PAPEL_BORDA
 		s.corner_radius_top_right = 4
 		s.corner_radius_bottom_right = 4
 	return s

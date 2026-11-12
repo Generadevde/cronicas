@@ -168,7 +168,9 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 			_anotar(u, raiz, "regras", lei["id"])
 			r["itens"].append({"tipo": "lei", "texto": lei["texto"] + ("" if lei.get("entendida", "") == "toda" else " (entendida em parte)"), "id": lei["id"]})
 	# 7b. Ordem de criar ("Crie um mercado"); senão, a frase fica anotada como acontecimento.
-	if r["itens"].is_empty():
+	if r["itens"].is_empty() and tempo(n) > 0:
+		r["itens"].append({"tipo": "tempo", "texto": "O tempo passa.", "id": ""})
+	elif r["itens"].is_empty():
 		var feito := LeitorMais.criar_por_ordem(u, original, n, raiz, foco)
 		if feito.is_empty() and not ctx.get("sem_anotar", false):
 			feito = LeitorMais.acontecimento(u, original, n, raiz, foco)

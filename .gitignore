@@ -8,3 +8,4 @@ export_presets.cfg
 # Sistema
 .DS_Store
 Thumbs.db
+dist/

@@ -152,12 +152,29 @@ static func _o_que_o_mundo_fez(u: Universo, antes: int, foco: String) -> Array:
 		var aqui: bool = foco != "" and (f["lugar"] == foco or Mapa.ancestrais(u, str(f["lugar"])).has(foco))
 		if imp < (0.25 if aqui else 0.55):
 			continue
+		# O povo sem nome morrendo de velhice não é notícia: só entra o que toca em algo que o autor escreveu, ou o que é grande.
+		if imp < 0.7 and not _toca_no_autor(u, f):
+			continue
 		r.append({"fato": f["id"], "texto": f["descricao"], "importancia": imp + (0.3 if aqui else 0.0), "data": f["data"], "seq": int(f["seq"])})
 	r.sort_custom(func(a, b): return float(a["importancia"]) > float(b["importancia"]))
 	r = r.slice(0, 10)
 	# Na ordem em que aconteceram.
 	r.sort_custom(func(a, b): return DataMundo.ordem(a["data"]) < DataMundo.ordem(b["data"]) or (DataMundo.ordem(a["data"]) == DataMundo.ordem(b["data"]) and int(a["seq"]) < int(b["seq"])))
 	return r
+
+
+static func _toca_no_autor(u: Universo, f: Dictionary) -> bool:
+	if not u.extras.get("escrita_por_cima", false):
+		return true
+	var pessoas := 0
+	for s in f["sujeitos"]:
+		var e: Dictionary = u.entidade(str(s))
+		if e.is_empty() or e["tipo"] != "pessoa":
+			continue
+		pessoas += 1
+		if u.valor_campo(str(s), "descrição") != "":
+			return true
+	return pessoas == 0
 
 
 ## O mundo escreve (com ressalva): uma continuação montada do que aconteceu.

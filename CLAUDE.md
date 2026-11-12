@@ -16,6 +16,7 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 ## Estrutura
 
 - `core/escrita/` — **o centro**: `leitor.gd` (cada frase vira mundo: lugares, gente, criaturas, necessidades, pessoas, sentimentos, leis, tempo; cada frase tem um fato-raiz para desfazer) e `escrita.gd` (lê o capítulo frase a frase, aceita as ações, faz o tempo andar, monta os cartões da margem e a sugestão do mundo).
+- `core/escrita/leitor_mais.gd` — escrever "por cima": números como se escreve ("3.700", "três mil e duzentos"), lugares e pessoas pelo nome, títulos ainda sem nome (o Livro pergunta), o que está por vir ("até a chegada do imperador"), perguntas ao Livro, regras do Livro, ordens de criar e acontecimentos anotados.
 - `core/` — dados e regras, sem interface: `universo.gd`, `fact_db.gd` (BancoDeFatos), `auditor.gd`, `ligador.gd` (nomes → links), `pesquisa.gd`, `biblioteca.gd` (salvar/carregar), `text_util.gd`, `data_mundo.gd`, `cronica.gd` (autoload).
 - `core/mente/` — personalidade, decisões, reações, combate, objetivos (Parte 3).
 - `core/mundo/` — mapa (lugares dentro de lugares, terreno, acidentes com nome, rios), viagens, natureza, povoador, línguas, eras/leis gerais (Parte 4); criaturas que atacam (`ameacas.gd`) e recursos de sobrevivência (`recursos.gd`).
@@ -27,14 +28,21 @@ Projeto de hobby do autor (Godot 4.7, GDScript). Responder e comentar em **portu
 - `core/vida/` — conversar com personagens (`conversa.gd`), acompanhar e ponto de vista (`acompanhar.gd`), IA local opcional que só dá voz (`ia_local.gd`) (Parte 10); Modo Viver: viver um personagem por dentro, ações em texto livre, diário e capítulo (`vivencia.gd`) (Parte 13).
 - `core/historia/` — fios e arcos (`fios.gd`), obras (`obras.gd`), legado cultural (`legado.gd`), cronista, diretor de drama e tom (`diretor.gd`), ganchos, segredos, boatos e sementes (`enredo.gd`) (Parte 11).
 - `core/integridade/` — ramos e comparação (`laboratorio.gd`), versões (`versoes.gd`), destinos do autor (`destinos.gd`), auditores, recuperação e memória (`integridade.gd`), importar/exportar (`troca.gd`) (Parte 12).
+- `core/integridade/confronto.gd` — Laboratório de confronto: ensaia uma luta entre dois lados e conta em palavras, com motivo; não gera fatos.
+- `ui/tela/` — **a tela única** (é a cena "livro" do programa): `tela.gd` (página no centro, margem à direita, estante fina à esquerda, painéis por cima; hospeda as abas antigas `ui/book/aba_*.gd` dentro dos painéis), `painel_opcoes.gd` (tema, letra, tamanho, som), `painel_estante.gd` (sagas → livros, exportar em texto), `painel_confronto.gd`, `realce.gd` (linhas do mundo em outra tinta), `som.gd` (máquina de escrever, gerado em código), `icone.gd`.
 - `ui/` — telas montadas em código: `tema.gd` (visual de livro), `menu/`, `library/`, `book/` (livro com quatro fitas — Escrever, O mundo, Linha do tempo, Bastidores — que juntam as abas `aba_*.gd`; `paginas.gd` monta BBCode).
 - `tests/` — `run_tests.gd` roda todos os `test_*.gd`.
 - `assets/` — fontes (OFL) e a arte do menu (feita pelo autor).
+
+## Como o programa se apresenta
+
+É um programa de escrever, não um jogo. O autor escreve "por cima" (uma coisa por linha); cada linha terminada vira mundo; o mundo responde em outra tinta e o autor aceita, muda ou risca. Nada de porcentagens na tela: tudo em palavras, com motivo. Na interface, "saga" é o `livro` do motor e "livro" é o `capítulo`. As cores do `Tema` são variáveis (temas antigo, escuro e claro em `Tema.PALETAS`): nunca guardar uma cor do Tema em `const`.
 
 ## Rodar
 
 - Testes: `GODOT=/caminho/godot ./testar.sh`
 - Abrir: `./jogar.sh`
+- Executável Linux: `GODOT=/caminho/godot ./exportar.sh` (precisa dos modelos de exportação do Godot 4.7) → `dist/Cronica/`
 
 ## Plano (13 partes)
 
