@@ -79,3 +79,34 @@ static func voz(u: Universo, eid: String, pergunta: String, base: String, sabe: 
 		texto = texto.substr(i + pedido.length())
 	texto = texto.strip_edges()
 	return texto if texto != "" else base
+
+
+## Pedido livre à IA (bloqueia até responder: chame de uma Thread). Devolve "" se não der.
+static func gerar(pedido: String, max_palavras: int = 120) -> String:
+	if not disponivel():
+		return ""
+	var c := config()
+	var args: Array = []
+	if _ollama(c):
+		args = ["run", c["modelo"], pedido]
+	else:
+		if c["modelo"] != "":
+			args.append_array(["-m", c["modelo"]])
+		args.append_array(["-n", str(max_palavras * 2), "--temp", "0.2", "-no-cnv", "-p", pedido])
+	var saida: Array = []
+	var codigo := OS.execute(c["comando"], PackedStringArray(args), saida, false)
+	if codigo != 0 or saida.is_empty():
+		return ""
+	var texto := str(saida[0])
+	var i := texto.find(pedido)
+	if i >= 0:
+		texto = texto.substr(i + pedido.length())
+	return texto.strip_edges()
+
+
+## Onde o Ollama costuma estar instalado (para preencher sozinho nas Opções).
+static func achar_comando() -> String:
+	for p in ["/usr/local/bin/ollama", "/usr/bin/ollama", "/snap/bin/ollama", OS.get_environment("HOME") + "/.local/bin/ollama"]:
+		if FileAccess.file_exists(p):
+			return p
+	return ""

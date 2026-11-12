@@ -47,6 +47,9 @@ var _som: SomMaquina
 var _tam_antes := 0
 var _foco_total := false
 var _aba_obj
+var _ia_leituras: Array = []      ## o que a IA leu e espera o seu sim: [{frase, linhas}]
+var _ia_fila: Array = []
+var _ia_thread: Thread
 
 
 func _ready() -> void:
@@ -462,8 +465,43 @@ func _ler_frases() -> void:
 	var ultimo: Dictionary = novos[novos.size() - 1]
 	if str(ultimo.get("sugestao", "")) != "":
 		_propor(str(ultimo["sugestao"]), ultimo.get("mundo", []).map(func(m): return m["fato"]))
+	# Linhas que o Livro só conseguiu anotar: a IA local (se houver) tenta ler melhor.
+	if IALocal.disponivel():
+		for c in novos:
+			var tipos: Array = c.get("itens", []).map(func(i): return str(i["tipo"]))
+			if tipos == ["acontecimento"]:
+				_ia_fila.append(str(c["frase"]))
+		_ia_proxima()
 	atualizar_cabecalho()
 	_montar_margem()
+
+
+func _ia_proxima() -> void:
+	if _ia_fila.is_empty() or (_ia_thread != null and _ia_thread.is_alive()):
+		return
+	if _ia_thread != null:
+		_ia_thread.wait_to_finish()
+	var frase: String = _ia_fila.pop_front()
+	var pedido := Interprete.pedido(universo, frase, str(universo.capitulo(cid).get("foco", "")))
+	avisar("A IA está lendo a linha…")
+	_ia_thread = Thread.new()
+	_ia_thread.start(func():
+		var saida := IALocal.gerar(pedido, 80)
+		_ia_chegou.call_deferred(frase, saida))
+
+
+func _ia_chegou(frase: String, saida: String) -> void:
+	var linhas := Interprete.limpar(universo, saida, frase) if saida != "" else []
+	if not linhas.is_empty():
+		_ia_leituras.append({"frase": frase, "linhas": linhas})
+		avisar("A IA leu uma linha: confira na margem.")
+		_montar_margem()
+	_ia_proxima()
+
+
+func _exit_tree() -> void:
+	if _ia_thread != null:
+		_ia_thread.wait_to_finish()
 
 
 # ---------------------------------------------------------------- o mundo propõe
@@ -694,6 +732,25 @@ func _montar_margem() -> void:
 		if consulta != "":
 			var vc := _cartao("O Livro responde", Tema.TINTA_MUNDO)
 			_texto(vc, consulta, 16)
+	# 1b. O que a IA local leu de uma linha que o Livro só tinha anotado.
+	for li in _ia_leituras.slice(0, 2):
+		var vi := _cartao("A IA leu assim", Tema.TINTA_MUNDO, true)
+		_texto(vi, "“%s”" % str(li["frase"]).strip_edges(), 14, Tema.TINTA_SUAVE, Tema.italico())
+		for l in li["linhas"]:
+			_texto(vi, "· " + str(l), 16)
+		var hi := _linha(vi)
+		var sim := _botao_cheio("Vale assim", Tema.TINTA_MUNDO, "Estas frases passam a valer no mundo, presas à sua linha")
+		sim.pressed.connect(func():
+			_ia_leituras.erase(li)
+			var itens := Interprete.aplicar(universo, cid, str(li["frase"]), li["linhas"])
+			avisar("Entendido: %d coisa(s) no mundo." % itens.size() if not itens.is_empty() else "O Livro não conseguiu usar essa leitura; a linha continua só anotada.")
+			_montar_margem())
+		hi.add_child(sim)
+		var nao2 := _botao_papel("Não é isso", "A linha continua só anotada como acontecimento")
+		nao2.pressed.connect(func():
+			_ia_leituras.erase(li)
+			_montar_margem())
+		hi.add_child(nao2)
 	# 2. Perguntas do Livro: quem ainda não tem nome.
 	var perguntas := 0
 	for e in universo.entidades_ativas():

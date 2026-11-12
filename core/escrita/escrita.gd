@@ -70,6 +70,14 @@ static func processar(u: Universo, cid: String) -> Array:
 			continue
 		var raiz := str(lidas[k])
 		lidas.erase(k)
+		# O que a IA tinha lido desta linha (e o autor aceitou) sai junto.
+		for ri in cap.get("ia", {}).get(k, []):
+			if u.fatos.existe(str(ri)) and u.fatos.obter(str(ri))["canon"]:
+				if u.fatos.obter(str(ri))["dados"].get("leitura", false):
+					Leitor.desfazer(u, str(ri))
+				else:
+					u.desfazer_fato(str(ri))
+		cap.get("ia", {}).erase(k)
 		if raiz == "" or raiz in ["antigo", "mundo", "ignorada"] or not u.fatos.existe(raiz) or not u.fatos.obter(raiz)["canon"]:
 			continue
 		var n := Leitor.desfazer(u, raiz)
@@ -116,6 +124,12 @@ static func processar_frase(u: Universo, cid: String, frase: String) -> Dictiona
 		if fid != "":
 			acoes += 1
 			itens.append({"tipo": "acao", "texto": u.fatos.obter(fid)["descricao"], "id": fid, "proposta": p["id"]})
+	# Se a frase é uma ação entre quem já existe, não precisa ficar também "anotada como acontecimento".
+	if acoes > 0:
+		for it in itens.duplicate():
+			if str(it["tipo"]) == "acontecimento":
+				u.desfazer_fato(str(it["id"]))
+				itens.erase(it)
 	# O que o Leitor já entendeu não vira dúvida ("nas colinas" não é uma ação).
 	if leitor_entendeu:
 		for p in u.propostas.duplicate():

@@ -223,3 +223,50 @@ func _apagar_pasta(caminho: String) -> void:
 	for arq in DirAccess.get_files_at(caminho):
 		DirAccess.remove_absolute(caminho + "/" + arq)
 	DirAccess.remove_absolute(caminho)
+
+
+## A IA local só traduz; o que ela inventa é cortado, e apagar a linha desfaz o que ela leu.
+func test_ia_local_le_e_nao_inventa() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	_escrever(u, m["cap"], "O rei Odo chegou a Brasa.")
+	_escrever(u, m["cap"], "Bren Valar passou a infância em Brasa.")
+	var bren := _achar(u, "Bren Valar")
+	var odo := _achar(u, "Odo")
+	verdadeiro(bren != "" and odo != "", "Bren e Odo existem")
+	var frase := "O velho rei Odo foi assassinado pelo próprio filho, Bren."
+	var c: Array = _escrever(u, m["cap"], frase)
+	igual(_tipos(c[0]), ["acontecimento"], "sem IA, a linha fica só anotada")
+	var saida := "Aqui estão as frases:\n1. Bren matou Odo.\n- O rei Zarkon chegou a Marte.\n* Bren odeia Odo.\nNADA"
+	var linhas := Interprete.limpar(u, saida, frase)
+	igual(linhas, ["Bren matou Odo.", "Bren odeia Odo."], "tira marcadores e corta o que a IA inventou (Zarkon, Marte)")
+	igual(Interprete.limpar(u, "Na cidade de Brasa viviam 900 habitantes.", frase), [], "número que a linha não diz é cortado")
+	verdadeiro(Interprete.pedido(u, frase, "").contains("Não invente"), "o pedido proíbe inventar")
+	var itens := Interprete.aplicar(u, m["cap"], frase, linhas)
+	verdadeiro(itens.size() >= 1, "a leitura valeu no mundo")
+	falso(Estado.vivo(u, odo), "Odo morreu")
+	Escrita.processar(u, m["cap"])
+	Extrator.analisar(u, m["cap"])
+	falso(Estado.vivo(u, odo), "e continua morto depois de reler o livro")
+	falso(str(u.capitulo(m["cap"])["texto"]).contains("Bren matou Odo"), "a frase da IA não entra no texto do autor")
+	# Apagar a linha do autor desfaz o que a IA tinha lido dela.
+	var cap := u.capitulo(m["cap"])
+	u.atualizar_capitulo(m["cap"], {"texto": str(cap["texto"]).replace(frase + "\n", "")})
+	Escrita.processar(u, m["cap"])
+	verdadeiro(Estado.vivo(u, odo), "linha apagada: Odo volta a estar vivo")
+
+
+func test_ia_local_por_programa_externo() -> void:
+	var falso_ollama := OS.get_environment("CRONICA_IA_FALSA")
+	if falso_ollama == "" or not FileAccess.file_exists(falso_ollama):
+		return
+	var antes := IALocal.config()
+	IALocal.salvar_config(falso_ollama, "teste", true)
+	verdadeiro(IALocal.disponivel(), "IA configurada")
+	var m := _novo()
+	var u: Universo = m["u"]
+	_escrever(u, m["cap"], "O rei Odo chegou a Brasa.")
+	_escrever(u, m["cap"], "Bren Valar passou a infância em Brasa.")
+	var linhas := Interprete.interpretar(u, "O velho rei Odo foi assassinado pelo próprio filho, Bren.", "")
+	igual(linhas, ["Bren matou Odo.", "Bren odeia Odo."], "chama o programa e limpa a resposta")
+	IALocal.salvar_config(str(antes.get("comando", "")), str(antes.get("modelo", "")), bool(antes.get("ligada", true)))

@@ -74,6 +74,54 @@ static func montar(tela, pai: VBoxContainer) -> void:
 			tela._som.tecla())
 	pai.add_child(som)
 
+	pai.add_child(Tema.secao("IA local (opcional, sem internet)"))
+	var cfg := IALocal.config()
+	var cmd := LineEdit.new()
+	cmd.placeholder_text = "caminho do programa (ex.: /usr/local/bin/ollama)"
+	cmd.text = str(cfg.get("comando", "")) if str(cfg.get("comando", "")) != "" else IALocal.achar_comando()
+	cmd.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var modelo := LineEdit.new()
+	modelo.placeholder_text = "modelo (ex.: gemma3:4b)"
+	modelo.text = str(cfg.get("modelo", "")) if str(cfg.get("modelo", "")) != "" else "gemma3:4b"
+	modelo.custom_minimum_size = Vector2(220, 0)
+	var ligada := CheckBox.new()
+	ligada.text = "Ligada"
+	ligada.button_pressed = bool(cfg.get("ligada", true))
+	var estado := Tema.rotulo("", 15, Tema.italico(), Tema.TINTA_SUAVE)
+	estado.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var guardar := func():
+		IALocal.salvar_config(cmd.text.strip_edges(), modelo.text.strip_edges(), ligada.button_pressed)
+		estado.text = "Pronta: a IA lê as linhas que o Livro só consegue anotar e mostra na margem para você conferir." if IALocal.disponivel() else "Desligada. Sem ela o Livro funciona normalmente; as linhas mais soltas ficam só anotadas."
+	cmd.text_changed.connect(func(_t): guardar.call())
+	modelo.text_changed.connect(func(_t): guardar.call())
+	ligada.toggled.connect(func(_v): guardar.call())
+	var testar := Tema.botao("Testar", "Pede uma leitura de exemplo e mostra quanto tempo levou")
+	testar.pressed.connect(func():
+		guardar.call()
+		if not IALocal.disponivel():
+			estado.text = "Não achei o programa nesse caminho."
+			return
+		estado.text = "Testando… (a primeira vez demora mais, porque o modelo é carregado)"
+		var t0 := Time.get_ticks_msec()
+		var th := Thread.new()
+		var fim := func(saida: String):
+			th.wait_to_finish()
+			if not is_instance_valid(estado):
+				return
+			var seg := (Time.get_ticks_msec() - t0) / 1000.0
+			var linhas := Interprete.limpar(tela.universo, saida, "O velho rei Odo foi assassinado pelo próprio filho, Bren.")
+			estado.text = ("Respondeu em %.0f segundos. Leitura de \"O velho rei Odo foi assassinado pelo próprio filho, Bren.\": %s" % [seg, " ".join(linhas) if not linhas.is_empty() else "(nada aproveitável: " + saida.substr(0, 120) + ")"]) if saida != "" else "A IA não respondeu. Confira o caminho e se o modelo foi baixado."
+		th.start(func():
+			var saida := IALocal.gerar(Interprete.pedido(tela.universo, "O velho rei Odo foi assassinado pelo próprio filho, Bren.", ""), 80)
+			fim.call_deferred(saida)))
+	var hia := HBoxContainer.new()
+	hia.add_theme_constant_override("separation", 10)
+	for c in [cmd, modelo, ligada, testar]:
+		hia.add_child(c)
+	pai.add_child(hia)
+	pai.add_child(estado)
+	guardar.call()
+
 	pai.add_child(Tema.ornamento())
 	var previa := Label.new()
 	previa.text = PREVIA

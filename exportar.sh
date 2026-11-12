@@ -18,6 +18,12 @@ Como abrir (Linux Mint):
   3. Para ter o ícone no menu do sistema, rode uma vez:  ./instalar-atalho.sh
 
 Não precisa de internet nem de instalar nada.
+
+IA local (opcional): faz o Livro entender linhas mais soltas. Precisa de internet só uma vez, para instalar:
+  1. No terminal:  curl -fsSL https://ollama.com/install.sh | sh
+  2. Baixe um modelo pequeno:  ollama pull gemma3:4b      (com 8 GB de memória, se ficar lento:  ollama pull llama3.2:3b)
+  3. No Crônica: Opções → IA local → confira o caminho e o modelo → Testar.
+Depois disso funciona desligado da rede. Sem a IA o programa funciona igual; as linhas mais soltas ficam só anotadas.
 Seus universos ficam em  ~/.local/share/godot/app_userdata/Crônica/  (salvos sozinhos, com cópia de segurança).
 T
 cat > dist/Cronica/instalar-atalho.sh <<'T'
