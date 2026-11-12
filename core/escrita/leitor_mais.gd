@@ -494,3 +494,58 @@ static func modo_de_vida(u: Universo, original: String, n: String, raiz: String,
 		if not povo.is_empty():
 			texto += ". Ainda não morava ninguém lá: o mundo pôs uns 300 moradores (escreva o número se quiser outro)"
 	return {"tipo": "gente", "texto": texto + ".", "id": lugar}
+
+
+## As células do mapa de 'de' que o autor já escreveu: em volta de cada lugar criado e o terreno pintado perto deles.
+## (Uma célula fora do mapa marca "nada escrito ainda", para o mapa não mostrar o que o mundo inventou.)
+static func escrito_no_mapa(u: Universo, de: String) -> Dictionary:
+	var r := {Vector2i(-1, -1): true}
+	var centros: Array = []
+	for f in Mapa.filhos(u, de):
+		var p: Dictionary = Mapa.posicao(u, str(f))
+		if p.is_empty():
+			continue
+		var c := Vector2i(int(p["x"]), int(p["y"]))
+		centros.append(c)
+		for dy in range(-2, 3):
+			for dx in range(-2, 3):
+				if dx * dx + dy * dy <= 5:
+					r[c + Vector2i(dx, dy)] = true
+	for k in Mapa.dados(u)["pintura"].get(de, {}):
+		var partes: PackedStringArray = str(k).split(",")
+		if partes.size() != 2:
+			continue
+		var cel := Vector2i(int(partes[0]), int(partes[1]))
+		for c2 in centros:
+			if Vector2(cel - c2).length() <= 6.5:
+				r[cel] = true
+				break
+	return r
+
+
+## "Kreven estava em um grande deserto": o terreno em volta do lugar passa a ser esse.
+static func terreno_em_volta(u: Universo, base: String, novo: String, n: String) -> void:
+	var tipo := TextUtil.normalizar(str(u.entidade(novo)["tipo"]))
+	if not Mapa.PALAVRAS_TERRENO.has(tipo) or not Mapa.TERRENOS.has(str(Mapa.PALAVRAS_TERRENO[tipo])):
+		return
+	var pai := Mapa.pai(u, base)
+	var p: Dictionary = Mapa.posicao(u, base)
+	if pai == "" or p.is_empty():
+		return
+	var grande := n.contains(" grande ") or n.contains(" vast") or n.contains(" imens") or n.contains(" enorme ") or n.contains(" sem fim")
+	var raio := 5 if grande else 3
+	var cx := int(p["x"])
+	var cy := int(p["y"])
+	var celulas := 0
+	for dy in range(-raio, raio + 1):
+		for dx in range(-raio, raio + 1):
+			var x := cx + dx
+			var y := cy + dy
+			if dx * dx + dy * dy <= raio * raio + 1 and x >= 0 and x < Mapa.COLS and y >= 0 and y < Mapa.LINHAS:
+				if Mapa.pintar(u, pai, x, y, str(Mapa.PALAVRAS_TERRENO[tipo])):
+					celulas += 1
+	# O lugar novo (o deserto) fica marcado ao lado, não num canto qualquer do mundo.
+	var nx := clampi(cx + 1, 0, Mapa.COLS - 1)
+	var ny := clampi(cy - 1, 0, Mapa.LINHAS - 1)
+	if Mapa.em(u, pai, nx, ny) == "":
+		Mapa.colocar(u, novo, pai, nx, ny, false)

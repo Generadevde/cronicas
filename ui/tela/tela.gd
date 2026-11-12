@@ -471,12 +471,13 @@ func _ler_frases() -> void:
 			if str(it["tipo"]) == "consequencia":
 				_propor(str(it["texto"]), [str(it["id"])])
 				break
-	# Linhas que o Livro só conseguiu anotar: a IA local (se houver) tenta ler melhor.
+	# Com a IA local ligada, ela lê todas as linhas novas (o Livro lê primeiro o que conhece, na hora; a IA completa).
 	if IALocal.disponivel():
 		for c in novos:
 			var tipos: Array = c.get("itens", []).map(func(i): return str(i["tipo"]))
-			if tipos == ["acontecimento"]:
-				_ia_fila.append(str(c["frase"]))
+			if c.get("desfeita", false) or tipos.has("consulta") or tipos.has("regra") or tipos == ["tempo"]:
+				continue
+			_ia_fila.append({"frase": str(c["frase"]), "tipos": tipos})
 		_ia_proxima()
 	atualizar_cabecalho()
 	_montar_margem()
@@ -487,20 +488,42 @@ func _ia_proxima() -> void:
 		return
 	if _ia_thread != null:
 		_ia_thread.wait_to_finish()
-	var frase: String = _ia_fila.pop_front()
-	var pedido := Interprete.pedido(universo, frase, str(universo.capitulo(cid).get("foco", "")))
-	avisar("A IA está lendo a linha…")
+	var item: Dictionary = _ia_fila.pop_front()
+	var frase := str(item["frase"])
+	var todas := Escrita.frases_prontas(str(universo.capitulo(cid)["texto"]))
+	var antes: Array = []
+	for f in todas:
+		if Escrita.chave(f) == Escrita.chave(frase):
+			break
+		antes.append(f)
+	var pedido := Interprete.pedido(universo, frase, str(universo.capitulo(cid).get("foco", "")), antes)
+	avisar("A IA está lendo: “%s”" % frase.substr(0, 60))
 	_ia_thread = Thread.new()
 	_ia_thread.start(func():
 		var saida := IALocal.gerar(pedido, 80)
-		_ia_chegou.call_deferred(frase, saida))
+		_ia_chegou.call_deferred(frase, saida, item["tipos"]))
 
 
-func _ia_chegou(frase: String, saida: String) -> void:
+func _ia_chegou(frase: String, saida: String, tipos: Array) -> void:
 	var linhas := Interprete.limpar(universo, saida, frase) if saida != "" else []
-	if not linhas.is_empty():
-		_ia_leituras.append({"frase": frase, "linhas": linhas})
-		avisar("A IA leu uma linha: confira na margem.")
+	# A linha ainda está na página? (Pode ter sido apagada enquanto a IA lia.)
+	var ainda: bool = Escrita.frases_prontas(str(universo.capitulo(cid)["texto"])).any(func(f): return Escrita.chave(f) == Escrita.chave(frase))
+	if not linhas.is_empty() and ainda:
+		# Vale na hora só o que usa nomes da própria linha; o que a IA deduziu das linhas anteriores pede o seu sim.
+		var partes := Interprete.separar(frase, linhas)
+		var seguras: Array = partes[0] if not IALocal.conferir() else []
+		var duvidosas: Array = partes[1] if not IALocal.conferir() else linhas
+		if not seguras.is_empty():
+			var itens := Interprete.aplicar(universo, cid, frase, seguras, tipos)
+			if not itens.is_empty():
+				_ia_leituras.append({"frase": frase, "linhas": seguras, "tipos": tipos, "itens": itens})
+				avisar("A IA entendeu mais %d coisa(s) nessa linha." % itens.size())
+		if not duvidosas.is_empty():
+			_ia_leituras.append({"frase": frase, "linhas": duvidosas, "tipos": tipos})
+			avisar("A IA leu uma linha: confira na margem.")
+		while _ia_leituras.size() > 4:
+			_ia_leituras.pop_front()
+		atualizar_cabecalho()
 		_montar_margem()
 	_ia_proxima()
 
@@ -738,21 +761,43 @@ func _montar_margem() -> void:
 		if consulta != "":
 			var vc := _cartao("O Livro responde", Tema.TINTA_MUNDO)
 			_texto(vc, consulta, 16)
-	# 1b. O que a IA local leu de uma linha que o Livro só tinha anotado.
-	for li in _ia_leituras.slice(0, 2):
-		var vi := _cartao("A IA leu assim", Tema.TINTA_MUNDO, true)
+	# 1b. O que a IA local leu (já valendo, com desfazer; ou esperando o seu sim, se você pediu para conferir).
+	for li in _ia_leituras.slice(-2):
+		var feita: bool = li.has("itens")
+		var vi := _cartao("A IA leu também" if feita else "A IA leu assim", Tema.TINTA_MUNDO, true)
 		_texto(vi, "“%s”" % str(li["frase"]).strip_edges(), 14, Tema.TINTA_SUAVE, Tema.italico())
+		if feita:
+			var ditos := {}
+			for it in li["itens"]:
+				var chave_t := TextUtil.normalizar(str(it["texto"])).trim_suffix(".")
+				if not ditos.has(chave_t):
+					ditos[chave_t] = true
+					_texto(vi, "· " + str(it["texto"]), 16)
+			var hf := _linha(vi)
+			var desf := _botao_papel("Não foi isso", "Desfaz o que a IA entendeu desta linha")
+			desf.pressed.connect(func():
+				_ia_leituras.erase(li)
+				var nd := Interprete.desfazer(universo, cid, str(li["frase"]))
+				avisar("Desfeito: %d coisa(s) saíram do mundo." % nd)
+				_montar_margem())
+			hf.add_child(desf)
+			var okb := _botao_papel("Certo", "Some com este cartão")
+			okb.pressed.connect(func():
+				_ia_leituras.erase(li)
+				_montar_margem())
+			hf.add_child(okb)
+			continue
 		for l in li["linhas"]:
 			_texto(vi, "· " + str(l), 16)
 		var hi := _linha(vi)
 		var sim := _botao_cheio("Vale assim", Tema.TINTA_MUNDO, "Estas frases passam a valer no mundo, presas à sua linha")
 		sim.pressed.connect(func():
 			_ia_leituras.erase(li)
-			var itens := Interprete.aplicar(universo, cid, str(li["frase"]), li["linhas"])
-			avisar("Entendido: %d coisa(s) no mundo." % itens.size() if not itens.is_empty() else "O Livro não conseguiu usar essa leitura; a linha continua só anotada.")
+			var itens := Interprete.aplicar(universo, cid, str(li["frase"]), li["linhas"], li.get("tipos", []))
+			avisar("Entendido: %d coisa(s) no mundo." % itens.size() if not itens.is_empty() else "O Livro não conseguiu usar essa leitura.")
 			_montar_margem())
 		hi.add_child(sim)
-		var nao2 := _botao_papel("Não é isso", "A linha continua só anotada como acontecimento")
+		var nao2 := _botao_papel("Não é isso")
 		nao2.pressed.connect(func():
 			_ia_leituras.erase(li)
 			_montar_margem())

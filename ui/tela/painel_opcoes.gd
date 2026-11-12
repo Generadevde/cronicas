@@ -91,7 +91,7 @@ static func montar(tela, pai: VBoxContainer) -> void:
 	estado.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var guardar := func():
 		IALocal.salvar_config(cmd.text.strip_edges(), modelo.text.strip_edges(), ligada.button_pressed)
-		estado.text = "Pronta: a IA lê as linhas que o Livro só consegue anotar e mostra na margem para você conferir." if IALocal.disponivel() else "Desligada. Sem ela o Livro funciona normalmente; as linhas mais soltas ficam só anotadas."
+		estado.text = "Pronta: a IA lê todas as linhas que você escreve e completa o que o Livro não entendeu sozinho." if IALocal.disponivel() else "Desligada. Sem ela o Livro funciona normalmente; as linhas mais soltas ficam só anotadas."
 	cmd.text_changed.connect(func(_t): guardar.call())
 	modelo.text_changed.connect(func(_t): guardar.call())
 	ligada.toggled.connect(func(_v): guardar.call())
@@ -114,11 +114,16 @@ static func montar(tela, pai: VBoxContainer) -> void:
 		th.start(func():
 			var saida := IALocal.gerar(Interprete.pedido(tela.universo, "O velho rei Odo foi assassinado pelo próprio filho, Bren.", ""), 80)
 			fim.call_deferred(saida)))
+	var conferir := CheckBox.new()
+	conferir.text = "Conferir cada leitura da IA antes de valer (desmarcado: vale na hora, e dá para desfazer na margem)"
+	conferir.button_pressed = IALocal.conferir()
+	conferir.toggled.connect(func(v: bool): IALocal.definir_conferir(v))
 	var hia := HBoxContainer.new()
 	hia.add_theme_constant_override("separation", 10)
 	for c in [cmd, modelo, ligada, testar]:
 		hia.add_child(c)
 	pai.add_child(hia)
+	pai.add_child(conferir)
 	pai.add_child(estado)
 	guardar.call()
 

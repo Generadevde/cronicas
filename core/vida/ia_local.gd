@@ -110,3 +110,18 @@ static func achar_comando() -> String:
 		if FileAccess.file_exists(p):
 			return p
 	return ""
+
+
+## Se o autor quer conferir cada leitura da IA antes de ela valer (por padrão, vale na hora e dá para desfazer).
+static func conferir() -> bool:
+	var c := ConfigFile.new()
+	if c.load(ARQUIVO) != OK:
+		return false
+	return bool(c.get_value("ia", "conferir", false))
+
+
+static func definir_conferir(v: bool) -> void:
+	var c := ConfigFile.new()
+	c.load(ARQUIVO)
+	c.set_value("ia", "conferir", v)
+	c.save(ARQUIVO)

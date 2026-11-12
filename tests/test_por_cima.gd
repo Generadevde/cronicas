@@ -377,3 +377,53 @@ func test_inverno_desert() -> void:
 	igual(_achar(u, "Tunt"), "", "e não um 'Tunt' solto")
 	igual(DataMundo.ordem(u.relogio), DataMundo.ordem(DataMundo.criar(1, 1)), "só descrição: o tempo não andou")
 	igual(str(u.capitulo(m["cap"]).get("foco", "")), kreven, "a história continua em Kreven")
+
+
+## A IA como leitora principal: completa sem repetir o que o Livro já entendeu, e dá para desfazer.
+func test_ia_completa_sem_repetir() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	_escrever(u, m["cap"], "O rei Odo chegou a Brasa.")
+	_escrever(u, m["cap"], "Bren Valar passou a infância em Brasa.")
+	var odo := _achar(u, "Odo")
+	var bren := _achar(u, "Bren Valar")
+	var c: Array = _escrever(u, m["cap"], "Bren matou Odo.")
+	verdadeiro(_tipos(c[0]).has("acao"), "o Livro entendeu sozinho")
+	var mortes := u.fatos.todos().filter(func(f): return f["canon"] and f["dados"].get("acao", "") == "morte_por").size()
+	var itens := Interprete.aplicar(u, m["cap"], "Bren matou Odo.", ["Bren matou Odo.", "Bren odeia Odo."], _tipos(c[0]))
+	igual(u.fatos.todos().filter(func(f): return f["canon"] and f["dados"].get("acao", "") == "morte_por").size(), mortes, "a IA não mata Odo duas vezes")
+	# Numa linha que o Livro só anotou, a IA vale na hora e dá para desfazer.
+	var c2: Array = _escrever(u, m["cap"], "Desde então o rapaz guardava rancor do velho.")
+	var medo := Estado.valor_relacao(u, bren, odo, "medo")
+	itens = Interprete.aplicar(u, m["cap"], "Desde então o rapaz guardava rancor do velho.", ["Bren teme Odo."], _tipos(c2[0]))
+	verdadeiro(itens.size() >= 1 and Estado.valor_relacao(u, bren, odo, "medo") > medo, "a leitura da IA valeu: %s" % str(itens))
+	verdadeiro(Interprete.desfazer(u, m["cap"], "Desde então o rapaz guardava rancor do velho.") > 0, "e foi desfeita")
+	igual(Estado.valor_relacao(u, bren, odo, "medo"), medo, "o medo voltou ao que era")
+	verdadeiro(Interprete.pedido(u, "Ele fugiu.", "", ["Bren matou Odo."]).contains("Bren matou Odo."), "o pedido leva as linhas anteriores, para os pronomes")
+
+
+## O mapa mostra só o que foi escrito.
+func test_mapa_so_com_o_que_foi_escrito() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	u.extras["escrita_por_cima"] = true
+	_escrever(u, m["cap"], "Existia uma cidade chamada Kreven.")
+	_escrever(u, m["cap"], "Kreven estava em um grande deserto.")
+	var kreven := _achar(u, "Kreven")
+	var mundo := Mapa.pai(u, kreven)
+	var p: Dictionary = Mapa.posicao(u, kreven)
+	igual(Mapa.terreno_em(u, mundo, int(p["x"]), int(p["y"])), "deserto", "Kreven está no deserto")
+	igual(Mapa.terreno_em(u, mundo, clampi(int(p["x"]) + 3, 0, Mapa.COLS - 1), int(p["y"])), "deserto", "e o deserto é grande")
+	var visto := LeitorMais.escrito_no_mapa(u, mundo)
+	verdadeiro(visto.has(Vector2i(int(p["x"]), int(p["y"]))), "o mapa mostra Kreven")
+	verdadeiro(visto.size() < Mapa.COLS * Mapa.LINHAS / 3, "e não o mundo inteiro (%d células)" % visto.size())
+	var d: Dictionary = Mapa.posicao(u, _achar(u, "Deserto de Kreven"))
+	verdadeiro(absi(int(d["x"]) - int(p["x"])) <= 1 and absi(int(d["y"]) - int(p["y"])) <= 1, "o deserto fica marcado ao lado da cidade")
+
+
+## O que a IA deduz de linhas anteriores não vale sozinho: pede o sim do autor.
+func test_ia_so_vale_sozinha_com_nomes_da_linha() -> void:
+	var partes := Interprete.separar("O velho rei Odo foi assassinado pelo próprio filho, Bren.", ["Bren matou Odo.", "O povo estava com medo."])
+	igual(partes[0], ["Bren matou Odo.", "O povo estava com medo."], "nomes da própria linha: vale na hora")
+	partes = Interprete.separar("Ele passou a infância em Kreven.", ["Bren matou Odo.", "O povo estava com medo."])
+	igual(partes[1], ["Bren matou Odo."], "nome que não está na linha: pede confirmação")

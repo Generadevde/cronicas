@@ -53,9 +53,16 @@ func _init() -> void:
 	tooltip_text = " "
 
 
+var _nevoa_da_escrita := false
+
+
 func mostrar(p_u: Universo, p_lugar: String) -> void:
 	u = p_u
 	lugar = p_lugar
+	# Escrevendo "por cima", o mapa mostra só o que foi escrito; o resto fica em branco até você escrever.
+	if u != null and u.extras.get("escrita_por_cima", false) and (nevoa.is_empty() or _nevoa_da_escrita) and Mapa.especie(u, lugar) != "cosmico" and lugar != "":
+		nevoa = LeitorMais.escrito_no_mapa(u, lugar)
+		_nevoa_da_escrita = true
 	queue_redraw()
 
 
@@ -291,8 +298,8 @@ func _nevoa(c: Vector2) -> void:
 			if nevoa.has(Vector2i(x, y)):
 				continue
 			var r := Rect2(Vector2(x * c.x, y * c.y), c + Vector2(0.6, 0.6))
-			draw_rect(r, Color("#E4CB97", 0.93))
-			if (x + y) % 2 == 0:
+			draw_rect(r, Color(Tema.PAPEL.lightened(0.04), 0.96) if _nevoa_da_escrita else Color("#E4CB97", 0.93))
+			if (x + y) % 2 == 0 and not _nevoa_da_escrita:
 				draw_line(r.position + Vector2(0, c.y), r.position + Vector2(c.x, 0), Color(Tema.TINTA_SUAVE, 0.12), 1.0)
 
 

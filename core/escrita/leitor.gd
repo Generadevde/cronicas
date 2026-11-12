@@ -125,6 +125,8 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 			var cs: Array = u.entidade(lugar)["campos"].duplicate(true)
 			cs.append({"chave": "fica em" if citado_antes == "" else "onde fica", "valor": str(u.entidade(base)["nome"])})
 			u.editar_entidade(lugar, {"nome": novo_nome, "campos": cs})
+		if base == citado_antes:
+			LeitorMais.terreno_em_volta(u, base, lugar, n)
 		foco = base
 		r["itens"].append({"tipo": "lugar", "texto": "%s (%s)" % [u.entidade(lugar)["nome"], u.entidade(lugar)["tipo"]], "id": lugar})
 	elif lugar != "":
