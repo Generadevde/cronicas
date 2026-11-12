@@ -399,3 +399,44 @@ static func acontecimento(u: Universo, original: String, n: String, raiz: String
 	var fid := Simulador.registrar(u, {"tipo": "acontecimento", "descricao": original, "sujeitos": sujeitos, "lugar": foco, "causas": [raiz],
 		"origem": {"tipo": BancoDeFatos.ORIGEM_AUTOR, "ref": "escrita"}, "dados": {"importancia": imp, "anotado": true}})
 	return {"tipo": "acontecimento", "texto": "Anotado como acontecimento" + ((" em " + str(u.entidade(foco)["nome"])) if foco != "" else ""), "id": fid}
+
+
+## "Seus moradores viviam da caça e da mineração": o lugar em cena passa a viver disso.
+## Se ainda não mora ninguém lá, o mundo inventa um povo (e diz que inventou).
+static func modo_de_vida(u: Universo, original: String, n: String, raiz: String, foco: String) -> Dictionary:
+	var rx := RegEx.new()
+	rx.compile(" (?:seus|suas|os|as|o|a|seu|sua) (moradores|habitantes|povo|gente|pessoas|aldeoes|cidadaos|familias|homens|mulheres)(?: (?:de|da|do) [a-z]+)? (?:viv|sobreviv|se sustent|depend|trabalh)[a-z]* (?:d[aeo]s?|com|n[ao]s?|em) (.+)$")
+	var m := rx.search(n)
+	if m == null:
+		return {}
+	var lugar := Leitor._lugar_citado(u, original)
+	if lugar == "":
+		lugar = foco
+	if lugar == "":
+		return {}
+	var partes: Array = []
+	for pedaco in m.get_string(2).strip_edges().split(" e ", false):
+		var t: String = pedaco.strip_edges()
+		for pre in ["de ", "da ", "do ", "das ", "dos ", "a ", "o "]:
+			if t.begins_with(pre):
+				t = t.substr(pre.length())
+		if t != "":
+			partes.append(t)
+	if partes.is_empty():
+		return {}
+	var do_que := " e ".join(partes)
+	# De volta com os acentos que o autor escreveu.
+	for w in original.replace(",", " ").replace(".", " ").split(" ", false):
+		var wn := TextUtil.normalizar(w)
+		if wn != w.to_lower() and wn.length() > 2:
+			do_que = (" " + do_que + " ").replace(" " + wn + " ", " " + w.to_lower() + " ").strip_edges()
+	var cs: Array = u.entidade(lugar)["campos"].filter(func(c): return c["chave"] != "vive de")
+	cs.append({"chave": "vive de", "valor": do_que})
+	u.editar_entidade(lugar, {"campos": cs})
+	var nome := str(u.entidade(lugar)["nome"])
+	var texto := "%s vive de %s" % [nome, do_que]
+	if Ameacas._pessoas(u, lugar).is_empty():
+		var povo := Leitor._povoar(u, lugar, 300, "moradores", "", raiz)
+		if not povo.is_empty():
+			texto += ". Ainda não morava ninguém lá: o mundo pôs uns 300 moradores (escreva o número se quiser outro)"
+	return {"tipo": "gente", "texto": texto + ".", "id": lugar}

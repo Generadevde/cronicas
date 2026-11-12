@@ -332,3 +332,19 @@ func test_avisos_antes_de_momentos_grandes() -> void:
 	igual(Pressagios.listar(u).size(), 0, "deixar seguir: o aviso some")
 	_escrever(u, m["cap"], "John Black adoeceu gravemente.")
 	verdadeiro(Pressagios.listar(u).any(func(a): return str(a["chave"]).begins_with("saude:")), "avisa que John pode não resistir")
+
+
+## O começo que o autor escreveu de verdade: a cidade não troca de nome e o povo vive de algo.
+func test_kreven_no_deserto() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	_escrever(u, m["cap"], "Existia uma cidade chamada Kreven.")
+	var kreven := _achar(u, "Kreven")
+	verdadeiro(kreven != "", "Kreven existe")
+	var c: Array = _escrever(u, m["cap"], "Kreven estava em um grande deserto.")
+	verdadeiro(_achar(u, "Deserto de Kreven") != "", "o deserto leva o nome da cidade: " + str(c[0]["itens"]))
+	igual(str(u.capitulo(m["cap"]).get("foco", "")), kreven, "a história continua em Kreven")
+	c = _escrever(u, m["cap"], "Seus moradores, vivam da caça e de mineração.")
+	igual(u.valor_campo(kreven, "vive de"), "caça e mineração", "Kreven vive de caça e mineração")
+	verdadeiro(Ameacas._pessoas(u, kreven).size() > 0, "e agora tem moradores")
+	falso(_tipos(c[0]).has("acontecimento"), "não fica só anotado")
