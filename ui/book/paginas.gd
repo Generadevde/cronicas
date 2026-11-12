@@ -19,6 +19,11 @@ static func cabecalho(titulo: String, subtitulo: String = "") -> String:
 	return s
 
 
+## Um valor de 0 a 1 dito em palavras (o Livro não mostra porcentagens).
+static func grau(v: float, palavras: Array = ["quase nenhuma", "pouca", "alguma", "muita", "enorme"]) -> String:
+	return str(palavras[clampi(int(v * palavras.size()), 0, palavras.size() - 1)])
+
+
 static func secao(texto: String) -> String:
 	return "\n[font=%s][font_size=%d][color=#5A3A1A]%s[/color][/font_size][/font]\n" % [VERSALETE, Tema.px(17), _e(texto)]
 
@@ -69,7 +74,7 @@ static func entidade(u: Universo, eid: String) -> String:
 	if vivas != "":
 		s += secao("Vivendo com as leis do mundo") + _e(vivas) + "\n"
 	if Ameacas.defesa(u, eid) > 0.0:
-		s += "Defesas do lugar: %d%%\n" % int(Ameacas.defesa(u, eid) * 100)
+		s += "Defesas do lugar: %s\n" % grau(Ameacas.defesa(u, eid), ["quase nenhuma", "fracas", "razoáveis", "fortes", "muito fortes"])
 	s += pactos(u, eid)
 	s += criacoes(u, eid)
 	if u.estado(eid).get("apagado", false):
@@ -143,7 +148,7 @@ static func estado(u: Universo, eid: String) -> String:
 		linhas.append("[b]Onde está:[/b] a caminho de %s (chega por volta de %s)" % [link("ent:" + viagem["para"], u.entidade(viagem["para"])["nome"]), DataMundo.texto(_data_de_ordem(int(viagem["chega"])))])
 	if mente and st["vivo"] and float(st["saude"]) < 0.99:
 		var ferimentos: Array = st["ferimentos"].map(func(f): return _e(f["descricao"]))
-		linhas.append("[b]Saúde:[/b] %d%%%s" % [roundi(float(st["saude"]) * 100), (" · " + ", ".join(ferimentos)) if not ferimentos.is_empty() else ""])
+		linhas.append("[b]Saúde:[/b] %s%s" % [grau(float(st["saude"]), ["à beira da morte", "muito mal", "debilitado", "abatido", "quase inteiro"]), (" · " + ", ".join(ferimentos)) if not ferimentos.is_empty() else ""])
 	var fam: Dictionary = st["familia"]
 	var rotulos := {"pais": "Pais", "filhos": "Filhos", "conjuges": "Cônjuge", "mestres": "Mestres", "discipulos": "Discípulos"}
 	for k in rotulos:
@@ -239,8 +244,8 @@ static func lugar(u: Universo, eid: String) -> String:
 			DataMundo.texto(_data_de_ordem(int(ev["ate"]))), link("fato:" + ev["fato"], "(por quê?)")])
 	if Mapa.especie(u, eid) == "povoado" and Natureza.tem_natureza(u, eid) and float(Natureza.de(u, eid)["pop"]) > 0:
 		var h := Humor.de(u, eid)
-		linhas.append("[b]Humor do povo:[/b] %s [color=#5A3A1A](raiva %d%% · medo %d%% · alegria %d%% · fé %d%%)[/color]" % [Humor.palavra(h),
-			roundi(float(h["raiva"]) * 100), roundi(float(h["medo"]) * 100), roundi(float(h["alegria"]) * 100), roundi(float(h["fe"]) * 100)])
+		linhas.append("[b]Humor do povo:[/b] %s [color=#5A3A1A](raiva %s · medo %s · alegria %s · fé %s)[/color]" % [Humor.palavra(h),
+			grau(float(h["raiva"])), grau(float(h["medo"])), grau(float(h["alegria"])), grau(float(h["fe"]))])
 		linhas.append("[b]Pão:[/b] %s" % Economia.palavra_preco(Economia.preco(u, eid)))
 	var soc := Sociedades.de_lugar(u, eid)
 	if soc != "" and soc != eid:
@@ -369,8 +374,8 @@ static func guerra(u: Universo, g: String) -> String:
 	for lado in ["a", "b"]:
 		for f in Guerras.forcas_do_lado(u, g, lado):
 			var c := Forcas.comandante(u, f)
-			forcas.append("  • %s — %s %s · moral %s · suprimentos %d%%%s" % [link("ent:" + f, u.entidade(f)["nome"]), Forcas.numero(Forcas.tamanho(u, f)),
-				Forcas.nome_tipo(u, f), _palavra_moral(Forcas.moral(u, f)), int(roundf(Forcas.suprimentos(u, f) * 100)),
+			forcas.append("  • %s — %s %s · moral %s · suprimentos %s%s" % [link("ent:" + f, u.entidade(f)["nome"]), Forcas.numero(Forcas.tamanho(u, f)),
+				Forcas.nome_tipo(u, f), _palavra_moral(Forcas.moral(u, f)), grau(Forcas.suprimentos(u, f), ["esgotados", "curtos", "pela metade", "bons", "fartos"]),
 				(" · comandante " + link("ent:" + c, Lendas.nome_com_titulo(u, c))) if c != "" else ""])
 	if not forcas.is_empty():
 		linhas.append("[b]Forças:[/b]\n" + "\n".join(forcas))
@@ -527,7 +532,7 @@ static func forca(u: Universo, f: String) -> String:
 	var sid := Forcas.lado(u, f)
 	linhas.append("[b]De:[/b] %s" % (link("ent:" + sid, u.entidade(sid)["nome"]) if sid != "" else "[i]ninguém (escreva \"pertence a\")[/i]"))
 	linhas.append("[b]Tamanho agora:[/b] %s de %s · [b]tipo:[/b] %s" % [Forcas.numero(Forcas.tamanho(u, f)), Forcas.numero(Forcas.tamanho_inicial(u, f) + float(u.estado(f).get("reforcos", 0.0))), Forcas.nome_tipo(u, f)])
-	linhas.append("[b]Moral:[/b] %s · [b]suprimentos:[/b] %d%%" % [_palavra_moral(Forcas.moral(u, f)), int(roundf(Forcas.suprimentos(u, f) * 100))])
+	linhas.append("[b]Moral:[/b] %s · [b]suprimentos:[/b] %s" % [_palavra_moral(Forcas.moral(u, f)), grau(Forcas.suprimentos(u, f), ["esgotados", "curtos", "pela metade", "bons", "fartos"])])
 	var c := Forcas.comandante(u, f)
 	if c != "":
 		linhas.append("[b]Comandante:[/b] %s%s" % [link("ent:" + c, Lendas.nome_com_titulo(u, c)), "" if Estado.vivo(u, c) else " [color=#7A2418](morto)[/color]"])

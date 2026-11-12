@@ -59,7 +59,7 @@ static func ensaiar(u: Universo, a: String, b: String, cond: Dictionary = {}) ->
 		var x: String = par[0]
 		if Estado.saude_atual(u, x) < 0.6:
 			porque.append("%s já chegou ferido." % _nome(u, x))
-		if Estado.emocao_por(u, x, par[1], ["odio", "raiva", "rancor", "humilhacao"]) > 0.3:
+		if maxf(Estado.emocao_por(u, x, par[1], ["odio", "raiva", "rancor", "humilhacao"]), Estado.valor_relacao(u, x, par[1], "raiva")) > 0.3:
 			porque.append("%s carrega raiva de %s: a raiva dá força, mas tira o juízo." % [_nome(u, x), _nome(u, par[1])])
 	var r := Combate.resolver(u, a, b, rng, bool(cond.get("ate_a_morte", false)), bonus)
 	var venc: String = r["vencedor"]

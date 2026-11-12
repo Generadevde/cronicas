@@ -270,3 +270,65 @@ func test_ia_local_por_programa_externo() -> void:
 	var linhas := Interprete.interpretar(u, "O velho rei Odo foi assassinado pelo próprio filho, Bren.", "")
 	igual(linhas, ["Bren matou Odo.", "Bren odeia Odo."], "chama o programa e limpa a resposta")
 	IALocal.salvar_config(str(antes.get("comando", "")), str(antes.get("modelo", "")), bool(antes.get("ligada", true)))
+
+
+## O que se escreve livre tem consequência de verdade, e apagar a linha desfaz.
+func test_consequencias_de_verdade() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	_escrever(u, m["cap"], "Na cidade de Austin viviam 400 habitantes.")
+	_escrever(u, m["cap"], "O rei Odo chegou a Austin.")
+	_escrever(u, m["cap"], "Bren Valar passou a infância em Austin.")
+	_escrever(u, m["cap"], "Crie uma ponte.")
+	var austin := _achar(u, "Austin")
+	var odo := _achar(u, "Odo")
+	var bren := _achar(u, "Bren Valar")
+	var vivos := Ameacas._pessoas(u, austin).size()
+	var c: Array = _escrever(u, m["cap"], "Uma peste terrível atingiu a cidade.")
+	igual(_tipos(c[0]), ["consequencia"], "a peste tem consequência")
+	verdadeiro(Ameacas._pessoas(u, austin).size() < vivos, "gente morreu de verdade")
+	verdadeiro(Estado.vivo(u, odo) and Estado.vivo(u, bren), "quem o autor escreveu pelo nome não morre por acaso")
+	falso(str(c[0]["itens"][0]["texto"]).contains("%"), "contado em palavras")
+	# Apagar a linha traz todos de volta.
+	var cap := u.capitulo(m["cap"])
+	u.atualizar_capitulo(m["cap"], {"texto": str(cap["texto"]).replace("Uma peste terrível atingiu a cidade.\n", "")})
+	Escrita.processar(u, m["cap"])
+	igual(Ameacas._pessoas(u, austin).size(), vivos, "linha apagada: ninguém morreu")
+	# A ponte cai.
+	var ponte := ""
+	for e in u.entidades_ativas():
+		if e["tipo"] == "ponte":
+			ponte = e["id"]
+	verdadeiro(ponte != "", "a ponte existe")
+	c = _escrever(u, m["cap"], "Uma enchente destruiu parte da ponte.")
+	igual(str(u.estado(ponte).get("condicao", "")), "danificado", "a ponte ficou danificada")
+	c = _escrever(u, m["cap"], "Dias depois, a ponte desabou.")
+	igual(str(u.estado(ponte).get("condicao", "")), "em ruínas", "e depois caiu")
+	# O trono muda de dono, e o antigo rei guarda raiva.
+	c = _escrever(u, m["cap"], "Bren tomou o trono.")
+	igual(u.valor_campo(bren, "cargo"), "governante de Austin", "Bren governa")
+	verdadeiro(u.valor_campo(odo, "cargo").begins_with("antigo"), "Odo perdeu o cargo")
+	verdadeiro(Estado.emocao_por(u, odo, bren, ["raiva"]) > 0.3, "e guarda raiva de Bren")
+	# Adoecer e sarar.
+	c = _escrever(u, m["cap"], "Odo adoeceu gravemente.")
+	verdadeiro(Estado.saude_atual(u, odo) < 0.7, "Odo está mal")
+	c = _escrever(u, m["cap"], "Odo se recuperou.")
+	verdadeiro(Estado.saude_atual(u, odo) > 0.9, "Odo sarou")
+
+
+## O Livro avisa antes de momentos grandes com quem o autor escreveu.
+func test_avisos_antes_de_momentos_grandes() -> void:
+	var m := _novo()
+	var u: Universo = m["u"]
+	u.extras["escrita_sem_tempo"] = true
+	_escrever(u, m["cap"], "Na cidade de Austin viviam 100 habitantes.")
+	_escrever(u, m["cap"], "John Black chegou a Austin.")
+	igual(Pressagios.listar(u).size(), 0, "nada de grande ainda")
+	_escrever(u, m["cap"], "Kai Dunmar jurou vingança contra John Black.")
+	var avisos := Pressagios.listar(u)
+	igual(avisos.size(), 1, "um aviso")
+	verdadeiro(str(avisos[0]["texto"]).contains("Kai Dunmar") and str(avisos[0]["texto"]).contains("John Black"), "diz quem e por quê: " + str(avisos[0]["texto"]))
+	Pressagios.dispensar(u, str(avisos[0]["chave"]))
+	igual(Pressagios.listar(u).size(), 0, "deixar seguir: o aviso some")
+	_escrever(u, m["cap"], "John Black adoeceu gravemente.")
+	verdadeiro(Pressagios.listar(u).any(func(a): return str(a["chave"]).begins_with("saude:")), "avisa que John pode não resistir")

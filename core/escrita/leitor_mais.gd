@@ -293,6 +293,11 @@ const NOVOS_LUGARES := {"regiao": "região", "planicie": "planície", "lago": "l
 	"plantacao": "plantação", "pomar": "pomar", "vinhedo": "vinhedo", "pedreira": "pedreira", "tribunal": "tribunal", "banco": "banco", "feira": "feira", "pais": "país",
 	"nacao": "nação", "ducado": "ducado", "condado": "condado", "republica": "república", "bioma": "bioma", "ecossistema": "ecossistema", "costa": "costa", "mar": "mar",
 	"oceano": "oceano", "ambiente": "ambiente", "assentamento": "assentamento", "comunidade": "comunidade"}
+## Construções e pedaços de um lugar: nascem dentro do lugar em cena e não tiram a história de lá.
+const CONSTRUCOES := ["ponte", "mercado", "casa", "casas", "praca", "moinho", "bairro", "muralha", "canal", "distrito", "estrada", "passagem", "tunel", "biblioteca",
+	"taverna", "estalagem", "hospital", "oficina", "forja", "armazem", "celeiro", "santuario", "catedral", "igreja", "palacio", "quartel", "arena", "cemiterio", "farol",
+	"observatorio", "laboratorio", "universidade", "posto", "cais", "estaleiro", "aqueduto", "poco", "jardim", "plantacao", "pomar", "vinhedo", "pedreira", "tribunal",
+	"banco", "feira"]
 const GENTE_UNICA := ["viajante", "morador", "moradora", "comerciante", "aventureiro", "aventureira", "explorador", "exploradora", "artesao", "artesa", "campones",
 	"camponesa", "nobre", "espiao", "espia", "mensageiro", "mensageira", "estrangeiro", "estrangeira", "sabio", "sabia", "profeta", "ladra", "assassino", "assassina",
 	"guarda", "juiz", "juiza", "professor", "professora", "aprendiz", "inventor", "inventora", "personagem", "pessoa", "lider", "governante", "herdeiro", "herdeira",

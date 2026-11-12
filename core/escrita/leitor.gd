@@ -109,7 +109,17 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 	var foco := str(ctx.get("foco", ""))
 	# 1. Lugar.
 	var lugar := _ler_lugar(u, original, n, raiz, foco)
-	if lugar != "":
+	if lugar != "" and foco != "" and TextUtil.normalizar(str(u.entidade(lugar)["tipo"])) in LeitorMais.CONSTRUCOES:
+		# Uma construção: fica no lugar em cena, com o nome dele se não tiver nome próprio, e a história não sai de lá.
+		if _nome_proprio(original) == "" and not original.contains(str(u.entidade(lugar)["nome"])):
+			var tipo_l := str(u.entidade(lugar)["tipo"])
+			var novo_nome := "%s de %s" % [tipo_l.substr(0, 1).to_upper() + tipo_l.substr(1), str(u.entidade(foco)["nome"])]
+			if LeitorMais._existe(u, novo_nome) == "":
+				var cs: Array = u.entidade(lugar)["campos"].duplicate(true)
+				cs.append({"chave": "fica em", "valor": str(u.entidade(foco)["nome"])})
+				u.editar_entidade(lugar, {"nome": novo_nome, "campos": cs})
+		r["itens"].append({"tipo": "lugar", "texto": "%s (%s)" % [u.entidade(lugar)["nome"], u.entidade(lugar)["tipo"]], "id": lugar})
+	elif lugar != "":
 		foco = lugar
 		r["itens"].append({"tipo": "lugar", "texto": "%s (%s)" % [u.entidade(lugar)["nome"], u.entidade(lugar)["tipo"]], "id": lugar})
 	else:
@@ -168,10 +178,12 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 			_anotar(u, raiz, "regras", lei["id"])
 			r["itens"].append({"tipo": "lei", "texto": lei["texto"] + ("" if lei.get("entendida", "") == "toda" else " (entendida em parte)"), "id": lei["id"]})
 	# 7b. Ordem de criar ("Crie um mercado"); senão, a frase fica anotada como acontecimento.
-	if r["itens"].is_empty() and tempo(n) > 0:
-		r["itens"].append({"tipo": "tempo", "texto": "O tempo passa.", "id": ""})
-	elif r["itens"].is_empty():
-		var feito := LeitorMais.criar_por_ordem(u, original, n, raiz, foco)
+	if r["itens"].is_empty():
+		var feito := Consequencias.ler(u, original, n, raiz, foco)
+		if feito.is_empty() and tempo(n) > 0:
+			feito = {"tipo": "tempo", "texto": "O tempo passa.", "id": ""}
+		if feito.is_empty():
+			feito = LeitorMais.criar_por_ordem(u, original, n, raiz, foco)
 		if feito.is_empty() and not ctx.get("sem_anotar", false):
 			feito = LeitorMais.acontecimento(u, original, n, raiz, foco)
 		if not feito.is_empty():

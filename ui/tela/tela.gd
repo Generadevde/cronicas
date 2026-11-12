@@ -774,6 +774,23 @@ func _montar_margem() -> void:
 	# 4. O que está por vir.
 	for pv in LeitorMais.pendentes(universo).slice(0, 2):
 		_cartao_por_vir(pv)
+	# 4b. Avisos antes de momentos grandes com quem você escreveu.
+	for av in Pressagios.listar(universo, 2):
+		var va := _cartao("Algo grande se aproxima", Tema.VERMELHO, true)
+		_texto(va, str(av["texto"]), 17)
+		var ha := _linha(va)
+		var esc := _botao_cheio("Escrever o momento", Tema.VERMELHO)
+		esc.pressed.connect(func(): _editor.grab_focus())
+		ha.add_child(esc)
+		var seg := _botao_papel("Deixar seguir", "O mundo decide sozinho; este aviso não aparece mais")
+		seg.pressed.connect(func():
+			Pressagios.dispensar(universo, str(av["chave"]))
+			_montar_margem())
+		ha.add_child(seg)
+		if str(av["outro"]) != "":
+			var lab2 := _botao_papel("Testar no Laboratório")
+			lab2.pressed.connect(func(): abrir_painel("laboratorio", "=confronto", str(av["outro"])))
+			ha.add_child(lab2)
 	# 5. Lutas em aberto.
 	for f in Lutas.pendentes(universo).slice(0, 1):
 		var vl := _cartao("Uma luta ficou em aberto", Tema.VERMELHO, true)
