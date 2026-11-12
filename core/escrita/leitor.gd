@@ -72,16 +72,38 @@ const SENTIMENTOS := {"odeia": {"raiva": 0.6}, "odeiam": {"raiva": 0.6}, "teme":
 	"desprezam": {"raiva": 0.4, "respeito": -0.4}, "inveja": {"raiva": 0.3}, "invejam": {"raiva": 0.3}}
 
 
+static var _todos_lugares: Dictionary = {}
+
+
+static func todos_os_lugares() -> Dictionary:
+	if _todos_lugares.is_empty():
+		_todos_lugares = LUGARES.duplicate()
+		_todos_lugares.merge(LeitorMais.NOVOS_LUGARES)
+	return _todos_lugares
+
+
 # ---------------------------------------------------------------- ler uma frase
 
 ## Lê uma frase e muda o mundo. ctx: {capitulo, foco (lugar em cena)}.
 ## Devolve {raiz, itens: [{tipo, texto, id}], dias, entendeu, foco}.
 static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
-	var original := frase.strip_edges()
+	var original := LeitorMais.milhares(frase.strip_edges())
 	var r := {"raiz": "", "itens": [], "dias": 0, "entendeu": false, "foco": str(ctx.get("foco", ""))}
 	if original.length() < 3:
 		return r
-	var n := " " + _limpo(original) + " "
+	var n := LeitorMais.por_extenso(_limpo(original))
+	# Pergunta ao Livro: não muda o mundo, o Livro responde.
+	if LeitorMais.eh_consulta(original, n):
+		r["itens"].append({"tipo": "consulta", "texto": LeitorMais.responder(u, original), "id": ""})
+		r["entendeu"] = true
+		return r
+	# Regra para o próprio Livro: fica guardada com as leis.
+	if LeitorMais.eh_regra_do_livro(n):
+		LeitorMais.guardar_regra(u, original)
+		r["itens"].append({"tipo": "regra", "texto": "Regra do Livro guardada: " + original, "id": ""})
+		r["entendeu"] = true
+		u.marcar_mudanca()
+		return r
 	var raiz := _raiz(u, original, ctx)
 	r["raiz"] = raiz
 	var foco := str(ctx.get("foco", ""))
@@ -105,6 +127,12 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 		r["foco"] = foco
 		u.marcar_mudanca()
 		return r
+	# 1c. Lugar pelo nome ("na cidade de Austin", "na Profundeza").
+	if lugar == "":
+		lugar = LeitorMais.lugar_nomeado(u, original, n, raiz, foco)
+		if lugar != "":
+			foco = lugar
+			r["itens"].append({"tipo": "lugar", "texto": "%s (%s)" % [u.entidade(lugar)["nome"], u.entidade(lugar)["tipo"]], "id": lugar})
 	# 2. Gente.
 	var gente := _ler_gente(u, original, n, raiz, foco)
 	if not gente.is_empty():
@@ -123,6 +151,12 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 	var pessoa := _ler_pessoa(u, original, n, raiz, foco)
 	if pessoa != "":
 		r["itens"].append({"tipo": "pessoa", "texto": "%s (%s)" % [u.entidade(pessoa)["nome"], _descricao_curta(u, pessoa)], "id": pessoa})
+	# 5b. Pessoas pelo nome, títulos ainda sem nome e o que está por vir.
+	for it in LeitorMais.pessoas(u, original, n, raiz, foco):
+		r["itens"].append(it)
+	var vir := LeitorMais.por_vir(u, original, n, raiz, foco)
+	if not vir.is_empty():
+		r["itens"].append({"tipo": "por_vir", "texto": vir["texto"], "id": vir["quem"]})
 	# 6. Sentimentos de um grupo ("o povo odeia o rei").
 	var sent := _ler_sentimento(u, original, n, raiz, foco)
 	if sent != "":
@@ -133,6 +167,13 @@ static func ler(u: Universo, frase: String, ctx: Dictionary = {}) -> Dictionary:
 		if not lei.is_empty():
 			_anotar(u, raiz, "regras", lei["id"])
 			r["itens"].append({"tipo": "lei", "texto": lei["texto"] + ("" if lei.get("entendida", "") == "toda" else " (entendida em parte)"), "id": lei["id"]})
+	# 7b. Ordem de criar ("Crie um mercado"); senão, a frase fica anotada como acontecimento.
+	if r["itens"].is_empty():
+		var feito := LeitorMais.criar_por_ordem(u, original, n, raiz, foco)
+		if feito.is_empty() and not ctx.get("sem_anotar", false):
+			feito = LeitorMais.acontecimento(u, original, n, raiz, foco)
+		if not feito.is_empty():
+			r["itens"].append(feito)
 	# 8. Tempo.
 	r["dias"] = tempo(n)
 	r["entendeu"] = not r["itens"].is_empty()
@@ -239,13 +280,13 @@ static func _lugar_citado(u: Universo, original: String) -> String:
 
 static func _ler_lugar(u: Universo, original: String, n: String, raiz: String, foco: String) -> String:
 	var rx := RegEx.new()
-	rx.compile(" (um|uma|numa|num|em uma|em um|existe uma|existe um|ha uma|ha um|havia uma|havia um) (?:(?:pequen[ao]|grande|velh[ao]|antig[ao]|enorme|remot[ao]|isolad[ao]|perdid[ao]|misterios[ao]|abandonad[ao]|so|unic[ao]|minuscul[ao]|vast[ao]) )*(%s)( espacial| flutuante| subterranea| subterraneo| voadora| voador)?(?: |$)" % "|".join(LUGARES.keys()))
+	rx.compile(" (um|uma|numa|num|em uma|em um|existe uma|existe um|ha uma|ha um|havia uma|havia um|crie|construa|erga|adicione) (?:(?:um|uma|uns|umas) )?(?:(?:pequen[ao]|grande|velh[ao]|antig[ao]|enorme|remot[ao]|isolad[ao]|perdid[ao]|misterios[ao]|abandonad[ao]|so|unic[ao]|minuscul[ao]|vast[ao]) )*(%s)( espacial| flutuante| subterranea| subterraneo| voadora| voador)?(?: |$)" % "|".join(todos_os_lugares().keys()))
 	var m := rx.search(n)
 	var tipo := ""
 	var palavra := ""
 	if m != null:
 		palavra = m.get_string(2)
-		tipo = str(LUGARES[palavra]) + m.get_string(3)
+		tipo = str(todos_os_lugares()[palavra]) + m.get_string(3)
 	# "Aru é uma ilha".
 	var nome := _nome_proprio(original)
 	if tipo == "":
@@ -506,6 +547,8 @@ static func _ler_gente(u: Universo, original: String, n: String, raiz: String, f
 			var t := grupo
 			grupo = extra
 			extra = t
+		if extra in ["ate", "que", "em", "na", "no", "nas", "nos", "de", "do", "da", "e", "com", "sem", "para", "por", "quando", "antes", "depois", "ja", "nao"]:
+			extra = ""
 		var qtd := numero(m.get_string(1))
 		if qtd <= 0 or qtd > 1000000:
 			continue

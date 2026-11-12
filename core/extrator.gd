@@ -186,6 +186,8 @@ static func frases(texto: String) -> Array:
 	for i in texto.length():
 		var c: String = texto[i]
 		atual += c
+		if c == "." and i > 0 and i + 1 < texto.length() and texto[i - 1].is_valid_int() and texto[i + 1].is_valid_int():
+			continue
 		if c in [".", "!", "?", "\n", ";"]:
 			if atual.strip_edges() != "":
 				lista.append(atual)
